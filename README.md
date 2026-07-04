@@ -18,15 +18,15 @@ Fertig — die Skills nutzen die MCP-Verbindung, es ist kein weiteres Login und 
 
 | Skill | Aufruf | Was er tut |
 |-------|--------|------------|
-| `mcp-campaign` | `/mcp:campaign` | Vollstaendige Kampagne aus einem Briefing erstellen/bearbeiten (CampaignBlueprint) |
-| `mcp-import` | `/mcp:import` | Lead-Listen (CSV/OutScraper/Inline) importieren |
-| `mcp-qualify` | `/mcp:qualify` | Leads gegen die Kampagnen-Kriterien qualifizieren |
-| `mcp-research` | `/mcp:research` | Qualifizierte Leads recherchieren (Aufhaenger, Entscheider, Kontakt) |
-| `mcp-generate` | `/mcp:generate` | AI-Variablen fuer die E-Mail-Personalisierung generieren |
-| `mcp-verify` | `/mcp:verify` | Generierte Variablen reviewen und freigeben/ablehnen |
-| `mcp-pipeline` | `/mcp:pipeline` | Qualifizieren → Recherchieren → Generieren in einem Lauf |
+| `mcp-campaign` | `/mcp-campaign` | Vollstaendige Kampagne aus einem Briefing erstellen/bearbeiten (CampaignBlueprint) |
+| `mcp-import` | `/mcp-import` | Lead-Listen (CSV/OutScraper/Inline) importieren |
+| `mcp-qualify` | `/mcp-qualify` | Leads gegen die Kampagnen-Kriterien qualifizieren |
+| `mcp-research` | `/mcp-research` | Qualifizierte Leads recherchieren (Aufhaenger, Entscheider, Kontakt) |
+| `mcp-generate` | `/mcp-generate` | AI-Variablen fuer die E-Mail-Personalisierung generieren |
+| `mcp-verify` | `/mcp-verify` | Generierte Variablen reviewen und freigeben/ablehnen |
+| `mcp-pipeline` | `/mcp-pipeline` | Qualifizieren → Recherchieren → Generieren in einem Lauf |
 
-Typischer Ablauf: `/mcp:campaign` → `/mcp:import` → `/mcp:pipeline` → `/mcp:verify` → CSV-Export in ListM8.
+Typischer Ablauf: `/mcp-campaign` → `/mcp-import` → `/mcp-pipeline` → `/mcp-verify` → CSV-Export in ListM8.
 
 ## Clients ohne Skill-Support
 
