@@ -5,7 +5,7 @@ description: Use when user says "mcp:qualify", "qualifiziere leads", "lead quali
 
 # MCP Qualify — Lead-Qualifizierung durch Claude-Subagents
 
-Dieser Skill orchestriert die Lead-Qualifizierung via MCP Business Tools. Claude-Subagents bewerten jeden Lead gegen die Kampagnen-Kriterien (aus `get_lead_data.qualificationGeneration`) und schreiben das Ergebnis via `write_lead_details` zurueck. Die ListM8-interne Qualification-Pipeline (OpenRouter) wird NICHT verwendet.
+Dieser Skill orchestriert die Lead-Qualifizierung via MCP Business Tools. Claude-Subagents bewerten jeden Lead gegen die Kampagnen-Kriterien (aus `get_lead_data.qualificationGeneration`) und schreiben das Ergebnis via `write_lead_details` zurueck. Die serverseitige Qualification-Pipeline (OpenRouter) wird dabei bewusst NICHT verwendet — dieser Skill ist der **Manuell-Modus**: dein Client denkt selbst, mit eigenem Modell und eigenen Quellen. Standard fuer den kompletten Durchlauf ist der serverseitige Lauf via `mcp-pipeline` (Tool `start_lead_run`). Vor dem Start `list_lead_runs(campaign_id, active_only=true)` pruefen: bei aktivem Lauf mit Qualifizierungs- ODER Research-Stufe blockt `write_lead_details` mit `lead_run_active` — warten (`get_lead_run_status`) oder `cancel_lead_run`.
 
 > **Hinweis zur Parallelisierung:** Wenn dein Client parallele Subagents unterstuetzt (z.B. Claude Code), spawne pro Lead einen Subagent wie beschrieben. Andernfalls arbeite die Leads **sequentiell** mit exakt denselben Schritten ab — das Ergebnis ist identisch, nur langsamer.
 

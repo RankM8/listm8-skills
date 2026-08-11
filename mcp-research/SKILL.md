@@ -5,7 +5,7 @@ description: Use when user says "mcp:research", "recherchiere leads", "lead rese
 
 # MCP Research — Lead-Research durch Claude-Subagents
 
-Dieser Skill orchestriert das Lead-Research via MCP Business Tools. Claude-Subagents recherchieren jeden Lead (Website, oeffentliche Quellen) nach den Kampagnen-Vorgaben (aus `get_lead_data.researchGeneration`) und schreiben den Report via `write_lead_details` zurueck. Die ListM8-interne Research-Pipeline (OpenRouter/scrape_website) wird NICHT verwendet; entsprechend entstehen keine Screenshot-Artefakte.
+Dieser Skill orchestriert das Lead-Research via MCP Business Tools. Claude-Subagents recherchieren jeden Lead (Website, oeffentliche Quellen) nach den Kampagnen-Vorgaben (aus `get_lead_data.researchGeneration`) und schreiben den Report via `write_lead_details` zurueck. Die serverseitige Research-Pipeline (OpenRouter/scrape_website) wird dabei bewusst NICHT verwendet — dieser Skill ist der **Manuell-Modus** (eigenes Modell/eigene Quellen); entsprechend entstehen keine Screenshot-Artefakte. Der serverseitige Lauf (`mcp-pipeline`, Tool `start_lead_run`) erzeugt sie dagegen — wer Screenshots fuer die Variablen-Generierung will, nimmt den Lauf. Vor dem Start `list_lead_runs(campaign_id, active_only=true)` pruefen: bei aktivem Lauf mit Research- ODER Qualifizierungs-Stufe blockt `write_lead_details` mit `lead_run_active`.
 
 > **Hinweis zur Parallelisierung:** Wenn dein Client parallele Subagents unterstuetzt (z.B. Claude Code), spawne pro Lead einen Subagent wie beschrieben. Andernfalls arbeite die Leads **sequentiell** mit exakt denselben Schritten ab — das Ergebnis ist identisch, nur langsamer.
 

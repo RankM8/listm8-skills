@@ -5,7 +5,7 @@ description: Use when user says "mcp:generate", "generiere emails", "email gener
 
 # MCP Generate — AI-Variablen-Generierung
 
-Dieser Skill orchestriert die vollautomatische AI-Variablen-Generierung fuer Leads via MCP Business Tools. Claude generiert AI-Variablen basierend auf Research, Qualification und Screenshots, und speichert sie via `save_lead_variables`. Email-Body und Subject werden NICHT durch diesen Skill erzeugt — sie sind in der Email-Sequenz hardcoded und werden beim CSV-Export live mit den Variablen gerendert.
+Dieser Skill orchestriert die vollautomatische AI-Variablen-Generierung fuer Leads via MCP Business Tools. Claude generiert AI-Variablen basierend auf Research, Qualification und Screenshots, und speichert sie via `save_lead_variables`. Email-Body und Subject werden NICHT durch diesen Skill erzeugt — sie sind in der Email-Sequenz hardcoded und werden beim CSV-Export live mit den Variablen gerendert. Dieser Skill ist der **Manuell-Modus**; Standard ist der serverseitige Lauf via `mcp-pipeline` (Tool `start_lead_run`, Stufe `email`). Vor dem Start `list_lead_runs(campaign_id, active_only=true)` pruefen: bei aktivem email-Lauf blockt `save_lead_variables` mit `lead_run_active`.
 
 > **Hinweis zur Parallelisierung:** Wenn dein Client parallele Subagents unterstuetzt (z.B. Claude Code), spawne pro Lead einen Subagent wie beschrieben. Andernfalls arbeite die Leads **sequentiell** mit exakt denselben Schritten ab — das Ergebnis ist identisch, nur langsamer.
 
@@ -133,8 +133,8 @@ Wenn dein Client Bilder von URLs laden und visuell analysieren kann: Screenshots
 Warte bis ALLE Sub-Agents des Batches fertig sind (sie laufen im Background — du wirst benachrichtigt).
 
 Zaehle:
-- Erfolgreiche Generierungen (save_lead_variables returned `status: "success"`)
-- Fehler (save_lead_variables returned `status: "error"` oder Agent-Fehler)
+- Erfolgreiche Generierungen (`save_lead_variables` liefert das unveraenderte Erfolgs-Payload mit `status: "success"`)
+- Fehler (`save_lead_variables` liefert ein MCP-Tool-Result mit `isError: true`; der Text beginnt mit einem Code wie `validation_failed:` oder `contact_gate:` — oder der Agent selbst ist fehlgeschlagen)
 
 Zeige Batch-Report:
 ```
@@ -235,15 +235,13 @@ Success-Response:
 }
 ```
 
-Error-Response bei fehlenden Variablen:
-```json
-{
-  "status": "error",
-  "message": "Variable(s) missing from submission: 'intro'",
-  "expected_variables": ["hallo", "intro"],
-  "received_variables": ["hallo"]
-}
+Fehler bei fehlenden Variablen: Das MCP-Tool-Result trägt `isError: true`; sein TextContent lautet:
+
+```text
+validation_failed: Variable(s) missing from submission: 'intro'
 ```
+
+Das Tool liefert nur den Text `<lowercase_code>: <message>` und keine strukturierte Fehler-Response. Weitere erwartete Codes sind z.B. `contact_gate`, `variables_not_configured`, `campaign_not_found`, `lead_not_found`, `lead_not_in_campaign` und `insufficient_scope`.
 
 ### Verification-Tools (siehe `/mcp:verify`)
 

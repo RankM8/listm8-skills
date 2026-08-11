@@ -1,6 +1,6 @@
 # ListM8 Skills
 
-Workflow-Skills fuer [ListM8](https://app.listm8.com) — KI-gestuetzte Cold-Mailing-Kampagnen ueber das Model Context Protocol (MCP). Die Skills orchestrieren den kompletten Akquise-Flow ueber die 12 MCP-Tools des ListM8-Servers: Kampagne erstellen, Leads importieren, qualifizieren, recherchieren, AI-Variablen generieren und reviewen.
+Workflow-Skills fuer [ListM8](https://app.listm8.com) — KI-gestuetzte Cold-Mailing-Kampagnen ueber das Model Context Protocol (MCP). Die Skills fahren den kompletten Akquise-Flow ueber die 20 MCP-Tools des ListM8-Servers: Kampagne erstellen, Leads importieren, den serverseitigen Lead-Lauf starten (Qualifizierung, Research und AI-Variablen in einem Lauf) und die Ergebnisse reviewen — plus Manuell-Skills fuer Clients, die selbst denken sollen.
 
 ## Setup (2 Befehle)
 
@@ -20,19 +20,19 @@ Fertig — die Skills nutzen die MCP-Verbindung, es ist kein weiteres Login und 
 |-------|--------|------------|
 | `mcp-campaign` | `/mcp-campaign` | Vollstaendige Kampagne aus einem Briefing erstellen/bearbeiten (CampaignBlueprint) |
 | `mcp-import` | `/mcp-import` | Lead-Listen (CSV/OutScraper/Inline) importieren |
-| `mcp-qualify` | `/mcp-qualify` | Leads gegen die Kampagnen-Kriterien qualifizieren |
-| `mcp-research` | `/mcp-research` | Qualifizierte Leads recherchieren (Aufhaenger, Entscheider, Kontakt) |
-| `mcp-generate` | `/mcp-generate` | AI-Variablen fuer die E-Mail-Personalisierung generieren |
+| `mcp-pipeline` | `/mcp-pipeline` | **Standard:** serverseitigen Lead-Lauf starten und ueberwachen (`start_lead_run` — Qualifizieren, Recherchieren, Generieren in einem Lauf) |
+| `mcp-qualify` | `/mcp-qualify` | Manuell-Modus: Leads gegen die Kampagnen-Kriterien qualifizieren (Client denkt selbst) |
+| `mcp-research` | `/mcp-research` | Manuell-Modus: qualifizierte Leads recherchieren (Aufhaenger, Entscheider, Kontakt) |
+| `mcp-generate` | `/mcp-generate` | Manuell-Modus: AI-Variablen fuer die E-Mail-Personalisierung generieren |
 | `mcp-verify` | `/mcp-verify` | Generierte Variablen reviewen und freigeben/ablehnen |
-| `mcp-pipeline` | `/mcp-pipeline` | Qualifizieren → Recherchieren → Generieren in einem Lauf |
 
 Typischer Ablauf: `/mcp-campaign` → `/mcp-import` → `/mcp-pipeline` → `/mcp-verify` → CSV-Export in ListM8.
 
 ## Clients ohne Skill-Support
 
-ChatGPT & Co. bekommen dieselben Workflows direkt vom Server: Der ListM8-MCP exponiert 6 **MCP-Prompts** (`campaign_blueprint_guide`, `qualify_leads`, `research_leads`, `generate_variables`, `verify_variables`, `run_full_pipeline`) — nach dem Verbinden des Connectors als Vorlagen abrufbar, ohne Installation.
+ChatGPT & Co. bekommen dieselben Workflows direkt vom Server: Der ListM8-MCP exponiert 7 **MCP-Prompts** (`campaign_blueprint_guide`, `run_leads` fuer den serverseitigen Lauf, `qualify_leads`, `research_leads`, `generate_variables`, `verify_variables`, `run_full_pipeline` als Manuell-Modus) — nach dem Verbinden des Connectors als Vorlagen abrufbar, ohne Installation.
 
 ## Hinweise
 
-- Die Skills sind client-agnostisch: Mit parallelen Subagents (Claude Code) laufen Batches parallel, sonst sequentiell — gleiche Schritte, gleiches Ergebnis.
+- Die Skills sind client-agnostisch. Der Standard-Weg (`mcp-pipeline`) laeuft serverseitig ueber die Kampagnen-Agents (abgerechnet ueber den OpenRouter-Account des Kontos); die Manuell-Skills nutzen das Modell deines Clients — mit parallelen Subagents (Claude Code) laufen Batches parallel, sonst sequentiell.
 - Setup-Anleitungen fuer alle Plattformen (Claude, Claude Code, ChatGPT, Cursor, Codex): in der App unter **`/mcp`**.

@@ -9,7 +9,7 @@ Dieser Skill orchestriert den automatischen Review von AI-generierten Variablen 
 
 > **Hinweis zur Parallelisierung:** Wenn dein Client parallele Subagents unterstuetzt (z.B. Claude Code), spawne pro Lead einen Subagent wie beschrieben. Andernfalls arbeite die Leads **sequentiell** mit exakt denselben Schritten ab — das Ergebnis ist identisch, nur langsamer.
 
-> **Wichtig:** Reviewt werden die **AI-Variablen-Werte** (z.B. `hallo`, `intro`), NICHT der Email-Body. Der Email-Body ist in der Email-Sequenz hardcoded und wird beim CSV-Export live mit den Variablen gerendert. Falls Variablen unbrauchbar sind, gibt es **keine Inline-Korrektur** — entweder approve, reject mit Begruendung, oder neu generieren via `/mcp:generate` bzw. `save_lead_variables`.
+> **Wichtig:** Reviewt werden die **AI-Variablen-Werte** (z.B. `hallo`, `intro`), NICHT der Email-Body. Der Email-Body ist in der Email-Sequenz hardcoded und wird beim CSV-Export live mit den Variablen gerendert. Falls Variablen unbrauchbar sind, gibt es **keine Inline-Korrektur** — entweder approve, reject mit Begruendung, oder neu generieren — via serverseitigem Lauf (`start_lead_run` mit `stages: ["email"]` auf den abgelehnten Leads) oder manuell via `/mcp:generate` bzw. `save_lead_variables`. Waehrend ein Lauf mit email-Stufe aktiv ist, blocken `approve_lead_variables`/`reject_lead_variables` mit `lead_run_active` — erst nach dessen Terminal-Status reviewen.
 
 ## Workflow-Uebersicht
 

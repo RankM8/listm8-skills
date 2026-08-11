@@ -1,16 +1,15 @@
 ---
 name: mcp-pipeline
-description: Use when user says "mcp:pipeline", "kompletter mcp durchlauf", "leads komplett verarbeiten", "qualify research generate", "alles in einem lauf mcp", "full pipeline", or triggers /mcp:pipeline.
+description: Use when user says "mcp:pipeline", "kompletter mcp durchlauf", "leads komplett verarbeiten", "lead lauf starten", "qualify research generate", "alles in einem lauf mcp", "full pipeline", or triggers /mcp:pipeline.
 ---
 
-# MCP Pipeline — Qualifizierung → Research → Variablen in einem Lauf
+# MCP Pipeline — serverseitiger Lead-Lauf (start_lead_run)
 
-Dieser Skill orchestriert die komplette Lead-Verarbeitung einer Kampagne als **einen Lauf** ueber die Phasen-Skills — die Claude-Subagent-Variante von "Qualifying + Research + Emails in einem Lauf" :
+Dieser Skill startet und ueberwacht die komplette Lead-Verarbeitung einer Kampagne als **einen serverseitigen Lauf**: das MCP-Tool `start_lead_run` verkettet Qualifizierung, Research und E-Mail-Variablen pro Lead mit den kampagneneigenen AI-Agents — abgerechnet ueber den OpenRouter-Account des Users (der Lauf kostet echtes Geld). Dein Client orchestriert nicht mehr selbst; er startet, pollt und berichtet.
 
 ```
-Phase 1: /mcp:qualify   — list_leads(qualification_status="pending") -> Subagents -> write_lead_details
-Phase 2: /mcp:research  — list_leads(research_status="pending", fit_level="qualified") -> Subagents
-Phase 3: /mcp:generate  — list_leads(campaign_status="processing") -> Subagents -> save_lead_variables
+list_campaigns -> list_lead_runs(active_only=true) -> start_lead_run(stages=[...])
+    -> get_lead_run_status (poll bis is_terminal) -> Report
 (danach manuell: /mcp:verify — Review & Approve)
 ```
 
@@ -18,34 +17,51 @@ Phase 3: /mcp:generate  — list_leads(campaign_status="processing") -> Subagent
 
 | Eingabe | Verhalten |
 |---------|-----------|
-| `/mcp:pipeline 80` | Voller Lauf fuer Kampagne 80 (alle 3 Phasen) |
-| `/mcp:pipeline 80 --bis research` | Nur Phase 1+2 |
+| `/mcp:pipeline 80` | Voller Lauf fuer Kampagne 80 (alle 3 Stufen) |
+| `/mcp:pipeline 80 --bis research` | Nur `stages: ["qualification","research"]` |
 | `/mcp:pipeline` | Kampagne via list_campaigns waehlen |
 
-**Vorab abfragen:** Batch-Groesse (Default 10) und welche Phasen (Default: alle 3). KI-Variablen (Phase 3) ist optional zuschaltbar/abschaltbar — Review/Approve gehoert bewusst NICHT in die Pipeline (Vier-Augen-Prinzip via /mcp:verify).
+**Vorab abfragen:** Stufen (Default: alle 3 — Teilmengen und Luecken erlaubt, z.B. nur `["email"]`; bereits erfuellte Stufen werden pro Lead uebersprungen) und optional ein `budget_usd` (bei groesseren Laeufen empfehlen). Review/Approve gehoert bewusst NICHT in die Pipeline (Vier-Augen-Prinzip via /mcp:verify).
 
 ## Ablaufregeln
 
-1. **Phasen strikt sequentiell**: Phase 2 startet erst, wenn Phase 1 fuer die Kampagne komplett durch ist (Research nutzt den Qualifizierungs-Kontext); Phase 3 erst nach Phase 2. Innerhalb einer Phase laufen die Subagent-Batches parallel.
-2. **Jede Phase folgt exakt ihrem Skill** (`mcp-qualify`, `mcp-research`, `mcp-generate`) — Prompts, Regeln und Fehlerbehandlung von dort uebernehmen, keine abweichende Logik.
-3. **Idempotenz nutzen**: Jede Phase zieht ihre Queue ueber die list_leads-Filter; bereits verarbeitete Leads tauchen nicht mehr auf. Ein abgebrochener Lauf kann jederzeit mit demselben Kommando fortgesetzt werden.
-4. **Fehler blockieren nicht**: Fehlgeschlagene Leads einer Phase bleiben in deren Queue und werden im Report ausgewiesen; die Pipeline laeuft mit den erfolgreichen weiter. Nur wenn ein KOMPLETTER Batch fehlschlaegt: stoppen und User fragen.
-5. **not_qualified-Leads** verlassen die Pipeline nach Phase 1 automatisch (Research filtert fit_level="qualified").
+1. **Vorpruefung (Pflicht)**: `list_lead_runs(campaign_id, active_only=true)`. Ist ein Lauf aktiv: NICHT starten — parallele Laeufe ueber dieselben Leads blockieren sich und koennen Leads still ueberspringen. Stattdessen den aktiven Lauf verfolgen oder mit `cancel_lead_run` stoppen. Vorbedingungen des Servers: OpenRouter-Key + AI-Modell konfiguriert; die email-Stufe braucht eine E-Mail-Sequenz an der Kampagne.
+2. **Lead-Auswahl**: `lead_ids` (1-2000) fuer bekannte Mengen ODER `select_by_filter=true` fuer "alles, was ansteht" (Filter wie `list_leads`). FALLSTRICK: Startet der Lauf bei der Qualifizierung, `fit_level=""` und `research_status=""` setzen — sonst matchen die Defaults frisch importierte Leads nicht (`no_leads_matched`). Bei `matched_total > selected` sind nur die Top-2000 nach Score im Lauf — Folgelauf fuer den Rest.
+3. **Optionen**: `budget_usd` (0.01-10000; erreicht => Lauf endet als `budget_exhausted`, laufende Jobs laufen aus). `agent_key` nur auf explizite User-Nennung — ein unbekannter Key ueberspringt die Stufen STILL.
+4. **Fehler beim Start**: `run_not_startable` = fehlende Vorbedingung — an den User zurueckgeben, keine Retry-Schleife. WICHTIG: ein erschoepftes Plan-Limit erzeugt beim Start KEINEN Fehler; der Lauf endet kurz darauf als `limit_exhausted` (nur im Status sichtbar).
+5. **Polling**: `get_lead_run_status(lead_run_id)` alle 30-60 s. Fortschritt an `completed vs leadTotal` messen, NICHT an den Stufen-Totals (die wachsen waehrend des Laufs). Stoppen bei `is_terminal: true`. CAVEAT: ein `completed` juenger als ~30 Minuten kann der Server wieder auf `running` zurueckholen — vor dem Abschlussbericht nachpruefen.
+6. **Abbruch**: `cancel_lead_run(lead_run_id)` — storniert Wartendes und Folgestufen, laufende Jobs laufen aus (leichtes Ueberschiessen moeglich); idempotent. Endzustand via `get_lead_run_status` verifizieren.
+7. **Waehrend des Laufs**: `save_lead_variables`, `approve_lead_variables`, `reject_lead_variables` und `write_lead_details` sind fuer die abgedeckten Stufen mit `lead_run_active` gesperrt (Rennschutz, kein Fehler).
 
-## Phasen-Uebergaenge & Reports
+## Terminal-Status deuten
 
-Nach jeder Phase einen Zwischen-Report:
+| Status | Bedeutung | Naechster Schritt |
+|--------|-----------|-------------------|
+| `completed` | Alle Leads durch | /mcp:verify |
+| `completed_with_failures` | Mind. ein Job endgueltig gescheitert | Fehl-Leads berichten, Folgelauf anbieten |
+| `budget_exhausted` | Budget erreicht, Rest storniert | Restmenge beziffern, hoeheres Budget anbieten |
+| `limit_exhausted` | Plan-Limit mitten im Lauf | An den User (Plan/Limit) — kein Auto-Retry |
+| `provider_exhausted` | OpenRouter lehnt das Konto ab | An den User — kein Retry |
+| `cancelled` | Vom User gestoppt | Stand berichten |
+| `failed` | Vorbereitung gescheitert, nichts verarbeitet | `statusReason` ausgeben, Vorbedingungen pruefen |
+
+## Abschluss-Report
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Phase {n}/{3} ({name}) abgeschlossen — Kampagne {campaign.name}
-Verarbeitet: X | Erfolg: Y | Fehler: Z | Nicht qualifiziert: Q (nur Phase 1)
+Lead-Lauf abgeschlossen — Kampagne {campaign.name} ({status})
+Stufen: {stages} | Leads: {completed}/{leadTotal} | Fehler: {failed}
+Kosten: {spentUsd} USD{von budgetUsd USD}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-Abschluss-Report nach der letzten Phase: Gesamtzahlen pro Phase + "Naechster Schritt: /mcp:verify — Variablen pruefen und freigeben."
+Danach: "Naechster Schritt: /mcp:verify — Variablen pruefen und freigeben."
+
+## Manuell-Modus
+
+Soll der Client selbst denken (eigenes Modell/eigene Quellen, kein OpenRouter-Key, gezielte Einzelfaelle): die Phasen-Skills `/mcp:qualify`, `/mcp:research`, `/mcp:generate` einzeln fahren — strikt sequentiell, jede Phase bis ihre Queue leer ist. Vorher ebenfalls `list_lead_runs(active_only=true)` pruefen (Regel 7 gilt auch dort).
 
 ## Verwandt
 
-- Phasen-Skills: `/mcp:qualify`, `/mcp:research`, `/mcp:generate` · Review: `/mcp:verify`
+- Review: `/mcp:verify` · Manuell-Modus: `/mcp:qualify`, `/mcp:research`, `/mcp:generate`
 - Vorbereitung: `/mcp:campaign`, `/mcp:import`

@@ -23,7 +23,7 @@ Mindestens klaeren (fehlendes nachfragen, AskUserQuestion):
 2. **USPs** (2-4 Punkte) und **Tonalitaet** (z.B. locker-direkt vs. formal).
 3. **CTA/Offer**: Was ist der konkrete naechste Schritt (z.B. "Website-Vorschau schicken")?
 4. **Qualifizierung**: Wer ist ideal, was disqualifiziert?
-5. **Research-Fokus**: Wonach sollen Subagents suchen (Aufhaenger-Prioritaeten)?
+5. **Research-Fokus**: Wonach soll die Recherche suchen (Aufhaenger-Prioritaeten — steuert Subagents wie serverseitige Agents)?
 6. **Sequenz**: Wie viele Steps (Empfehlung: 3), Abstaende (z.B. 0/3/4 Tage)?
 
 ## Phase 2: Blueprint bauen

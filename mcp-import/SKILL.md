@@ -5,7 +5,7 @@ description: Use when user says "mcp:import", "importiere leads via mcp", "leads
 
 # MCP Import — Lead-Listen hochladen
 
-Dieser Skill laedt Lead-Listen ueber das MCP-Tool `import_leads` (Scope `leads:write`) in ListM8 — aus CSV-Dateien (z.B. OutScraper-Exporte), JSON oder Inline-Daten. Mit `campaign_id` startet die Pipeline (Status `processing`); ohne entstehen unkategorisierte Leads in der globalen Liste.
+Dieser Skill laedt Lead-Listen ueber das MCP-Tool `import_leads` (Scope `leads:write`) in ListM8 — aus CSV-Dateien (z.B. OutScraper-Exporte), JSON oder Inline-Daten. Mit `campaign_id` werden die Leads der Kampagne zugeordnet (Status `processing`); ohne entstehen unkategorisierte Leads in der globalen Liste. Der Import startet KEINE Verarbeitung — anschliessend `mcp-pipeline` (serverseitiger Lauf via `start_lead_run`) oder die Manuell-Skills.
 
 ## Aufruf
 
@@ -27,7 +27,7 @@ Dieser Skill laedt Lead-Listen ueber das MCP-Tool `import_leads` (Scope `leads:w
    { "rating": {"action": "create_new", "name": "Google Rating", "fieldType": "text"},
      "branche": {"action": "map_existing", "fieldKey": "branche"} }
    ```
-4. Vorab-Check: Zeilen ohne gueltige E-Mail zaehlen und dem User melden — das Tool weist den GESAMTEN Call ab, wenn ungueltige E-Mails enthalten sind (`invalid_rows` in der Antwort). Ungueltige Zeilen vor dem Call entfernen und im Report ausweisen.
+4. Vorab-Check: Zeilen ohne gueltige E-Mail zaehlen und dem User melden — das Tool weist den GESAMTEN Call ab, wenn ungueltige E-Mails enthalten sind. Die ersten 20 Zeilendiagnosen stehen direkt im `isError`-Text nach dem Prefix `validation_failed:`; es gibt kein strukturiertes `invalid_rows`-Feld. Ungueltige Zeilen vor dem Call entfernen und im Report ausweisen.
 
 ## Phase 2: Import
 
@@ -50,11 +50,14 @@ import_leads(
 
 ## Fehlerbehandlung
 
+Erwartete Tool-Fehler sind MCP-Tool-Results mit `isError: true`; ihr Text beginnt mit `<lowercase_code>:`. Es gibt kein strukturiertes Fehler-Payload.
+
 | Code | Aktion |
 |------|--------|
-| `VALIDATION_FAILED` + `invalid_rows` | Genannte Zeilen fixen/entfernen, erneut senden |
-| `LIMIT_REACHED` | Chunk verkleinern bzw. User informieren (Plan-Limit MAX_LEADS) |
-| `CAMPAIGN_NOT_FOUND` | campaign_id pruefen (list_campaigns) |
+| `validation_failed` mit inline aufgefuehrten Zeilen | Genannte Zeilen fixen/entfernen, erneut senden |
+| `limit_reached` | Chunk verkleinern bzw. User informieren (Plan-Limit MAX_LEADS) |
+| `campaign_not_found` | campaign_id pruefen (`list_campaigns`) |
+| `insufficient_scope` | Token mit Scope `leads:write` verwenden |
 
 ## Hinweise
 
