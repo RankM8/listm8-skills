@@ -31,8 +31,8 @@ Dieser Skill orchestriert die vollautomatische AI-Variablen-Generierung fuer Lea
 
 | Eingabe | Verhalten |
 |---------|-----------|
-| `/mcp:generate` | Zeigt Kampagnen via list_campaigns, User waehlt |
-| `/mcp:generate 76` | Startet direkt fuer Kampagne 76 |
+| `/mcp-generate` | Zeigt Kampagnen via list_campaigns, User waehlt |
+| `/mcp-generate 76` | Startet direkt fuer Kampagne 76 |
 | `generiere emails fuer kampagne 76` | Startet direkt fuer Kampagne 76 |
 
 ## Schritt-fuer-Schritt Anleitung
@@ -161,7 +161,7 @@ Gesamt verarbeitet: {total_processed} Leads
 Erfolg: {total_success} | Fehler: {total_errors}
 Status: Verarbeitete Leads auf "pending_review" gesetzt
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Naechster Schritt: /mcp:verify — Variablen pruefen und freigeben
+Naechster Schritt: /mcp-verify — Variablen pruefen und freigeben
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -243,7 +243,7 @@ validation_failed: Variable(s) missing from submission: 'intro'
 
 Das Tool liefert nur den Text `<lowercase_code>: <message>` und keine strukturierte Fehler-Response. Weitere erwartete Codes sind z.B. `contact_gate`, `variables_not_configured`, `campaign_not_found`, `lead_not_found`, `lead_not_in_campaign` und `insufficient_scope`.
 
-### Verification-Tools (siehe `/mcp:verify`)
+### Verification-Tools (siehe `/mcp-verify`)
 
 Die folgenden Tools werden im Verification-Workflow verwendet, NICHT in der Generierung:
 
@@ -251,7 +251,7 @@ Die folgenden Tools werden im Verification-Workflow verwendet, NICHT in der Gene
 - **approve_lead_variables** — gibt Variablen frei (`LeadCampaignStatus = approved`, ready fuer CSV-Export)
 - **reject_lead_variables** — lehnt Variablen ab mit `reason` (`LeadCampaignStatus = rejected`, vom CSV-Export ausgeschlossen)
 
-Details: siehe `/mcp:verify` Skill.
+Details: siehe `/mcp-verify` Skill.
 
 ## Fehlerbehandlung
 
@@ -263,7 +263,7 @@ Details: siehe `/mcp:verify` Skill.
 | Alle Agents eines Batches fehlgeschlagen | Warnung ausgeben, User fragen ob fortfahren |
 | Netzwerk/MCP-Verbindungsfehler | 1x Retry, dann STOP mit Fehlermeldung |
 
-**Kein automatischer Retry einzelner Leads** — fehlgeschlagene Leads koennen spaeter mit `/mcp:generate` erneut verarbeitet werden (sie haben noch keinen `pending_review`-Status und tauchen wieder in list_leads auf).
+**Kein automatischer Retry einzelner Leads** — fehlgeschlagene Leads koennen spaeter mit `/mcp-generate` erneut verarbeitet werden (sie haben noch keinen `pending_review`-Status und tauchen wieder in list_leads auf).
 
 ## Wichtige Hinweise
 

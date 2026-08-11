@@ -30,11 +30,11 @@ Dieser Skill orchestriert die Lead-Qualifizierung via MCP Business Tools. Claude
 
 | Eingabe | Verhalten |
 |---------|-----------|
-| `/mcp:qualify` | Zeigt Kampagnen via list_campaigns, User waehlt |
-| `/mcp:qualify 80` | Startet direkt fuer Kampagne 80 |
+| `/mcp-qualify` | Zeigt Kampagnen via list_campaigns, User waehlt |
+| `/mcp-qualify 80` | Startet direkt fuer Kampagne 80 |
 | `qualifiziere leads fuer kampagne 80` | Startet direkt fuer Kampagne 80 |
 
-**Batch-Groesse abfragen** (wie /mcp:generate): Default 10, Optionen 50/100/200.
+**Batch-Groesse abfragen** (wie /mcp-generate): Default 10, Optionen 50/100/200.
 
 ## Phase 1: Leads laden
 
@@ -98,9 +98,9 @@ LEAD: {lead.company} (ID: {lead.id})
 
 ## Phase 3: Report & naechster Batch
 
-Wie /mcp:generate: Batch-Report (Erfolg/Fehler/Verbleibend), dann erneut `list_leads` bis `remaining == 0`. Fehlgeschlagene Leads bleiben `qualification_status=pending` und tauchen im naechsten Lauf wieder auf — kein automatischer Einzel-Retry.
+Wie /mcp-generate: Batch-Report (Erfolg/Fehler/Verbleibend), dann erneut `list_leads` bis `remaining == 0`. Fehlgeschlagene Leads bleiben `qualification_status=pending` und tauchen im naechsten Lauf wieder auf — kein automatischer Einzel-Retry.
 
-Abschluss-Report + Hinweis: "Naechster Schritt: /mcp:research — qualifizierte Leads recherchieren".
+Abschluss-Report + Hinweis: "Naechster Schritt: /mcp-research — qualifizierte Leads recherchieren".
 
 ## Fehlerbehandlung
 
@@ -113,5 +113,5 @@ Abschluss-Report + Hinweis: "Naechster Schritt: /mcp:research — qualifizierte 
 
 ## Verwandt
 
-- `/mcp:research` — Research fuer qualifizierte Leads (naechste Phase)
-- `/mcp:generate` — AI-Variablen (nach Research)
+- `/mcp-research` — Research fuer qualifizierte Leads (naechste Phase)
+- `/mcp-generate` — AI-Variablen (nach Research)

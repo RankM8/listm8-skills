@@ -11,8 +11,8 @@ Dieser Skill laedt Lead-Listen ueber das MCP-Tool `import_leads` (Scope `leads:w
 
 | Eingabe | Verhalten |
 |---------|-----------|
-| `/mcp:import <datei> 80` | Datei parsen, in Kampagne 80 importieren |
-| `/mcp:import <datei>` | Kampagne via list_campaigns waehlen (oder "ohne Kampagne") |
+| `/mcp-import <datei> 80` | Datei parsen, in Kampagne 80 importieren |
+| `/mcp-import <datei>` | Kampagne via list_campaigns waehlen (oder "ohne Kampagne") |
 | `importiere diese leads: ...` | Inline-Daten importieren |
 
 ## Phase 1: Daten parsen (Claude-seitig)
@@ -65,5 +65,5 @@ Erwartete Tool-Fehler sind MCP-Tool-Results mit `isError: true`; ihr Text beginn
 
 ## Verwandt
 
-- `/mcp:campaign` (Kampagne zuerst), `/mcp:pipeline` (naechster Schritt)
+- `/mcp-campaign` (Kampagne zuerst), `/mcp-pipeline` (naechster Schritt)
 - die Tool-Beschreibungen des MCP-Servers

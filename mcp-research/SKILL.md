@@ -5,7 +5,7 @@ description: Use when user says "mcp:research", "recherchiere leads", "lead rese
 
 # MCP Research — Lead-Research durch Claude-Subagents
 
-Dieser Skill orchestriert das Lead-Research via MCP Business Tools. Claude-Subagents recherchieren jeden Lead (Website, oeffentliche Quellen) nach den Kampagnen-Vorgaben (aus `get_lead_data.researchGeneration`) und schreiben den Report via `write_lead_details` zurueck. Die serverseitige Research-Pipeline (OpenRouter/scrape_website) wird dabei bewusst NICHT verwendet — dieser Skill ist der **Manuell-Modus** (eigenes Modell/eigene Quellen); entsprechend entstehen keine Screenshot-Artefakte. Der serverseitige Lauf (`mcp-pipeline`, Tool `start_lead_run`) erzeugt sie dagegen — wer Screenshots fuer die Variablen-Generierung will, nimmt den Lauf. Vor dem Start `list_lead_runs(campaign_id, active_only=true)` pruefen: bei aktivem Lauf mit Research- ODER Qualifizierungs-Stufe blockt `write_lead_details` mit `lead_run_active`.
+Dieser Skill orchestriert das Lead-Research via MCP Business Tools. Claude-Subagents recherchieren jeden Lead (Website, oeffentliche Quellen) nach den Kampagnen-Vorgaben (aus `get_lead_data.researchGeneration`) und schreiben den Report via `write_lead_details` zurueck. Die serverseitige Research-Pipeline (OpenRouter, serverseitiges Website-Scraping) wird dabei bewusst NICHT verwendet — dieser Skill ist der **Manuell-Modus** (eigenes Modell/eigene Quellen); entsprechend entstehen keine Screenshot-Artefakte. Der serverseitige Lauf (`mcp-pipeline`, Tool `start_lead_run`) erzeugt sie dagegen — wer Screenshots fuer die Variablen-Generierung will, nimmt den Lauf. Vor dem Start `list_lead_runs(campaign_id, active_only=true)` pruefen: bei aktivem Lauf mit Research- ODER Qualifizierungs-Stufe blockt `write_lead_details` mit `lead_run_active`.
 
 > **Hinweis zur Parallelisierung:** Wenn dein Client parallele Subagents unterstuetzt (z.B. Claude Code), spawne pro Lead einen Subagent wie beschrieben. Andernfalls arbeite die Leads **sequentiell** mit exakt denselben Schritten ab — das Ergebnis ist identisch, nur langsamer.
 
@@ -30,13 +30,13 @@ Dieser Skill orchestriert das Lead-Research via MCP Business Tools. Claude-Subag
 
 | Eingabe | Verhalten |
 |---------|-----------|
-| `/mcp:research` | Zeigt Kampagnen via list_campaigns, User waehlt |
-| `/mcp:research 80` | Startet direkt fuer Kampagne 80 |
+| `/mcp-research` | Zeigt Kampagnen via list_campaigns, User waehlt |
+| `/mcp-research 80` | Startet direkt fuer Kampagne 80 |
 | `recherchiere leads fuer kampagne 80` | Startet direkt fuer Kampagne 80 |
 
-**Batch-Groesse abfragen** (wie /mcp:generate): Default 10, Optionen 50/100/200.
+**Batch-Groesse abfragen** (wie /mcp-generate): Default 10, Optionen 50/100/200.
 
-**Vorbedingung:** Leads sollten qualifiziert sein (`/mcp:qualify` zuerst). Wer bewusst unqualifizierte Leads recherchieren will: `fit_level=""` verwenden.
+**Vorbedingung:** Leads sollten qualifiziert sein (`/mcp-qualify` zuerst). Wer bewusst unqualifizierte Leads recherchieren will: `fit_level=""` verwenden.
 
 ## Phase 1: Leads laden
 
@@ -100,9 +100,9 @@ LEAD: {lead.company} (ID: {lead.id})
 
 ## Phase 3: Report & naechster Batch
 
-Wie /mcp:generate: Batch-Report, dann erneut `list_leads` bis `remaining == 0`. Fehlgeschlagene Leads bleiben `research_status=pending`.
+Wie /mcp-generate: Batch-Report, dann erneut `list_leads` bis `remaining == 0`. Fehlgeschlagene Leads bleiben `research_status=pending`.
 
-Abschluss-Report + Hinweis: "Naechster Schritt: /mcp:generate — AI-Variablen generieren".
+Abschluss-Report + Hinweis: "Naechster Schritt: /mcp-generate — AI-Variablen generieren".
 
 ## Fehlerbehandlung
 
@@ -115,5 +115,5 @@ Abschluss-Report + Hinweis: "Naechster Schritt: /mcp:generate — AI-Variablen g
 
 ## Verwandt
 
-- `/mcp:qualify` — Qualifizierung (vorherige Phase)
-- `/mcp:generate` — AI-Variablen (naechste Phase), `/mcp:verify` — Review
+- `/mcp-qualify` — Qualifizierung (vorherige Phase)
+- `/mcp-generate` — AI-Variablen (naechste Phase), `/mcp-verify` — Review
