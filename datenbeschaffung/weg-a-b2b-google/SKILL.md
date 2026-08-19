@@ -9,7 +9,7 @@ Der Weg für Firmen, die man über ihre Website findet, nicht über einen Maps-E
 Kanzleien, Beratungen, Systemhäuser, Makler-, Architektur- und Ingenieurbüros. Zweistufig —
 SERP liefert Domains, Kontaktdaten kommen erst danach über `impressum-enrichment`.
 
-Voraussetzungen vom Master: bestätigter ICP-Satz, Zugriffsweg steht (`_shared/references/zugriff.md`),
+Voraussetzungen vom Master: bestätigter ICP-Satz, Zugriffsweg steht (`../datenbeschaffung-referenzen/references/zugriff.md`),
 Vorab-Abgleich gelaufen (falls MCP verbunden).
 
 Braucht der Nutzer Kontaktdaten ab Werk und ist die Zielgruppe über Firmografien beschreibbar,
@@ -50,24 +50,24 @@ Budget zuerst gestrichen.
 
 Branche nicht in der Tabelle: dasselbe Muster ableiten — Branchenname, deutsches Synonym,
 Leistungsvariante. Formulierungsregeln und die `-site:`-Obergrenze stehen in
-`_shared/references/erfahrungswerte.md`; Queries nicht von Hand bauen:
+`../datenbeschaffung-referenzen/references/erfahrungswerte.md`; Queries nicht von Hand bauen:
 
 ```
-python3 _shared/scripts/build_queries.py --keywords "Recruiting Agentur,Personalvermittlung,Headhunter" \
+python3 ../datenbeschaffung-referenzen/scripts/build_queries.py --keywords "Recruiting Agentur,Personalvermittlung,Headhunter" \
   --cities "München" --exclude 8
 ```
 
 ## Schritt 2 — Pilot (Pflicht)
 
 Eine Stadt, alle Query-Varianten in EINEM Lauf (eine Query je Zeile im Multi-Query-Feld des
-Actors). Actor: **Primär aus `_shared/references/apify-actors.md`** (SERP-Kategorie) — dort steht
+Actors). Actor: **Primär aus `../datenbeschaffung-referenzen/references/apify-actors.md`** (SERP-Kategorie) — dort steht
 auch die Schreibweise des Länder-Codes, die sich zwischen Primär und Fallback unterscheidet.
 5 Seiten je Query (`erfahrungswerte.md`), ein Land pro Lauf. Kosten vorher nennen
-(`_shared/references/kosten.md`: SERP-Discovery für eine Nische DACH-weit bleibt unter 1 $),
+(`../datenbeschaffung-referenzen/references/kosten.md`: SERP-Discovery für eine Nische DACH-weit bleibt unter 1 $),
 harter Deckel ≤ 0,50 $ für den Piloten.
 
 ```
-python3 _shared/scripts/process_serp.py --in serp-pilot.json --out domains-pilot.csv --report
+python3 ../datenbeschaffung-referenzen/scripts/process_serp.py --in serp-pilot.json --out domains-pilot.csv --report
 ```
 
 Auswertung gegen den ICP: **ab ~70 % Fit skalieren.** Darunter erst Queries schärfen (spezifischer
@@ -80,7 +80,7 @@ Franchise-Zentrale ohne Standort, News- oder Lexikonartikel über die Branche.
 
 ## Schritt 3 — Skalierung
 
-Gleiche Queries, Städteliste aus `_shared/references/staedte.md`, ein Land je Lauf (der
+Gleiche Queries, Städteliste aus `../datenbeschaffung-referenzen/references/staedte.md`, ein Land je Lauf (der
 Länder-Code gilt pro Lauf, deshalb DE/AT/CH getrennt starten — parallel ist erlaubt).
 Alle Stadt-mal-Query-Kombinationen eines Landes gehen in EINEN Lauf; das spart Actor-Overhead,
 nicht Geld. Danach alle Datasets zusammenführen und einmal durch `process_serp.py` schicken —
@@ -98,7 +98,7 @@ Leads dürfen keine Anreicherung kosten. Nicht-DACH-Domains und Onepager ohne Im
 ## Schritt 5 — Roh-CSV bauen
 
 ```
-python3 _shared/scripts/build_csv.py --in impressum.json \
+python3 ../datenbeschaffung-referenzen/scripts/build_csv.py --in impressum.json \
   --quelle "apify:<serp-actor>+impressum <datum>" --land <de|at|ch> \
   --out leads-<branche>-<region>-<datum>.csv
 ```

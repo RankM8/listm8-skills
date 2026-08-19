@@ -44,7 +44,7 @@ gebraucht werden, entscheidet das `enrichment-waterfall` — und nur für die Sp
 
 ## Schritt 2 — ICP in Filter übersetzen
 
-Nach den Dimensionen aus `_shared/references/icp.md`: Rolle (Geschäftsführer, Inhaber, CEO),
+Nach den Dimensionen aus `../datenbeschaffung-referenzen/references/icp.md`: Rolle (Geschäftsführer, Inhaber, CEO),
 Branche des KUNDEN, Größe (Mindest-Mitarbeiterzahl setzen), Region, Trigger. Anti-ICP wird zum
 Ausschluss — der wirksamste Hebel sind **Branchen-/SIC-Code-Ausschlüsse** (belegtes Beispiel:
 reine SaaS- und Softwarefirmen aus einer Systemhaus-Suche werfen, ohne die Branchenbreite zu
@@ -75,7 +75,7 @@ Datensätze als JSON mit den generischen Schlüsseln (`email`, `firstName`, `las
 `website`, `phone`, `city`) ablegen, dann
 
 ```
-python3 _shared/scripts/build_csv.py --in apollo.json \
+python3 ../datenbeschaffung-referenzen/scripts/build_csv.py --in apollo.json \
   --quelle "apollo <datum>" --out leads-<nische>-<region>-<datum>.csv
 ```
 

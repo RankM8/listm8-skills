@@ -9,7 +9,7 @@ Sucht **einzelne Shops mit eigener Marke** — keine Marktplätze, keine Ketten,
 Vergleichsportale. Der Filter ist hier die eigentliche Arbeit: die Nischen-Queries treffen
 zuverlässig, aber die ersten Seiten gehören strukturell Amazon, Otto und Idealo.
 
-Voraussetzungen vom Master: bestätigter ICP-Satz, Zugriffsweg steht (`_shared/references/zugriff.md`),
+Voraussetzungen vom Master: bestätigter ICP-Satz, Zugriffsweg steht (`../datenbeschaffung-referenzen/references/zugriff.md`),
 Vorab-Abgleich gelaufen (falls MCP verbunden).
 
 Will der Nutzer nach Shop-Technologie, Umsatzklasse oder Traffic filtern statt nach Nische:
@@ -37,12 +37,12 @@ Shopify-Fokus gewünscht: `site:myshopify.com <nische>` als vierte Query — tri
 Shopify-Subdomain, also klein und jung, aber sehr sauber.
 
 ```
-python3 _shared/scripts/build_queries.py --keywords "Naturkosmetik Online Shop,Beauty Shop online,Skincare Shop" \
+python3 ../datenbeschaffung-referenzen/scripts/build_queries.py --keywords "Naturkosmetik Online Shop,Beauty Shop online,Skincare Shop" \
   --cities "" --exclude 8
 ```
 
 Für E-Commerce die Kern-Ausschlüsse gegen die Marktplätze tauschen (`amazon.de`, `otto.de`,
-`zalando.de`, `idealo.de`) — Begründung und Obergrenze in `_shared/references/erfahrungswerte.md`.
+`zalando.de`, `idealo.de`) — Begründung und Obergrenze in `../datenbeschaffung-referenzen/references/erfahrungswerte.md`.
 
 ## Schritt 2 — Pilot (Pflicht)
 
@@ -51,11 +51,11 @@ gerade hier entscheidet der Filter über die Ausbeute, und ohne Piloten merkt ma
 skalierten Lauf, dass 60 % Portal-Unterseiten in der Liste stehen.
 
 Also: eine Nische, alle Query-Varianten, EIN Lauf, 4 Seiten je Query (`erfahrungswerte.md`).
-Actor: **Primär aus `_shared/references/apify-actors.md`** (SERP-Kategorie). Kosten vorab nennen
+Actor: **Primär aus `../datenbeschaffung-referenzen/references/apify-actors.md`** (SERP-Kategorie). Kosten vorab nennen
 (`kosten.md`), Deckel ≤ 0,50 $.
 
 ```
-python3 _shared/scripts/process_serp.py --in serp-pilot.json --out shops-pilot.csv --report
+python3 ../datenbeschaffung-referenzen/scripts/process_serp.py --in serp-pilot.json --out shops-pilot.csv --report
 ```
 
 **Ab ~70 % Shop-Fit skalieren**, darunter Queries schärfen. Der `--report` zeigt, welche Portale
@@ -98,7 +98,7 @@ deutsches Impressum gehen in den `kontaktseiten-fallback`.
 ## Schritt 6 — Roh-CSV bauen
 
 ```
-python3 _shared/scripts/build_csv.py --in impressum.json \
+python3 ../datenbeschaffung-referenzen/scripts/build_csv.py --in impressum.json \
   --quelle "apify:<serp-actor>+impressum <datum>" --land <de|at|ch> \
   --out leads-<nische>-<region>-<datum>.csv
 ```

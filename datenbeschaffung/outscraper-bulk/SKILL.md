@@ -53,7 +53,7 @@ Erfahrungswerte aus echten Läufen (E-Mail-Rate = Anteil mit Adresse im Rohergeb
 Faustregeln: 3–5 verwandte Kategorien liefern bessere Listen als 20; sich stark überlappende
 Kategorien (`plastic surgeon` + `cosmetic surgeon`) erzeugen vor allem Duplikate; `exactMatch: true`
 reduziert Müll, funktioniert aber nur mit offiziellen Google-Kategorien. Neue gemessene
-Kategorie-Werte gehören mit Datum nach `_shared/references/erfahrungswerte.md`.
+Kategorie-Werte gehören mit Datum nach `../datenbeschaffung-referenzen/references/erfahrungswerte.md`.
 
 ## Schritt 2 — Job bauen
 
@@ -80,7 +80,7 @@ auch hier, obwohl `kosten.md` nur Apify-Preise belegt.
 
 Nach Abschluss die Datei aus dem Dashboard laden (XLSX oder CSV). **Keine Ablage-Struktur im Repo, kein
 Scrape-Log, keine Tracking-Datei pflegen** — die Herkunft und der Bestand leben in der App
-(`_shared/references/outreach-uebergabe.md`, `create_list` mit `source`). Wer wissen will, was schon
+(`../datenbeschaffung-referenzen/references/outreach-uebergabe.md`, `create_list` mit `source`). Wer wissen will, was schon
 gescrapt wurde, fragt die Listen der App ab, nicht eine Markdown-Datei.
 
 ## Schritt 4 — SMTP-Status filtern (der eine harte Filter)
@@ -109,12 +109,12 @@ Spalten-Zuordnung: `name` → `company`, `email` → `email`, `site` → `websit
 `phoneNumber`, `city` → `city`, `category` → `kategorie`. Danach in das eine Format bringen:
 
 ```
-python3 _shared/scripts/build_csv.py --in outscraper.json \
+python3 ../datenbeschaffung-referenzen/scripts/build_csv.py --in outscraper.json \
   --quelle "outscraper:google_maps_service_v2 <datum>" --land <de|at|ch> \
   --out leads-<nische>-<region>-<datum>.csv
 ```
 
-Deduplizierung über Läufe hinweg macht `_shared/scripts/dedup.py` gegen den Bestandsindex — nicht von
+Deduplizierung über Läufe hinweg macht `../datenbeschaffung-referenzen/scripts/dedup.py` gegen den Bestandsindex — nicht von
 Hand, und nicht über eine eigene Konsolidierungs-Datei.
 
 ## Schritt 6 — Übergabe

@@ -43,7 +43,7 @@ kleinere Korridor meist der bessere.
 
 ## Schritt 2 — ICP in die Datenbank-Dimensionen übersetzen
 
-Nach `_shared/references/icp.md`, hier mit den Feldern, die es nur in dieser Datenbank gibt:
+Nach `../datenbeschaffung-referenzen/references/icp.md`, hier mit den Feldern, die es nur in dieser Datenbank gibt:
 
 | ICP-Dimension | Filter in StoreLeads |
 |---|---|
@@ -83,7 +83,7 @@ Den Export in das eine Format aus `csv-spalten.md` überführen: Zeilen als JSON
 Schlüsseln (`email`, `company`, `website`/`domain`, `phone`, `city`, `kategorie`) ablegen, dann
 
 ```
-python3 _shared/scripts/build_csv.py --in storeleads.json \
+python3 ../datenbeschaffung-referenzen/scripts/build_csv.py --in storeleads.json \
   --quelle "storeleads <datum>" --land <de|at|ch> --out leads-<nische>-<region>-<datum>.csv
 ```
 

@@ -9,7 +9,7 @@ Coaches sind die Zielgruppe mit dem höchsten Noise-Anteil im Paket: um jede Coa
 sitzen Ausbildungsakademien, Verbände, Verzeichnisse und Kursplattformen, die für dieselben
 Begriffe ranken. Die Trefferquote entscheidet sich an der Query, nicht am Volumen.
 
-Voraussetzungen vom Master: bestätigter ICP-Satz, Zugriffsweg steht (`_shared/references/zugriff.md`),
+Voraussetzungen vom Master: bestätigter ICP-Satz, Zugriffsweg steht (`../datenbeschaffung-referenzen/references/zugriff.md`),
 Vorab-Abgleich gelaufen (falls MCP verbunden). Positioniert sich die Zielgruppe stärker über einen
 Kanal als über die eigene Website, sind `weg-d-coaches-linkedin` (B2B) oder `weg-d-instagram-*`
 (B2C) die besseren Wege — einmal gegenprüfen, dann hier weiter.
@@ -52,13 +52,13 @@ Zwei bis drei Varianten, immer mit Stadt.
 | Dating / Beziehung | Dating Coach, Beziehungscoach, Liebescoach |
 
 Nische nicht dabei: Nischenname + Stadt, deutsches Synonym, Premium-Variante („1:1", „Coaching").
-**Welche Variante wie viel bringt, steht belegt in `_shared/references/erfahrungswerte.md`** —
+**Welche Variante wie viel bringt, steht belegt in `../datenbeschaffung-referenzen/references/erfahrungswerte.md`** —
 samt Formulierungsregeln („Coach" statt „Trainer", Komposita zusammenschreiben, `Vertriebscoach`
 statt `Sales Coaching`) und `-site:`-Obergrenze. Die Reihenfolge dort ist keine Kosmetik: bei
 Ernährung liegen zwischen bester und schlechtester Variante 12 Prozentpunkte.
 
 ```
-python3 _shared/scripts/build_queries.py --keywords "Ernährungscoach,Ernährungscoaching" \
+python3 ../datenbeschaffung-referenzen/scripts/build_queries.py --keywords "Ernährungscoach,Ernährungscoaching" \
   --cities "Berlin" --exclude 8
 ```
 
@@ -69,11 +69,11 @@ Für B2C zusätzlich `superprof.de` und `yelp.com` in die Ausschlüsse tauschen,
 
 Eine Stadt, alle Query-Varianten in EINEM Lauf, 7 Seiten je Query (`erfahrungswerte.md`: Seite 4–7
 fängt die Coaches mit schwachem SEO — also die mit Bedarf). Actor: **Primär aus
-`_shared/references/apify-actors.md`** (SERP-Kategorie). Kosten vorab nennen (`kosten.md`),
+`../datenbeschaffung-referenzen/references/apify-actors.md`** (SERP-Kategorie). Kosten vorab nennen (`kosten.md`),
 Deckel ≤ 0,50 $. Pilotstadt: B2B Frankfurt oder München, B2C Berlin oder Wien.
 
 ```
-python3 _shared/scripts/process_serp.py --in serp-pilot.json --out coaches-pilot.csv --report
+python3 ../datenbeschaffung-referenzen/scripts/process_serp.py --in serp-pilot.json --out coaches-pilot.csv --report
 ```
 
 **Ab ~70 % Fit skalieren.** Für Ernährung und Spiritualität sind 60–70 % nach Filterung schon ein
@@ -98,7 +98,7 @@ fast immer eine Arztpraxis.
 
 ## Schritt 4 — Skalierung
 
-Städte aus `_shared/references/staedte.md`, ein Land je Lauf (der Länder-Code gilt pro Lauf) —
+Städte aus `../datenbeschaffung-referenzen/references/staedte.md`, ein Land je Lauf (der Länder-Code gilt pro Lauf) —
 DE/AT/CH getrennt, gern parallel; alle Stadt-mal-Query-Kombinationen eines Landes in EINEN Lauf.
 Danach alle Datasets zusammenführen und einmal durch `process_serp.py`: so greift der Dedup auf
 Root-Domain über Städte hinweg — ein Coach, der drei Städte bedient, ist ein Lead. Deckel:
@@ -112,7 +112,7 @@ der Entscheider die Person selbst — die Entscheiderfelder sind hier mehr wert 
 Onepager ohne auslesbares Impressum gehen in den `kontaktseiten-fallback`.
 
 ```
-python3 _shared/scripts/build_csv.py --in impressum.json \
+python3 ../datenbeschaffung-referenzen/scripts/build_csv.py --in impressum.json \
   --quelle "apify:<serp-actor>+impressum <datum>" --land <de|at|ch> \
   --out leads-<nische>-<region>-<datum>.csv
 ```

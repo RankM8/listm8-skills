@@ -9,12 +9,12 @@ Zielgruppe: Händler, die ihr Geschäft auf einem Marktplatz betreiben — Amazo
 Etsy-Manufakturen, gewerbliche eBay-Verkäufer. **Ergebnis dieses Wegs ist immer ein Verkäufer mit
 Kontaktweg, nie eine Produktliste.** Eine Zeile ohne identifizierbaren Händler ist kein Lead.
 
-Voraussetzungen vom Master: bestätigter ICP-Satz, Zugriffsweg steht (`_shared/references/zugriff.md`),
+Voraussetzungen vom Master: bestätigter ICP-Satz, Zugriffsweg steht (`../datenbeschaffung-referenzen/references/zugriff.md`),
 Vorab-Abgleich gelaufen (falls MCP verbunden).
 
 **Belegstand:** Für diesen Weg gibt es keine Kurs-Lektion und keine belegten Ist-Kosten wie bei
 Weg C. Grundlage ist die Actor-Recherche vom 19.08.2026 (Plattform-Verkäufer-Sektion in
-`_shared/references/apify-actors.md`). Kosten daher aus dem Actor-Pricing kalkulieren, Deckel
+`../datenbeschaffung-referenzen/references/apify-actors.md`). Kosten daher aus dem Actor-Pricing kalkulieren, Deckel
 setzen, die echten Zahlen im Piloten messen und in `kosten.md` nachtragen — keine Zahlen raten.
 
 ## Schritt 1 — Plattform wählen (eine je Lauf)
@@ -65,7 +65,7 @@ Erfassungsdatum eingrenzen, sonst wandern Karteileichen in die Liste. Deckel: ka
 ## Schritt 5 — Roh-CSV bauen
 
 ```
-python3 _shared/scripts/build_csv.py --in seller.json \
+python3 ../datenbeschaffung-referenzen/scripts/build_csv.py --in seller.json \
   --quelle "apify:<actor-id> <datum>" --land <de|at|ch> --out leads-<nische>-<plattform>-<datum>.csv
 ```
 

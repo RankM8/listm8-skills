@@ -13,7 +13,7 @@ bevor Instagram selbst angefasst wird.
 Zusatznutzen: Wer mit seinem Profil bei Google rankt, ist meist professioneller aufgestellt als der
 Durchschnitt der Nische.
 
-Voraussetzungen vom Master: bestätigter ICP-Satz, Zugriffsweg steht (`_shared/references/zugriff.md`),
+Voraussetzungen vom Master: bestätigter ICP-Satz, Zugriffsweg steht (`../datenbeschaffung-referenzen/references/zugriff.md`),
 Vorab-Abgleich gelaufen (falls MCP verbunden).
 
 ## Ehrliche Erwartungswerte (vor dem ersten Lauf nennen)
@@ -41,7 +41,7 @@ perfekte Query zu suchen:
 Fürs Premium-Segment die Verkaufs-Signale in die Query nehmen: `"1:1"`, `"Erstgespräch"`,
 `"Online Coaching"`, `"Link in Bio"`. Weniger Ergebnisse, aber sehr hohe Trefferquote.
 
-Städte aus `_shared/references/staedte.md`, eine Region pro Durchlauf. Deutsche und englische
+Städte aus `../datenbeschaffung-referenzen/references/staedte.md`, eine Region pro Durchlauf. Deutsche und englische
 Begriffe mischen. `-site:`-Ausschlüsse sind hier überflüssig — `site:instagram.com` filtert bereits.
 
 **Nicht `build_queries.py` verwenden:** Das Skript baut Firmen-SERP-Queries mit `-site:`-Ausschlüssen
@@ -49,7 +49,7 @@ und passt zu diesem Weg nicht. Die Queries hier von Hand zusammenstellen, eine j
 
 ## Schritt 2 — SERP-Pilot
 
-SERP-Actor: **Primär aus `_shared/references/apify-actors.md`**. Alle Queries eines Laufs als
+SERP-Actor: **Primär aus `../datenbeschaffung-referenzen/references/apify-actors.md`**. Alle Queries eines Laufs als
 Multi-Query (eine je Zeile) übergeben — maximal ~20 Queries je Lauf, sonst steigt die Block-Rate.
 `maxPagesPerQuery: 3–4` reicht (siehe Deckelung oben), Länder-Code passend zur Region.
 
@@ -73,7 +73,7 @@ Regeln aus dem SERP-Dataset filtern:
 
 Auswertung dem Nutzer zeigen (gefundene Profile, Anteil mit Follower-Hinweis, 5–10 Beispiele) und
 gegen den ICP halten: **ab ~70 % Fit skalieren**, darunter Query-Schichten nachschärfen. Die gemessene
-Quote je Query-Schicht gehört mit Datum nach `_shared/references/erfahrungswerte.md`.
+Quote je Query-Schicht gehört mit Datum nach `../datenbeschaffung-referenzen/references/erfahrungswerte.md`.
 
 ## Schritt 4 — Skalierung
 
@@ -101,7 +101,7 @@ Was der Schritt liefert und wofür es taugt:
 ## Schritt 6 — Roh-CSV bauen
 
 ```
-python3 _shared/scripts/build_csv.py --in profile.json \
+python3 ../datenbeschaffung-referenzen/scripts/build_csv.py --in profile.json \
   --quelle "apify:<actor-id> <datum>" --land <de|at|ch> --out leads-<nische>-<region>-<datum>.csv
 ```
 

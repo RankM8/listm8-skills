@@ -11,9 +11,9 @@ als jede Website-Suche, denn gefiltert wird die Person, nicht die Domain.
 
 **Das Verkaufsargument:** Der gepinnte Actor arbeitet **ohne LinkedIn-Login und ohne Cookies**.
 Es wird kein Kundenkonto hinterlegt, also gibt es kein Sperr-Risiko — hartes Auswahlkriterium
-aus `_shared/references/apify-actors.md`.
+aus `../datenbeschaffung-referenzen/references/apify-actors.md`.
 
-Voraussetzungen vom Master: bestätigter ICP-Satz, Zugriffsweg steht (`_shared/references/zugriff.md`),
+Voraussetzungen vom Master: bestätigter ICP-Satz, Zugriffsweg steht (`../datenbeschaffung-referenzen/references/zugriff.md`),
 Vorab-Abgleich gelaufen (falls MCP verbunden).
 
 ## Schritt 1 — Filter statt Freitext (die wichtigste Regel)
@@ -49,7 +49,7 @@ Jeder dieser Filter spart Geld, weil aussortierte Profile gar nicht erst geliefe
 
 ## Schritt 2 — Pilot im Short-Mode (Pflicht)
 
-Actor: **Primär aus `_shared/references/apify-actors.md`** (LinkedIn-Kategorie), Modus `Short`.
+Actor: **Primär aus `../datenbeschaffung-referenzen/references/apify-actors.md`** (LinkedIn-Kategorie), Modus `Short`.
 Short liefert Name, Headline, aktuelle Firma und Standort — genug, um die Trefferquote zu
 beurteilen, und deutlich billiger als das volle Profil.
 
@@ -89,7 +89,7 @@ Nutzer zwischen „nur Profildaten" und „mit E-Mail-Suche" wählen lassen.
 ## Schritt 5 — Roh-CSV bauen
 
 ```
-python3 _shared/scripts/build_csv.py --in linkedin.json \
+python3 ../datenbeschaffung-referenzen/scripts/build_csv.py --in linkedin.json \
   --quelle "apify:<actor-id> <datum>" --land <de|at|ch> --out leads-<nische>-<region>-<datum>.csv
 ```
 

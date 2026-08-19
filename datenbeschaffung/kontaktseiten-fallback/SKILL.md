@@ -47,12 +47,12 @@ Ausbeute kaum. Für Shopify-Shops lohnt `/pages/contact` zusätzlich, für engli
 ## Schritt 3 — Kosten nennen, Deckel setzen
 
 Kalkulation: `Anzahl Lücken-Zeilen × Pfade × Preis je gecrawlter Seite` — Preise ausschließlich
-aus `_shared/references/kosten.md` und `_shared/references/apify-actors.md`, nie schätzen.
+aus `../datenbeschaffung-referenzen/references/kosten.md` und `../datenbeschaffung-referenzen/references/apify-actors.md`, nie schätzen.
 Betrag nennen, Bestätigung abwarten, harten Deckel setzen. Ohne diesen Schritt kein Lauf.
 
 ## Schritt 4 — Crawlen (ein Batch)
 
-Actor: **Primär aus `_shared/references/apify-actors.md`** — für die reine E-Mail- und
+Actor: **Primär aus `../datenbeschaffung-referenzen/references/apify-actors.md`** — für die reine E-Mail- und
 Telefon-Lücke ist der Kontaktdaten-Extraktor aus der Impressum-Kategorie (Fallback B) der
 passende Eintrag. Steht für einen Sonderfall dort noch kein Actor, gilt der Recherchemodus des
 Masters, und der Fund wird in `apify-actors.md` mit Datum eingetragen.
@@ -71,7 +71,7 @@ Treffer über die Root-Domain zurück in die vorhandene Roh-CSV mergen. Zwei Reg
    `kontaktseiten-fallback` — die Qualitätsstufe behandelt diese Adressen strenger, weil sie
    nicht validiert sind.
 
-Das CSV-Format bleibt exakt `_shared/references/csv-spalten.md`; neue Spalten entstehen hier keine.
+Das CSV-Format bleibt exakt `../datenbeschaffung-referenzen/references/csv-spalten.md`; neue Spalten entstehen hier keine.
 Gewinn berichten: wie viele E-Mails und Telefonnummern dazugekommen sind, wie viele Zeilen weiter
 leer bleiben.
 

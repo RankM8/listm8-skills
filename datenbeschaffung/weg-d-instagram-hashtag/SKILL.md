@@ -9,7 +9,7 @@ Der Weg für B2C-Coaches, die bei Google nicht auftauchen, aber regelmäßig pos
 über die Hashtags ihrer Beiträge — und der Scrape liefert die **komplette Post-Caption** mit: Man
 sieht, wie sich jemand positioniert, bevor man einen Cent für Profildaten ausgibt.
 
-Voraussetzungen vom Master: bestätigter ICP-Satz, Zugriffsweg steht (`_shared/references/zugriff.md`),
+Voraussetzungen vom Master: bestätigter ICP-Satz, Zugriffsweg steht (`../datenbeschaffung-referenzen/references/zugriff.md`),
 Vorab-Abgleich gelaufen (falls MCP verbunden).
 
 ## Ehrliche Erwartungswerte (vor dem ersten Lauf nennen)
@@ -31,7 +31,7 @@ vom Nutzer genannt oder über eine Websuche zusammengestellt — und deren letzt
 
 1. Accounts kurz prüfen: existiert er, ist er öffentlich, wird regelmäßig gepostet? Fällt mehr als
    die Hälfte aus, lieber neu recherchieren als mit vier Accounts weiterarbeiten.
-2. Posts scrapen (Discovery-Actor aus `_shared/references/apify-actors.md`, Instagram-Kategorie),
+2. Posts scrapen (Discovery-Actor aus `../datenbeschaffung-referenzen/references/apify-actors.md`, Instagram-Kategorie),
    **8 Posts je Account reichen** — gebraucht werden nur die Hashtags, nicht der Content.
 3. Hashtags aus den Captions zählen, und zwar zweidimensional: wie oft insgesamt **und bei wie vielen
    verschiedenen Accounts**. Sortiert wird nach der Zahl der Accounts.
@@ -100,7 +100,7 @@ Followerzahl und ohne jedes Angebot sind Hobby-Accounts.
 **Orientierung für die Pilot-Entscheidung:** 20–40 % klare Treffer sind ausgezeichnet, 10–20 % solide,
 5–10 % mittelmäßig (engere Tags wählen), unter 5 % heißt: die Tags sind zu generisch, neu wählen und
 den Piloten wiederholen. Skaliert wird — wie überall — ab ~70 % ICP-Fit in der Treffergruppe. Die
-gemessene Quote je Tag-Typ gehört mit Datum nach `_shared/references/erfahrungswerte.md`.
+gemessene Quote je Tag-Typ gehört mit Datum nach `../datenbeschaffung-referenzen/references/erfahrungswerte.md`.
 
 ## Schritt 5 — Skalierung und Profil-Anreicherung
 
@@ -115,7 +115,7 @@ wertlos). E-Mail und Telefon zusätzlich aus dem Bio-Text lesen, wo vorhanden.
 ## Schritt 6 — Roh-CSV bauen
 
 ```
-python3 _shared/scripts/build_csv.py --in profile.json \
+python3 ../datenbeschaffung-referenzen/scripts/build_csv.py --in profile.json \
   --quelle "apify:<actor-id> <datum>" --land <de|at|ch> --out leads-<nische>-<region>-<datum>.csv
 ```
 
