@@ -5,7 +5,7 @@ description: Pflicht-Endstation jedes Datenbeschaffungs-Laufs — turns a raw sc
 
 # Listen-Qualität — die Pflicht-Endstation
 
-Nimmt die Roh-CSV eines Weg-Skills (Format: `_shared/references/csv-spalten.md`) und macht daraus
+Nimmt die Roh-CSV eines Weg-Skills (Format: `../datenbeschaffung-referenzen/references/csv-spalten.md`) und macht daraus
 eine übergebene, rückverfolgbare Liste. Kein Weg endet ohne diesen Skill.
 
 Trichter-Prinzip beachten: Diese Stufe sortiert MECHANISCH (Duplikate, Sperren, kaputte Daten) und
@@ -28,7 +28,7 @@ MIT MCP (`outreach-uebergabe.md`, Schritt 0, falls in Phase 3 des Masters noch n
 
 ```
 export_leads(format="index")  →  bestand-index.json
-python3 _shared/scripts/dedup.py --index bestand-index.json --in roh.csv --out neu.csv
+python3 ../datenbeschaffung-referenzen/scripts/dedup.py --index bestand-index.json --in roh.csv --out neu.csv
 ```
 
 Der Report nennt: behalten / schon im Bestand / **do_not_contact entfernt** (namentlich, die werden
@@ -56,7 +56,7 @@ Dem Nutzer die Stichprobe zeigen (Firma, Website, passt/passt-nicht mit einem Ha
 
 ## Schritt 5 — Übergabe
 
-`_shared/references/outreach-uebergabe.md` folgen:
+`../datenbeschaffung-referenzen/references/outreach-uebergabe.md` folgen:
 
 - MIT MCP: `check_leads_exist` (Autoritäts-Check) → `create_list` (mit Herkunft + realen Kosten) →
   `import_leads(list_id, attribute_mappings)` → `get_job_status` → Report-Zahlen 1:1 berichten.

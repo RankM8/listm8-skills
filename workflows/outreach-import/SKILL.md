@@ -1,6 +1,6 @@
 ---
-name: mcp-import
-description: Use when user says "mcp:import", "importiere leads via mcp", "leads hochladen mcp", "csv leads importieren", "outscraper import mcp", or triggers /mcp:import.
+name: outreach-import
+description: Use when user says "outreach:import", "mcp:import", "importiere leads via mcp", "leads hochladen mcp", "csv leads importieren", "outscraper import mcp", or triggers /mcp:import.
 ---
 
 # MCP Import — Lead-Listen hochladen

@@ -1,6 +1,6 @@
 ---
-name: mcp-campaign
-description: Use when user says "mcp:campaign", "erstelle kampagne via mcp", "kampagne per mcp anlegen", "campaign blueprint erstellen", "bearbeite kampagne via mcp", or triggers /mcp:campaign.
+name: outreach-campaign
+description: Use when user says "outreach:campaign", "mcp:campaign", "erstelle kampagne via mcp", "kampagne per mcp anlegen", "campaign blueprint erstellen", "bearbeite kampagne via mcp", "Kampagne mit guter Copy bauen", "Qualifizierungskriterien formulieren", or triggers /mcp:campaign. Guided campaign builder: enforces the cold-mailing SOP (copywriting, open qualification, research anchors) via the bundled references.
 ---
 
 # MCP Campaign — Kampagnen erstellen & bearbeiten via Blueprint
@@ -25,6 +25,21 @@ Mindestens klaeren (fehlendes nachfragen, AskUserQuestion):
 4. **Qualifizierung**: Wer ist ideal, was disqualifiziert?
 5. **Research-Fokus**: Wonach sollen Subagents suchen (Aufhaenger-Prioritaeten)?
 6. **Sequenz**: Wie viele Steps (Empfehlung: 3), Abstaende (z.B. 0/3/4 Tage)?
+
+## Phase 1b: Qualität nach SOP (Pflicht, bevor eine Zeile Blueprint entsteht)
+
+Drei Referenzen in diesem Skill-Ordner sind beim Bauen VERBINDLICH — lesen, anwenden, nicht paraphrasieren:
+
+| Referenz | Steuert |
+|---|---|
+| `references/copywriting.md` | Sequenz + Betreff + AI-Variablen-Prompts: Goldene Formel, EIN CTA, kein Pitch, Wortlimits, FUP-Dramaturgie, Spam-Schutz, Prüfdurchlauf |
+| `references/qualifizierung.md` | `qualificationSettings`: inklusiv formulieren, Disqualifier nur harte No-Gos — die Qualifizierung ist ein OFFENER Vorfilter |
+| `references/research.md` | `researchAgentConfig`: Anker-Hierarchie (Bewertungen zuerst), Anker positiv, Schmerzpunkte getrennt |
+
+Dazu die Offer-Regel: Ohne konkretes Deliverable keine Copy — heisst das Angebot "Analyse",
+"Audit", "Erstgespräch" o.ä., erst das Offer mit dem Nutzer schaerfen (Werttest: spart Zeit,
+spart Geld oder bringt Geld?). Vor dem Erstellen die fertige Sequenz gegen den Pruefdurchlauf
+aus `references/copywriting.md` halten.
 
 ## Phase 2: Blueprint bauen
 

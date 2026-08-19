@@ -1,6 +1,6 @@
 ---
-name: mcp-research
-description: Use when user says "mcp:research", "recherchiere leads", "lead research", "research leads", "leads recherchieren", or triggers /mcp:research.
+name: outreach-research
+description: Use when user says "outreach:research", "mcp:research", "recherchiere leads", "lead research", "research leads", "leads recherchieren", or triggers /mcp:research.
 ---
 
 # MCP Research — Lead-Research durch Claude-Subagents

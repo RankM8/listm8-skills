@@ -1,6 +1,6 @@
 ---
-name: mcp-pipeline
-description: Use when user says "mcp:pipeline", "kompletter mcp durchlauf", "leads komplett verarbeiten", "qualify research generate", "alles in einem lauf mcp", "full pipeline", or triggers /mcp:pipeline.
+name: outreach-pipeline
+description: Use when user says "outreach:pipeline", "mcp:pipeline", "kompletter mcp durchlauf", "leads komplett verarbeiten", "qualify research generate", "alles in einem lauf mcp", "full pipeline", or triggers /mcp:pipeline.
 ---
 
 # MCP Pipeline — Qualifizierung → Research → Variablen in einem Lauf
@@ -27,7 +27,7 @@ Phase 3: /mcp:generate  — list_leads(campaign_status="processing") -> Subagent
 ## Ablaufregeln
 
 1. **Phasen strikt sequentiell**: Phase 2 startet erst, wenn Phase 1 fuer die Kampagne komplett durch ist (Research nutzt den Qualifizierungs-Kontext); Phase 3 erst nach Phase 2. Innerhalb einer Phase laufen die Subagent-Batches parallel.
-2. **Jede Phase folgt exakt ihrem Skill** (`mcp-qualify`, `mcp-research`, `mcp-generate`) — Prompts, Regeln und Fehlerbehandlung von dort uebernehmen, keine abweichende Logik.
+2. **Jede Phase folgt exakt ihrem Skill** (`outreach-qualify`, `outreach-research`, `outreach-generate`) — Prompts, Regeln und Fehlerbehandlung von dort uebernehmen, keine abweichende Logik.
 3. **Idempotenz nutzen**: Jede Phase zieht ihre Queue ueber die list_leads-Filter; bereits verarbeitete Leads tauchen nicht mehr auf. Ein abgebrochener Lauf kann jederzeit mit demselben Kommando fortgesetzt werden.
 4. **Fehler blockieren nicht**: Fehlgeschlagene Leads einer Phase bleiben in deren Queue und werden im Report ausgewiesen; die Pipeline laeuft mit den erfolgreichen weiter. Nur wenn ein KOMPLETTER Batch fehlschlaegt: stoppen und User fragen.
 5. **not_qualified-Leads** verlassen die Pipeline nach Phase 1 automatisch (Research filtert fit_level="qualified").

@@ -1,6 +1,6 @@
 ---
-name: mcp-verify
-description: Use when user says "mcp:verify", "verify emails", "email verification", "pruefe emails", "email review", "emails pruefen", or triggers /mcp:verify.
+name: outreach-verify
+description: Use when user says "outreach:verify", "mcp:verify", "verify emails", "email verification", "pruefe emails", "email review", "emails pruefen", or triggers /mcp:verify.
 ---
 
 # MCP Verify — AI-Variablen-Review

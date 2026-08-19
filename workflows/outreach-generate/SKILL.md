@@ -1,6 +1,6 @@
 ---
-name: mcp-generate
-description: Use when user says "mcp:generate", "generiere emails", "email generation", "MCP workflow", "generate emails for campaign", or triggers /mcp:generate.
+name: outreach-generate
+description: Use when user says "outreach:generate", "mcp:generate", "generiere emails", "email generation", "MCP workflow", "generate emails for campaign", or triggers /mcp:generate.
 ---
 
 # MCP Generate — AI-Variablen-Generierung

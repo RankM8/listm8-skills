@@ -1,6 +1,6 @@
 ---
-name: mcp-qualify
-description: Use when user says "mcp:qualify", "qualifiziere leads", "lead qualifizierung", "qualify leads", "leads bewerten", or triggers /mcp:qualify.
+name: outreach-qualify
+description: Use when user says "outreach:qualify", "mcp:qualify", "qualifiziere leads", "lead qualifizierung", "qualify leads", "leads bewerten", or triggers /mcp:qualify.
 ---
 
 # MCP Qualify — Lead-Qualifizierung durch Claude-Subagents

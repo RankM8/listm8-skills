@@ -13,16 +13,16 @@ und orchestriert — die eigentliche Arbeit machen die Weg-Skills und `listen-qu
 1. **Trichter-Prinzip.** Keine Stufe muss perfekt sein — jede filtert für die nächste. Die Liste darf
    Beifang enthalten; die Qualifizierung in der App arbeitet bewusst offen, erst Review und
    20er-Sample sind streng. Einzige harte Grenze überall: `do_not_contact`.
-2. **Kosten IMMER vorab.** Vor jedem kostenpflichtigen Lauf: Kalkulation aus `_shared/references/kosten.md`
+2. **Kosten IMMER vorab.** Vor jedem kostenpflichtigen Lauf: Kalkulation aus `../datenbeschaffung-referenzen/references/kosten.md`
    nennen („Das kostet etwa X $ — ok?") und einen harten Deckel setzen. Keine Ausnahme.
 3. **Pilot-Zwang.** Kein Skalieren ohne Pilotlauf (eine Stadt, ~50 Ergebnisse) und ohne genannte
    Trefferquote. Skaliert wird ab **~70 % ICP-Fit** im Piloten; darunter erst Query/Filter nachschärfen.
-4. **Actor-IDs nur aus `_shared/references/apify-actors.md`.** Nie raten.
+4. **Actor-IDs nur aus `../datenbeschaffung-referenzen/references/apify-actors.md`.** Nie raten.
 5. **Deutsch mit korrekten Umlauten**, in jedem Output.
 
 ## Phase 0 — Setup prüfen (einmal je Umgebung)
 
-`_shared/references/setup.md` folgen: Zugriffsweg feststellen (MCP/REST/CLI, siehe `zugriff.md`),
+`../datenbeschaffung-referenzen/references/setup.md` folgen: Zugriffsweg feststellen (MCP/REST/CLI, siehe `zugriff.md`),
 kostenlosen Selbsttest fahren. Zusätzlich prüfen: Ist der **Outreach-MCP** verbunden
 (`ping`-Tool vorhanden)? Wenn ja, den Nutzer informieren, dass Bestand-Abgleich und direkte
 Übergabe aktiv sind. Wenn nein: weiterarbeiten, am Ende CSV-Fallback — aber einmal erwähnen,
@@ -30,7 +30,7 @@ was mit MCP zusätzlich ginge.
 
 ## Phase 1 — ICP + Anti-ICP erheben
 
-`_shared/references/icp.md` folgen. Ergebnis ist EIN Satz + Ausschlüsse, vom Nutzer bestätigt:
+`../datenbeschaffung-referenzen/references/icp.md` folgen. Ergebnis ist EIN Satz + Ausschlüsse, vom Nutzer bestätigt:
 
 > „[Rolle] in [Branche] mit [Größe] in [Region], erkennbar an [Trigger]. Nicht: [Anti-ICP]."
 
@@ -65,7 +65,7 @@ vorlegen, nicht den ganzen Baum erklären.
 ## Phase 3 — Vorab-Abgleich (nur mit MCP)
 
 VOR dem ersten kostenpflichtigen Lauf: Bestandsindex ziehen und bekannte Domains in die
-Query-Ausschlüsse geben — `_shared/references/outreach-uebergabe.md`, Schritt 0. Bekannte Leads
+Query-Ausschlüsse geben — `../datenbeschaffung-referenzen/references/outreach-uebergabe.md`, Schritt 0. Bekannte Leads
 dürfen gar nicht erst Geld kosten.
 
 ## Phase 4 — Weg-Skill ausführen
