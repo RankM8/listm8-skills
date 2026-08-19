@@ -39,6 +39,10 @@ def main() -> int:
     with open(args.index, encoding="utf-8") as fh:
         payload = json.load(fh)
     rows = payload.get("index", payload) if isinstance(payload, dict) else payload
+    if not isinstance(rows, list) or (rows and not isinstance(rows[0], dict)) or (rows and "e" not in rows[0]):
+        print("FEHLER: --index ist kein gültiger Bestandsindex (erwartet die Antwort von "
+              "export_leads format=index). Datei prüfen — enthält sie eine Fehlermeldung?", file=sys.stderr)
+        return 2
     generated = payload.get("generated_at") if isinstance(payload, dict) else None
     if generated:
         age = datetime.now(timezone.utc) - datetime.fromisoformat(generated)
