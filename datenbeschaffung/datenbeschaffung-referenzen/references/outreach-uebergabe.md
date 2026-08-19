@@ -13,7 +13,7 @@ Einmal je Lauf den Bestandsindex ziehen und lokal matchen:
 ```
 export_leads(format="index")            # kompakter Index: {e: email, d: root-domain, s: status}
 → als bestand-index.json speichern
-python3 _shared/scripts/dedup.py --index bestand-index.json --in roh.csv --out neu.csv
+python3 ../datenbeschaffung-referenzen/scripts/dedup.py --index bestand-index.json --in roh.csv --out neu.csv
 ```
 
 `dedup.py` entfernt: exakte E-Mail-Treffer (inkl. secondaryEmails), `do_not_contact`-Leads
@@ -50,13 +50,29 @@ manuelle Scrape-Log.
 
 ### 3. Import in die Liste
 
+**WICHTIG — was ohne Mapping verloren geht:** `import_leads` kennt als Kernfelder nur
+`email`, `company`, `website`, `phoneNumber`, `city`, `status`. JEDE andere Spalte —
+auch `firstName`/`lastName` (die teuer beschafften Entscheider-Namen!), `companyClean`,
+`hinweis` und alle Personalisierungs-Spalten — überlebt den Import NUR, wenn sie in
+`attribute_mappings` deklariert ist. Nicht deklarierte Spalten werden stillschweigend
+verworfen. Deshalb: vor dem Import die CSV-Header auflisten und für jede Nicht-Kern-Spalte
+ein Mapping setzen.
+
 ```
 import_leads(leads=[...], list_id=<id>, attribute_mappings={
-  "kategorie": {"action":"create_new","name":"Kategorie","fieldType":"text"},
-  "quelle":    {"action":"create_new","name":"Quelle","fieldType":"text"}
+  "firstName":    {"action":"create_new","name":"Vorname","fieldType":"text"},
+  "lastName":     {"action":"create_new","name":"Nachname","fieldType":"text"},
+  "kategorie":    {"action":"create_new","name":"Kategorie","fieldType":"text"},
+  "quelle":       {"action":"create_new","name":"Quelle","fieldType":"text"},
+  "companyClean": {"action":"create_new","name":"Firma (Ansprache)","fieldType":"text"},
+  "hinweis":      {"action":"create_new","name":"Hinweis","fieldType":"text"}
+  // ... plus jede weitere Zusatzspalte (bewertung, linkedin_url, ...)
 })
 → get_job_status(job_id) pollen bis completed
 ```
+
+Existiert ein Attribut aus einem früheren Lauf bereits, statt `create_new` auf das
+vorhandene Attribut mappen: `{"action":"map_existing","fieldKey":"<bestehender_key>"}`.
 
 Der Job-Report liefert `imported`, `duplicates` (nur verlinkt, nie doppelt), `linked_to_list`
 und `do_not_contact_hits` — die Zahlen 1:1 an den Nutzer berichten.

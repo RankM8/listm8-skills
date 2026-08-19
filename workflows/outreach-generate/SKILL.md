@@ -45,6 +45,7 @@ Wenn KEINE campaign_id als Argument uebergeben wurde:
 2. Zeige dem User die Kampagnen mit `leadCounts.needs_email_generation > 0`
 3. Frage: "Fuer welche Kampagne soll ich Variablen generieren?"
 4. Merke dir die campaign_id
+5. Vorpruefung: `list_lead_runs(campaign_id, active_only=true)` — laeuft ein serverseitiger Lauf mit E-Mail-Stufe, lehnt `save_lead_variables` mit `lead_run_active` ab (Rennschutz). Erst nach Terminal-Status starten (`get_lead_run_status`) oder den Lauf nach Ruecksprache mit `cancel_lead_run` stoppen.
 
 Wenn campaign_id als Argument uebergeben wurde: Direkt zur Batch-Groesse-Abfrage.
 
@@ -122,11 +123,9 @@ LEAD: {lead.company} (ID: {lead.id})
 WICHTIG: variables ist ein JSON-STRING. ALLE Variablen aus emailGeneration.expectedOutput muessen enthalten sein.
 ```
 
-### Phase 4: Screenshot-Handling
+### Phase 4: Visueller Kontext (optional)
 
-Screenshots sind in der `lead.screenshots[]` Liste als relative URLs enthalten (z.B. `/api/research-artifacts/abc-123`), Basis ist die ListM8-Server-URL.
-
-Wenn dein Client Bilder von URLs laden und visuell analysieren kann: Screenshots laden und in die Generierung einbeziehen. Andernfalls: Screenshots ueberspringen und nur auf Basis von Research-Text, Qualification und Custom Attributes generieren — im Report vermerken: "Screenshots nicht einbezogen, Text-basierte Generierung."
+`get_lead_data` liefert KEINE Screenshots — die visuelle Beurteilung der Server-Runs ist im Research-TEXT zusammengefasst. Wenn dein Client selbst Websites besuchen kann (Browser/Fetch): die Lead-Website (`lead.website`) kurz oeffnen und den Eindruck in die Generierung einbeziehen. Andernfalls auf Basis von Research-Text, Qualification und Custom Attributes generieren — im Report vermerken: "Website nicht besucht, Text-basierte Generierung."
 
 ### Phase 5: Ergebnisse sammeln & Report
 
@@ -205,7 +204,6 @@ Gibt vollen Generierungs-Context zurueck:
 - Stammdaten (email, company, website, city, phoneNumber, score)
 - `qualification` (fitLevel, category, summary, snapshot)
 - `research` (text, bestEmail, decisionMaker, contactRecommendation)
-- `screenshots[]` (type, viewport, url, label)
 - `customAttributes` (key-value Paare)
 - `emailGeneration.systemPrompt` — Der aufgeloeste System-Prompt
 - `emailGeneration.variables[]` — Variablen mit aufgeloesten Prompts
@@ -261,6 +259,7 @@ Details: siehe `/mcp:verify` Skill.
 |--------|--------|
 | `list_leads` gibt leere leads[] | "Keine Leads in Queue" -> STOP |
 | Sub-Agent save_lead_variables Error | Fehler notieren, weitermachen mit naechstem Lead |
+| `lead_run_active` | Parallel laeuft ein Server-Lauf mit E-Mail-Stufe — Batch pausieren, `get_lead_run_status` bis Terminal-Status, dann fortsetzen (Queue ist idempotent) |
 | Sub-Agent Timeout/Crash | Als Fehler zaehlen, im Report erwaehnen |
 | Alle Agents eines Batches fehlgeschlagen | Warnung ausgeben, User fragen ob fortfahren |
 | Netzwerk/MCP-Verbindungsfehler | 1x Retry, dann STOP mit Fehlermeldung |

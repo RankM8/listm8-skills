@@ -1,14 +1,17 @@
 # CSV-Spalten — DAS eine Format
 
-> Jede Stufe der Datenbeschaffung schreibt und liest exakt dieses Format. Es ist deckungsgleich
-> mit dem, was `import_leads` (Outreach-MCP) und der App-Import erwarten — die Übergabe ist damit
-> ein Mapping-freier Schritt.
+> Jede Stufe der Datenbeschaffung schreibt und liest exakt dieses Format. `import_leads`
+> (Outreach-MCP) übernimmt davon die Kernfelder `email`, `company`, `website`, `phoneNumber`,
+> `city` direkt — ALLE anderen Spalten (auch `firstName`/`lastName`!) brauchen beim Import
+> eine Deklaration in `attribute_mappings`, sonst werden sie stillschweigend verworfen
+> (Details: `outreach-uebergabe.md`, Schritt 3). Der App-Import bietet die Zusatzspalten
+> interaktiv als Attribute an.
 
 ## Kernspalten (immer vorhanden, exakt diese Header)
 
 | Spalte | Pflicht | Regeln |
 |---|---|---|
-| `email` | ja | lowercase, getrimmt. Ohne gültige E-Mail keine Zeile |
+| `email` | ja* | lowercase, getrimmt. *Pflicht erst in der ÜBERGABE-CSV (Import/CSV-Fallback). Während der Anreicherung darf sie leer sein — genau diese Zeilen füttern die Impressum-/Kontaktseiten-Stufe (build_csv.py behält sie und markiert `keine-email` in `hinweis`; erst `--require-email` bei der finalen Fassung verwirft sie) |
 | `firstName` | nein | leer lassen statt raten — eine kaputte Anrede killt die Mail |
 | `lastName` | nein | dito |
 | `company` | nein | Anzeigename; Normalisierung (GmbH-Zusätze) macht build_csv.py in `companyClean` |
@@ -25,8 +28,9 @@
 | `companyClean` | normalisierter Firmenname für die Ansprache („Müller Bau" statt „Müller Bau GmbH & Co. KG") |
 | `hinweis` | maschinelle Anmerkungen (z. B. `keine-website`, `rollen-adresse`) |
 
-Weitere quellenspezifische Spalten sind erlaubt (z. B. `bewertung`, `reviews_count`, `linkedin_url`) —
-sie wandern beim Import als Custom-Attribute mit und stehen der Personalisierung zur Verfügung.
+Weitere quellenspezifische Spalten sind erlaubt (z. B. `bewertung`, `reviews_count`, `linkedin_url`).
+Sie stehen der Personalisierung zur Verfügung — beim MCP-Import aber NUR, wenn sie in
+`attribute_mappings` deklariert sind (siehe Kopfnotiz); der App-Import bietet sie interaktiv an.
 
 ## Regeln
 

@@ -47,6 +47,7 @@ Wenn KEINE campaign_id als Argument uebergeben wurde:
 2. Zeige dem User die Kampagnen mit `leadCounts.pending_review > 0`
 3. Frage: "Fuer welche Kampagne soll ich Variablen reviewen?"
 4. Merke dir die campaign_id
+5. Vorpruefung: `list_lead_runs(campaign_id, active_only=true)` — solange ein serverseitiger Lauf mit E-Mail-Stufe aktiv ist, lehnen `approve_lead_variables`/`reject_lead_variables` mit `lead_run_active` ab (Rennschutz). Erst nach dem Terminal-Status des Laufs reviewen.
 
 Wenn campaign_id als Argument uebergeben wurde: Direkt zur Batch-Groesse-Abfrage.
 
@@ -287,6 +288,7 @@ Success-Response:
 |--------|--------|
 | `list_leads` gibt leere leads[] | "Keine Leads zur Review" -> STOP |
 | Sub-Agent approve/reject Error | Fehler notieren, weitermachen mit naechstem Lead |
+| `lead_run_active` | Parallel laeuft ein Server-Lauf mit E-Mail-Stufe — Review pausieren, `get_lead_run_status` bis Terminal-Status, dann fortsetzen |
 | Sub-Agent Timeout/Crash | Als Fehler zaehlen, im Report erwaehnen |
 | Alle Agents eines Batches fehlgeschlagen | Warnung ausgeben, User fragen ob fortfahren |
 | Netzwerk/MCP-Verbindungsfehler | 1x Retry, dann STOP mit Fehlermeldung |

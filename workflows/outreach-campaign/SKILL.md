@@ -1,6 +1,6 @@
 ---
 name: outreach-campaign
-description: Use when user says "outreach:campaign", "mcp:campaign", "erstelle kampagne via mcp", "kampagne per mcp anlegen", "campaign blueprint erstellen", "bearbeite kampagne via mcp", "Kampagne mit guter Copy bauen", "Qualifizierungskriterien formulieren", or triggers /mcp:campaign. Guided campaign builder: enforces the cold-mailing SOP (copywriting, open qualification, research anchors) via the bundled references.
+description: 'Use when user says "outreach:campaign", "mcp:campaign", "erstelle kampagne via mcp", "kampagne per mcp anlegen", "campaign blueprint erstellen", "bearbeite kampagne via mcp", "Kampagne mit guter Copy bauen", "Qualifizierungskriterien formulieren", or triggers /mcp:campaign. Guided campaign builder that enforces the cold-mailing SOP (copywriting, open qualification, research anchors) via the bundled references.'
 ---
 
 # MCP Campaign — Kampagnen erstellen & bearbeiten via Blueprint
@@ -64,7 +64,7 @@ Struktur (Schema v1 — die vollstaendige Referenz liefert der MCP-Prompt `campa
       }
     },
     "qualificationSettings": { "idealCustomer": "...", "disqualifiers": "..." },
-    "researchAgentConfig": { "researchGoals": "...", "researchDepth": "quick", "researchPriorities": "..." },
+    "researchAgentConfig": { "researchGoals": "...", "researchPriorities": "..." },
     "emailAgentConfig": { "emailLanguage": "Deutsch (DACH)", "emailTone": "..." }
   },
   "aiVariables": [
@@ -79,7 +79,7 @@ Struktur (Schema v1 — die vollstaendige Referenz liefert der MCP-Prompt `campa
 - AI-Variablen `hallo` (Anrede) und `intro` (personalisierter Opener) IMMER anlegen; Namen-Regex `^[a-zA-Z][a-zA-Z0-9_]*$`, Prompt min 10 Zeichen.
 - Sequenz-Bodies nutzen `{{ai.hallo}}`/`{{ai.intro}}` + `{{companyName}}`-Platzhalter; Step 1 `delayDays: 0`.
 - `agentKey` in den Configs WEGLASSEN, ausser der User nennt explizit einen bestehenden Agenten (Referenz + Fallback: ohne Key greifen System-Defaults; unbekannte Keys → VALIDATION_FAILED).
-- Max 50 Variablen, max 25 Steps, Blueprint < 256 KB.
+- Max 25 Variablen, max 25 Steps, Blueprint < 256 KB.
 
 Blueprint dem User zur Bestaetigung zeigen (kompakt: Name, Variablen, Step-Betreffs, Kriterien), DANN erstellen.
 
@@ -87,7 +87,9 @@ Blueprint dem User zur Bestaetigung zeigen (kompakt: Name, Variablen, Step-Betre
 
 **Neu:** `create_campaign(blueprint=<object>)` → Response enthaelt `campaign_id`, `imported` (steps/variables/intelligence/configs). Kampagne startet als `draft`.
 
-**Bearbeiten:** `edit_campaign(campaign_id=<id>, blueprint=<object>, confirm_overwrite=true)` — **Replace-all**: Immer das KOMPLETTE Ziel-Blueprint senden, nie nur die Aenderung. Bei bestehender Kampagne zuerst den Ist-Stand holen (UI-Export oder `GET /campaigns/{id}/blueprint/export`), anpassen, komplett zuruecksenden. Ohne `confirm_overwrite` → `CONFIRM_OVERWRITE_REQUIRED` (Schutz).
+**Bearbeiten:** `edit_campaign(campaign_id=<id>, blueprint=<object>, confirm_overwrite=true)` — **Replace-all**: Immer das KOMPLETTE Ziel-Blueprint senden, nie nur die Aenderung. Den Ist-Stand IMMER zuerst mit dem MCP-Tool `export_campaign_blueprint(campaign_id)` holen (nie aus dem Gedaechtnis rekonstruieren — alles, was im gesendeten Blueprint fehlt, wird geloescht), anpassen, komplett zuruecksenden. Ohne `confirm_overwrite` → `CONFIRM_OVERWRITE_REQUIRED` (Schutz).
+
+**WARNUNG Datenverlust:** Ersetzt `edit_campaign` die AI-Variablen, werden kaskadiert ALLE bereits generierten Variablen-Werte saemtlicher Leads der Kampagne geloescht — nach einer Generierung fuer z.B. 500 Leads ist diese Arbeit unwiederbringlich weg. Vor dem Edit pruefen: Sind schon Variablen generiert (`list_leads` mit `campaign_status="pending_review"`/`approved`)? Dann dem User die Konsequenz ausdruecklich nennen und bestaetigen lassen — `confirm_overwrite=true` alleine ist KEINE informierte Zustimmung. Nie bei aktivem Lead-Run editieren (`list_lead_runs(active_only=true)` vorher pruefen).
 
 ## Fehlerbehandlung
 

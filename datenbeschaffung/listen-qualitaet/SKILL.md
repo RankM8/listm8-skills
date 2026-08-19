@@ -32,8 +32,14 @@ python3 ../datenbeschaffung-referenzen/scripts/dedup.py --index bestand-index.js
 ```
 
 Der Report nennt: behalten / schon im Bestand / **do_not_contact entfernt** (namentlich, die werden
-NIE angeschrieben) / Domain-Warnungen. OHNE MCP: dedup.py mit leerem Index laufen lassen
-(dedupliziert dann nur innerhalb der Datei) und im Bericht sagen, dass der Bestand-Abgleich fehlte.
+NIE angeschrieben) / Domain-Warnungen / ohne E-Mail behalten. OHNE MCP entfällt dieser Schritt —
+Duplikate innerhalb der Datei hat `build_csv.py` bereits entfernt; im Bericht ausdrücklich sagen,
+dass der Bestand-Abgleich fehlte.
+
+**E-Mail-Gate:** Zeilen, die nach der Anreicherung (Impressum-/Kontaktseiten-Stufe des Wegs)
+immer noch keine E-Mail haben, jetzt in eine eigene Datei abspalten (`leads-…-ohne-email.csv`)
+und die Zahl berichten — sie gehen NICHT in Verifizierung und Übergabe (der Import verlangt
+eine gültige E-Mail pro Zeile).
 
 ## Schritt 3 — Verifizierung
 

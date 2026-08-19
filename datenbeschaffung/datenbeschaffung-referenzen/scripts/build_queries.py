@@ -7,6 +7,9 @@
 Ausgabe: eine Query pro Zeile (das Format, das scraperlink und der offizielle
 Google-Search-Actor als Multi-Query akzeptieren). Regeln: eine Region pro Lauf,
 Ort steht in der Query (Geotargeting damit unnötig, belegt 19.08.2026).
+
+--cities "" baut Queries OHNE Stadt (z. B. E-Com/überregionale Nischen);
+ohne --cities gilt die Städteliste der Region.
 """
 from __future__ import annotations
 
@@ -42,7 +45,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--keywords", required=True, help="kommagetrennt")
     ap.add_argument("--region", choices=list(CITIES) + ["custom"], default="de")
-    ap.add_argument("--cities", help="kommagetrennt — überschreibt --region")
+    ap.add_argument("--cities", help='kommagetrennt — überschreibt --region; "" = ohne Stadt')
     ap.add_argument("--exclude", type=int, default=6,
                     help="Anzahl -site:-Ausschlüsse je Query (0 = keine; Google mag <10)")
     ap.add_argument("--noise", type=pathlib.Path,
@@ -50,14 +53,15 @@ def main() -> int:
     args = ap.parse_args()
 
     keywords = [k.strip() for k in args.keywords.split(",") if k.strip()]
-    cities = ([c.strip() for c in args.cities.split(",") if c.strip()]
-              if args.cities else CITIES[args.region])
+    # --cities "" ist eine bewusste Entscheidung (ohne Stadt), kein Fallback auf die Region.
+    cities = (CITIES[args.region] if args.cities is None
+              else [c.strip() for c in args.cities.split(",") if c.strip()])
     excludes = noise_domains(args.noise, args.exclude) if args.exclude else []
     suffix = (" " + " ".join(f"-site:{d}" for d in excludes)) if excludes else ""
 
     for kw in keywords:
-        for city in cities:
-            print(f"{kw} {city}{suffix}")
+        for city in cities or [""]:
+            print((f"{kw} {city}" if city else kw) + suffix)
     return 0
 
 

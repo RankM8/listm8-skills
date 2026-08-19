@@ -6,8 +6,13 @@
 
 Versteht die Feldnamen der gepinnten Actors (Maps: title/website/emails/phone/city/categoryName;
 Impressum: company_name/email/phone_number/...; generisch: email/company/...).
-Dedupliziert auf E-Mail (lowercase), normalisiert Firmennamen (companyClean), markiert
-Rollen-Adressen und fehlende Websites in `hinweis`.
+Dedupliziert auf E-Mail (lowercase; ohne E-Mail auf Website bzw. Firma+Stadt), normalisiert
+Firmennamen (companyClean), markiert Rollen-Adressen, fehlende Websites und fehlende E-Mails
+in `hinweis`.
+
+Zeilen OHNE E-Mail bleiben standardmäßig erhalten (`keine-email` in `hinweis`) — sie sind der
+Input für die Impressum-/Kontaktseiten-Stufe. Erst die finale Übergabe-CSV läuft mit
+--require-email (verwirft E-Mail-lose Zeilen, siehe references/csv-spalten.md).
 """
 from __future__ import annotations
 
@@ -20,8 +25,10 @@ FIELDS = ["email", "firstName", "lastName", "company", "website", "phoneNumber",
           "kategorie", "quelle", "companyClean", "hinweis"]
 ROLE_PREFIXES = ("info@", "kontakt@", "office@", "mail@", "hallo@", "hello@", "service@",
                  "kontakt.", "buero@", "zentrale@", "post@")
+# Die Rechtsform muss ein eigenes Wort sein (Trenner oder Whitespace davor) — sonst
+# verstümmelt der Suffix-Match Namen wie "Freitag" (ag), "Krug" (ug), "Sonntag" (ag).
 LEGAL_SUFFIX = re.compile(
-    r"\s*(\||-|–)?\s*(gmbh\s*&\s*co\.?\s*kg|gmbh|ug\s*\(haftungsbeschränkt\)|ug|ag|kg|ohg|gbr|e\.\s*k\.|e\.k\.|inh\..*)$",
+    r"(?:\s*[|–-]\s*|\s+|^)(gmbh\s*&\s*co\.?\s*kg|gmbh|ug\s*\(haftungsbeschränkt\)|ug|ag|kg|ohg|gbr|e\.\s*k\.|e\.k\.|inh\..*)$",
     re.I)
 
 
@@ -50,6 +57,8 @@ def main() -> int:
     ap.add_argument("--out", required=True)
     ap.add_argument("--quelle", required=True, help='z. B. "apify:compass/crawler-google-places 2026-08-19"')
     ap.add_argument("--land", help="nur Zeilen mit diesem countryCode behalten (de/at/ch)")
+    ap.add_argument("--require-email", action="store_true",
+                    help="Zeilen ohne E-Mail verwerfen — NUR für die finale Übergabe-CSV")
     args = ap.parse_args()
 
     with open(args.infile, encoding="utf-8") as fh:
@@ -57,33 +66,50 @@ def main() -> int:
 
     out: dict[str, dict] = {}
     skipped_no_email = 0
+    skipped_unusable = 0
     for row in data if isinstance(data, list) else [data]:
         if args.land and str(row.get("countryCode", "")).lower() not in (args.land.lower(), ""):
             continue
         email = pick(row, "email", "emails").lower()
-        if not email or "@" not in email:
-            skipped_no_email += 1
-            continue
-        if email in out:
-            continue
+        if "@" not in email:
+            email = ""
         company = pick(row, "company", "title", "company_name", "companyName", "name")
         website = pick(row, "website", "url", "target_url", "domain")
         if website and "://" not in website:
             website = "https://" + website
+        if not email:
+            if args.require_email:
+                skipped_no_email += 1
+                continue
+            if not website and not company:
+                # weder anschreibbar noch anreicherbar — nutzlos
+                skipped_unusable += 1
+                continue
+        # Dedup-Schlüssel: E-Mail; ohne E-Mail die Website (gleicher Betrieb doppelt
+        # gescrapt), sonst Firma+Stadt.
+        city = pick(row, "city") or pick(row.get("company_address") or {}, "city")
+        key = email or (
+            "site:" + re.sub(r"^https?://(www\.)?", "", website).rstrip("/").lower()
+            if website else "co:" + company.lower() + "|" + city.lower()
+        )
+        if key in out:
+            continue
         hints = []
-        if email.startswith(ROLE_PREFIXES):
+        if email and email.startswith(ROLE_PREFIXES):
             hints.append("rollen-adresse")
+        if not email:
+            hints.append("keine-email")
         if not website:
             hints.append("keine-website")
         contact = row.get("contact_person") or {}
-        out[email] = {
+        out[key] = {
             "email": email,
             "firstName": pick(contact, "first_name") or pick(row, "firstName", "first_name"),
             "lastName": pick(contact, "last_name") or pick(row, "lastName", "last_name"),
             "company": company,
             "website": website,
             "phoneNumber": pick(row, "phoneNumber", "phone", "phone_number", "phones"),
-            "city": pick(row, "city") or pick(row.get("company_address") or {}, "city"),
+            "city": city,
             "kategorie": pick(row, "kategorie", "categoryName", "category", "branche"),
             "quelle": args.quelle,
             "companyClean": clean_company(company) if company else "",
@@ -96,9 +122,15 @@ def main() -> int:
         writer.writerows(out.values())
 
     no_web = sum(1 for r in out.values() if "keine-website" in r["hinweis"])
+    no_mail = sum(1 for r in out.values() if "keine-email" in r["hinweis"])
     roles = sum(1 for r in out.values() if "rollen-adresse" in r["hinweis"])
-    print(f"Leads: {len(out)} | ohne E-Mail übersprungen: {skipped_no_email} | "
-          f"ohne Website: {no_web} | Rollen-Adressen: {roles}")
+    report = (f"Leads: {len(out)} | ohne E-Mail (Impressum-Kandidaten): {no_mail} | "
+              f"ohne Website: {no_web} | Rollen-Adressen: {roles}")
+    if skipped_no_email:
+        report += f" | verworfen (--require-email): {skipped_no_email}"
+    if skipped_unusable:
+        report += f" | verworfen (weder E-Mail noch Website/Firma): {skipped_unusable}"
+    print(report)
     return 0
 
 

@@ -1,6 +1,6 @@
 ---
 name: weg-d-coaches-google
-description: Weg D des Datenbeschaffungs-Pakets — coaches and personal brands via Google SERP scraping, covering both segments in one flow: B2B coaches (Executive, Leadership, Vertrieb, Agile) and B2C coaches (Fitness, Ernährung, Mindset, Spiritualität, Dating). Invoked by the datenbeschaffung master; never triggered directly by the user.
+description: 'Weg D des Datenbeschaffungs-Pakets — coaches and personal brands via Google SERP scraping, covering both segments in one flow: B2B coaches (Executive, Leadership, Vertrieb, Agile) and B2C coaches (Fitness, Ernährung, Mindset, Spiritualität, Dating). Invoked by the datenbeschaffung master; never triggered directly by the user.'
 ---
 
 # Weg D — Coaches über Google

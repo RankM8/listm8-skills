@@ -36,6 +36,10 @@ Dieser Skill orchestriert die Lead-Qualifizierung via MCP Business Tools. Claude
 
 **Batch-Groesse abfragen** (wie /mcp:generate): Default 10, Optionen 50/100/200.
 
+## Phase 0: Vorpruefung — kein paralleler Server-Lauf
+
+`list_lead_runs(campaign_id, active_only=true)` aufrufen. Ist ein serverseitiger Lauf aktiv, der Qualifizierung ODER Research abdeckt, lehnt `write_lead_details` jeden Schreibvorgang mit `lead_run_active` ab (Rennschutz — das Tool prueft beide Stufen gemeinsam). Dann: auf den Terminal-Status warten (`get_lead_run_status`) oder den Lauf nach Ruecksprache mit `cancel_lead_run` stoppen — NICHT parallel losarbeiten.
+
 ## Phase 1: Leads laden
 
 ```
@@ -108,6 +112,7 @@ Abschluss-Report + Hinweis: "Naechster Schritt: /mcp:research — qualifizierte 
 |--------|--------|
 | leads[] leer | "Keine unqualifizierten Leads" -> STOP |
 | write_lead_details error | Fehler notieren, weiter mit naechstem Lead |
+| `lead_run_active` | Parallel laeuft ein Server-Lauf — Batch pausieren, `get_lead_run_status` bis Terminal-Status, dann fortsetzen (Queue ist idempotent) |
 | Sub-Agent Timeout/Crash | Als Fehler zaehlen, Lead bleibt in der Queue |
 | MCP-Verbindungsfehler | 1x Retry, dann STOP |
 

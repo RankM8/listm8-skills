@@ -30,6 +30,7 @@ Phase 3: /mcp:generate  — list_leads(campaign_status="processing") -> Subagent
 2. **Jede Phase folgt exakt ihrem Skill** (`outreach-qualify`, `outreach-research`, `outreach-generate`) — Prompts, Regeln und Fehlerbehandlung von dort uebernehmen, keine abweichende Logik.
 3. **Idempotenz nutzen**: Jede Phase zieht ihre Queue ueber die list_leads-Filter; bereits verarbeitete Leads tauchen nicht mehr auf. Ein abgebrochener Lauf kann jederzeit mit demselben Kommando fortgesetzt werden.
 4. **Fehler blockieren nicht**: Fehlgeschlagene Leads einer Phase bleiben in deren Queue und werden im Report ausgewiesen; die Pipeline laeuft mit den erfolgreichen weiter. Nur wenn ein KOMPLETTER Batch fehlschlaegt: stoppen und User fragen.
+4b. **Rennschutz `lead_run_active`**: Vor dem Start `list_lead_runs(campaign_id, active_only=true)` pruefen — laeuft ein serverseitiger Lauf, sind die Schreib-Tools seiner Stufen gesperrt (`write_lead_details` prueft Qualifizierung UND Research gemeinsam; `save/approve/reject_lead_variables` die E-Mail-Stufe). Faellt ein Schreib-Tool mitten im Lauf mit `lead_run_active` aus, hat parallel jemand einen Server-Lauf gestartet: Phase pausieren, `get_lead_run_status` bis Terminal-Status abwarten, dann fortsetzen — die Queues sind idempotent.
 5. **not_qualified-Leads** verlassen die Pipeline nach Phase 1 automatisch (Research filtert fit_level="qualified").
 
 ## Phasen-Uebergaenge & Reports

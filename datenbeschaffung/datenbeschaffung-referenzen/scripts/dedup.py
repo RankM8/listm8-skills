@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """Vorab-Abgleich gegen den Outreach-Bestand — VOR der kostenpflichtigen Anreicherung.
 
-    python3 dedup.py --index bestand-index.json --in roh.csv --out neu.csv [--warn-domains]
+    python3 dedup.py --index bestand-index.json --in roh.csv --out neu.csv [--drop-known-domains]
 
 --index: Antwort von export_leads(format="index") — {"index": [{"e","d","s","se"?}, ...]}
          (auch als reines Array akzeptiert). Älter als 24 h → Warnung.
-Entfernt: exakte E-Mail-Treffer (inkl. Zweitadressen), do_not_contact-Treffer (hart).
+Entfernt: exakte E-Mail-Treffer (inkl. Zweitadressen), do_not_contact-Treffer (hart — auch
+Zeilen ohne E-Mail, deren Domain gesperrt ist).
 Markiert: Domain-Treffer ("Firma schon im Bestand") in der Spalte `hinweis` — kein Ausschluss,
 es sei denn --drop-known-domains ist gesetzt.
+Zeilen OHNE E-Mail bleiben erhalten (Anreicherungs-Kandidaten) und werden im Report gezählt.
 """
 from __future__ import annotations
 
@@ -62,7 +64,7 @@ def main() -> int:
             if r["d"] not in known_domains or status == "do_not_contact":
                 known_domains[r["d"]] = status
 
-    kept, dropped_known, dropped_dnc, domain_hits = [], [], [], 0
+    kept, dropped_known, dropped_dnc, domain_hits, no_email_kept = [], [], [], 0, 0
     with open(args.infile, encoding="utf-8-sig", newline="") as fh:
         reader = csv.DictReader(fh)
         fields = list(reader.fieldnames or [])
@@ -70,27 +72,28 @@ def main() -> int:
             fields.append("hinweis")
         for row in reader:
             email = (row.get("email") or "").strip().lower()
-            if not email:
-                continue
-            status = known_emails.get(email)
-            if status == "do_not_contact":
-                dropped_dnc.append(email)
-                continue
-            if status is not None:
-                dropped_known.append(email)
-                continue
+            if email:
+                status = known_emails.get(email)
+                if status == "do_not_contact":
+                    dropped_dnc.append(email)
+                    continue
+                if status is not None:
+                    dropped_known.append(email)
+                    continue
             dom = root_domain(row.get("website")) or (email.split("@", 1)[1] if "@" in email else None)
             dom_status = known_domains.get(dom) if dom else None
             if dom_status == "do_not_contact":
-                dropped_dnc.append(email)
+                dropped_dnc.append(email or f"(ohne E-Mail: {dom})")
                 continue
             if dom_status is not None:
                 domain_hits += 1
                 if args.drop_known_domains:
-                    dropped_known.append(email)
+                    dropped_known.append(email or f"(ohne E-Mail: {dom})")
                     continue
                 hinweis = (row.get("hinweis") or "").strip()
                 row["hinweis"] = (hinweis + ";" if hinweis else "") + "firma-schon-im-bestand"
+            if not email:
+                no_email_kept += 1
             kept.append(row)
 
     with open(args.out, "w", encoding="utf-8", newline="") as fh:
@@ -99,7 +102,8 @@ def main() -> int:
         writer.writerows(kept)
 
     print(f"Behalten: {len(kept)} | Schon im Bestand entfernt: {len(dropped_known)} | "
-          f"do_not_contact entfernt: {len(dropped_dnc)} | Domain-Warnungen: {domain_hits}")
+          f"do_not_contact entfernt: {len(dropped_dnc)} | Domain-Warnungen: {domain_hits}"
+          + (f" | ohne E-Mail behalten (Anreicherungs-Kandidaten): {no_email_kept}" if no_email_kept else ""))
     if dropped_dnc:
         print("do_not_contact (NIE anschreiben): " + ", ".join(sorted(set(dropped_dnc))[:20]))
     return 0
