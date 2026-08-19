@@ -133,7 +133,7 @@ Warte bis ALLE Sub-Agents des Batches fertig sind (sie laufen im Background — 
 
 Zaehle:
 - Erfolgreiche Generierungen (save_lead_variables returned `status: "success"`)
-- Fehler (save_lead_variables returned `status: "error"` oder Agent-Fehler)
+- Fehler (save_lead_variables warf einen Tool-Fehler/isError, oder der Agent selbst schlug fehl)
 
 Zeige Batch-Report:
 ```
@@ -233,15 +233,10 @@ Success-Response:
 }
 ```
 
-Error-Response bei fehlenden Variablen:
-```json
-{
-  "status": "error",
-  "message": "Variable(s) missing from submission: 'intro'",
-  "expected_variables": ["hallo", "intro"],
-  "received_variables": ["hallo"]
-}
-```
+Fehler bei fehlenden Variablen: Das Tool liefert KEIN Error-JSON, sondern einen
+Tool-Fehler (isError) mit Text wie `validation_failed: Variable(s) missing from
+submission: 'intro'` — die fehlenden Namen stehen im Fehlertext. Alle Variablen
+aus `emailGeneration.expectedOutput` nachliefern und erneut senden.
 
 ### Verification-Tools (siehe `/mcp:verify`)
 
@@ -249,7 +244,7 @@ Die folgenden Tools werden im Verification-Workflow verwendet, NICHT in der Gene
 
 - **get_lead_variables** — laedt aktuelle Variablen-Werte (Name, Wert, Status, generatedAt) zur Pruefung
 - **approve_lead_variables** — gibt Variablen frei (`LeadCampaignStatus = approved`, ready fuer CSV-Export)
-- **reject_lead_variables** — lehnt Variablen ab mit `reason` (`LeadCampaignStatus = rejected`, vom CSV-Export ausgeschlossen)
+- **reject_lead_variables** — lehnt Variablen ab mit `reason` (`LeadCampaignStatus = rejected`; NICHT final: der Lead zaehlt wieder als generierungsbeduerftig und wird beim naechsten Generate/Run neu erzeugt. Dauerhaft raus = aus Kampagne entfernen oder `mark_leads_contacted(emails, status="do_not_contact")`)
 
 Details: siehe `/mcp:verify` Skill.
 

@@ -51,6 +51,14 @@ macht `process_serp.py` gegen `noise-domains.md`. Bewährter Kern für Google-We
 -site:instagram.com -site:linkedin.com -site:youtube.com -site:xing.com
 ```
 
+So erzeugen (der `--exclude N`-Zähler nimmt nur die ERSTEN N Domains aus noise-domains.md,
+nie diesen Kern — für den Kern und fürs Tauschen immer `--exclude-domains` verwenden):
+
+```
+python3 ../datenbeschaffung-referenzen/scripts/build_queries.py --keywords "..." \
+  --exclude-domains "indeed.com,stepstone.de,kleinanzeigen.de,facebook.com,instagram.com,linkedin.com,youtube.com,xing.com"
+```
+
 Nischen-Ergänzung statt Verlängerung: den nischenspezifisch stärksten Treiber gegen einen der
 Kern-Ausschlüsse tauschen (B2C-Coaching: `superprof.de` und `yelp.com`; B2B: `kununu.com` und
 `glassdoor.com`; E-Commerce: `amazon.de`, `otto.de`, `zalando.de`, `idealo.de`).

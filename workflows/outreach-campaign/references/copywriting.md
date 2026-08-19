@@ -26,8 +26,8 @@ Fakten. Max. 2 Sätze, beginnt klein (folgt auf die Anrede), über den EMPFÄNGE
 
 ## Betreffzeilen
 
-2–5 Wörter, mit {{firstName}}. Bewährt: „Meeting {{firstName}} & <Vorname>", „kurze Frage,
-{{firstName}}", „Anfrage für {{firstName}}". Verboten im Betreff: Spam-Trigger („gratis",
+2–5 Wörter, mit {{firstName}}. Bewährt: „kurze Frage, {{firstName}}", „Anfrage für
+{{firstName}}", „Idee für {{companyName}}". Verboten im Betreff: Spam-Trigger („gratis",
 „kostenlos", „100 %", „garantiert", „jetzt zugreifen", „Rabatt", „dringend", „unverbindlich",
 „exklusives Angebot"), Ausrufezeichen, VOLLGROSS, Fake-„Re:".
 

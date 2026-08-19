@@ -16,7 +16,7 @@ Dieser Skill orchestriert den automatischen Review von AI-generierten Variablen 
 ```
 1. list_campaigns -> Kampagne identifizieren (oder campaign_id aus Argument)
    |
-2. list_leads(campaign_id, campaign_status="pending_review", limit={batch_size})
+2. list_leads(campaign_id, campaign_status="pending_review", fit_level="", research_status="", limit={batch_size})
    -> Leads mit generierten, noch nicht freigegebenen Variablen
    |
 3. Fuer jeden Lead: Sub-Agent spawnen (parallel, bis zu {batch_size} gleichzeitig)
@@ -71,11 +71,13 @@ Rufe auf:
 list_leads(
   campaign_id = <ID>,
   campaign_status = "pending_review",
+  fit_level = "",
+  research_status = "",
   limit = {batch_size}
 )
 ```
 
-**WICHTIG:** `campaign_status="pending_review"` filtert auf Leads mit generierten, noch nicht freigegebenen Variablen.
+**WICHTIG:** `campaign_status="pending_review"` filtert auf Leads mit generierten, noch nicht freigegebenen Variablen. `fit_level=""` und `research_status=""` MUESSEN explizit gesetzt werden — die Defaults (`qualified`/`researched`) filtern sonst still mit, und pending_review-Leads aus Server-Runs ohne eigene Qualifizierung/Research tauchen NIE im Review auf ("Keine Leads zur Review" trotz pending_review > 0 in list_campaigns).
 
 Merke dir aus der Response:
 - `campaign.name` und `campaign.id`
@@ -195,9 +197,11 @@ Kampagne: {campaign.name} (ID: {campaign.id})
 Gesamt verarbeitet: {total_processed} Leads
 Freigegeben: {total_approved} | Abgelehnt: {total_rejected} | Fehler: {total_errors}
 Status: Freigegebene Leads auf "approved" gesetzt (ready fuer CSV-Export)
-        Abgelehnte Leads auf "rejected" gesetzt (vom CSV-Export ausgeschlossen)
+        Abgelehnte Leads auf "rejected" gesetzt (nicht im Export; siehe Hinweis)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
+
+**WICHTIG — "rejected" ist NICHT final:** Ein rejected-Lead zaehlt als generierungsbeduerftig — der naechste E-Mail-Run bzw. Re-Generate erzeugt neue Variablen und setzt ihn zurueck auf pending_review (der `reason` fliesst in die Neu-Generierung ein). Soll ein Lead DAUERHAFT raus: aus der Kampagne entfernen oder `mark_leads_contacted(emails=[...], status="do_not_contact")` setzen — dann wird er global von allen AI-Jobs und Exporten ausgeschlossen.
 
 ## MCP Tool Reference
 

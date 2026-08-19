@@ -3,6 +3,12 @@
 > zuletzt geprüft: **2026-08-19** · GOLD-Tier · Quelle: echte Läufe (SHK Köln/Düsseldorf).
 > Regel: Vor JEDEM kostenpflichtigen Lauf die erwarteten Kosten aus dieser Tabelle kalkulieren
 > und dem Nutzer nennen. Jeder Lauf bekommt einen harten Deckel (`maxTotalChargeUsd`).
+>
+> **Was „GOLD-Tier" heißt:** Apify staffelt die Pay-per-Event-Preise nach Konto-Tier
+> (FREE/BRONZE/SILVER/GOLD — abhängig vom Monatsumsatz). Diese Tabelle nennt GOLD-Preise;
+> **Free-/Starter-Konten zahlen je Einheit MEHR** (teils 20–50 %). Bei der Pflicht-Kostennennung
+> für einen Neukunden deshalb dazusagen: „Zahlen sind GOLD-Tier — dein Konto zahlt anfangs etwas
+> mehr; das eigene Tier steht in der Apify-Konsole unter Billing."
 
 ## Belegte Ist-Kosten
 

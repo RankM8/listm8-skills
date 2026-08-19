@@ -23,7 +23,7 @@ Die Regeln sind NICHT optional:
    einer actor-internen Google-Suche.
 2. **`domainBlacklist` IMMER setzen** — die Portal-Domains aus `../datenbeschaffung-referenzen/references/noise-domains.md`
    (kommagetrennt). Portale werden sonst voll berechnet: bares Geld.
-3. **Batches fahren.** 0,04 $ Actor-Start je Lauf — nie tröpfeln, minimal ~50 Domains je Lauf.
+3. **Batches fahren.** Jeder Lauf kostet die Actor-Startgebühr (`kosten.md`) — nie tröpfeln, minimal ~50 Domains je Lauf.
 4. **Ein-Entwickler-Risiko:** Schlägt der Primär-Actor fehl oder liefert leer, auf Fallback A
    ausweichen (nur schwächere Register-Felder), für die reine E-Mail-Lücke reicht Fallback B.
 
@@ -38,8 +38,9 @@ Die Regeln sind NICHT optional:
 }
 ```
 
-Kosten vorher nennen: je erfolgreicher Domain ~0,0076 $ (inkl. Validierung) + 0,04 $ Start —
-`kosten.md`. Deckel setzen.
+Kosten vorher nennen — die Zahlen (je erfolgreicher Domain inkl. Validierung + Startgebühr)
+kommen NUR aus `../datenbeschaffung-referenzen/references/kosten.md`, nie aus dem Gedächtnis.
+Deckel setzen.
 
 ## Auswertung
 

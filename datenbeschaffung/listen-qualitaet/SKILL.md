@@ -43,10 +43,11 @@ eine gültige E-Mail pro Zeile).
 
 ## Schritt 3 — Verifizierung
 
-Regel aus `apify-actors.md`: Verifizierung ist ein eigener Schritt (0,0006 $/Adresse,
-`michael.g/email-verifier-validator`) — **außer** der Weg hat schon validiert (Impressum-Primär
-liefert `email_status` mit; dann nur UNDELIVERABLE aussortieren). Kosten vorher nennen (Leitsatz 2
-des Masters). Ergebnis: nur zustellbare Adressen bleiben; Bounce-Ziel < 3 %.
+Verifizierung ist ein eigener Schritt mit dem gepinnten E-Mail-Verifier aus
+`../datenbeschaffung-referenzen/references/apify-actors.md` (Actor-ID und Preis NUR von dort —
+nie aus dem Gedächtnis) — **außer** der Weg hat schon validiert (Impressum-Primär liefert
+`email_status` mit; dann nur UNDELIVERABLE aussortieren). Kosten vorher nennen (Leitsatz 2
+des Masters, Zahlen aus `kosten.md`). Ergebnis: nur zustellbare Adressen bleiben; Bounce-Ziel < 3 %.
 
 ## Schritt 4 — 20er-Sample (die eine strenge Prüfung)
 

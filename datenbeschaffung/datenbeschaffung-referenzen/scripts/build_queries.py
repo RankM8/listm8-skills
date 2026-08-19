@@ -47,7 +47,10 @@ def main() -> int:
     ap.add_argument("--region", choices=list(CITIES) + ["custom"], default="de")
     ap.add_argument("--cities", help='kommagetrennt — überschreibt --region; "" = ohne Stadt')
     ap.add_argument("--exclude", type=int, default=6,
-                    help="Anzahl -site:-Ausschlüsse je Query (0 = keine; Google mag <10)")
+                    help="Anzahl -site:-Ausschlüsse je Query aus noise-domains.md (0 = keine; Google mag <10)")
+    ap.add_argument("--exclude-domains",
+                    help='konkrete Domains statt der Zählung, kommagetrennt — z. B. der bewährte '
+                         'Kern aus erfahrungswerte.md: "indeed.com,stepstone.de,kleinanzeigen.de,..."')
     ap.add_argument("--noise", type=pathlib.Path,
                     default=pathlib.Path(__file__).parent.parent / "references/noise-domains.md")
     args = ap.parse_args()
@@ -56,7 +59,10 @@ def main() -> int:
     # --cities "" ist eine bewusste Entscheidung (ohne Stadt), kein Fallback auf die Region.
     cities = (CITIES[args.region] if args.cities is None
               else [c.strip() for c in args.cities.split(",") if c.strip()])
-    excludes = noise_domains(args.noise, args.exclude) if args.exclude else []
+    if args.exclude_domains is not None:
+        excludes = [d.strip().lower() for d in args.exclude_domains.split(",") if d.strip()]
+    else:
+        excludes = noise_domains(args.noise, args.exclude) if args.exclude else []
     suffix = (" " + " ".join(f"-site:{d}" for d in excludes)) if excludes else ""
 
     for kw in keywords:

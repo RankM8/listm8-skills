@@ -15,6 +15,18 @@ description: Stufe 2 des Datenbeschaffungs-Pakets — bulk Google Maps harvestin
 Sinnvoll ab: **>10.000 Leads**, ganze Länder, wiederkehrende Flächen-Scrapes. Darunter ist der
 Apify-Weg schneller, billiger zu steuern und iterativ korrigierbar.
 
+## Pilot-Pflicht (Leitsatz 3 des Masters — gilt HIER erst recht)
+
+Kein Flächenjob ohne Pilot: Bei 12–24 h Laufzeit merkt der Nutzer eine falsche Kategorie
+oder Region erst einen Tag und viel Geld später. Deshalb VOR dem großen Job:
+
+1. **Pilot über `weg-c-local-maps`** (Apify, Minuten statt Stunden) mit denselben Kategorien
+   auf EINER repräsentativen Stadt der Zielfläche — 30–50 Places reichen.
+2. **~70 %-Schwelle:** Passen mindestens ~70 % der Pilot-Treffer zum ICP-Satz, ist die
+   Kategorien-Wahl bestätigt. Darunter: Kategorien nachschärfen und Pilot wiederholen —
+   NICHT den Flächenjob starten.
+3. Erst danach den Outscraper-Job bauen (Schritt 2) — mit exakt den pilot-bestätigten Kategorien.
+
 ## Zugang (nicht Apify)
 
 Outscraper ist ein eigener Anbieter mit eigenem Konto und eigenem Schlüssel — `zugriff.md` gilt hier

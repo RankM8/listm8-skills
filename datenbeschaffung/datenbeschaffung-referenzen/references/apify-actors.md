@@ -1,6 +1,6 @@
 # Gepinnte Apify-Actors — Empfehlungen mit Beleg
 
-> zuletzt geprüft: **2026-08-19** · Preise GOLD-Tier · belegt durch echte Testläufe (SHK Köln/Düsseldorf).
+> zuletzt geprüft: **2026-08-19** · Preise GOLD-Tier (Free-/Starter-Konten zahlen je Einheit mehr — Erklärung in `kosten.md`) · belegt durch echte Testläufe (SHK Köln/Düsseldorf).
 > Actor-IDs kommen NUR aus dieser Tabelle. Neue Funde aus dem Recherchemodus werden HIER
 > mit Datum ergänzt — nie nur im Chat gelassen.
 
