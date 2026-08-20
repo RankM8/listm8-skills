@@ -1,7 +1,7 @@
 # ListM8 Skills — Outreach-Workflows + Datenbeschaffung
 
 Das eine Skills-Repo für Kunden der Outreach-Plattform (ListM8 / Akquise-Whitelabel).
-Privat — die Inhalte sind Teil des Produkts.
+Öffentlich — Installation und Updates laufen für jeden Kunden über `npx skills add`.
 
 ```
 workflows/          Produkt-Workflows (brauchen den verbundenen Outreach-MCP)
@@ -26,16 +26,17 @@ datenbeschaffung/   Leads beschaffen (funktioniert auch ohne MCP — mit MCP bes
 
 ## Installation
 
-**Ein Befehl, alle Skills** (Claude Code, Cursor, Codex — GitHub-Zugriff auf dieses Repo nötig):
+**Ein Befehl, alle Skills** (Claude Code, Cursor, Codex):
 
 ```
 npx skills add RankM8/listm8-skills
 ```
 
-**Ohne GitHub-Zugang:** Das Datenbeschaffungs-Paket gibt es als ZIP-Download in der App
-(Einrichtung → Skills → „Leads beschaffen"). ZIP entpacken und dem KI-Assistenten als
-Skills-Verzeichnis geben. Die Workflow-Funktionen stehen in Claude/ChatGPT auch ohne
-Skills bereit — der MCP-Server liefert sie als eingebaute Prompts.
+**Ohne Kommandozeile:** Das Datenbeschaffungs-Paket gibt es zusätzlich als ZIP-Download in
+der App (Einrichtung → Skills → „Leads beschaffen"). Die Workflow-Funktionen stehen in
+Claude/ChatGPT auch ohne Skills bereit — der MCP-Server liefert sie als eingebaute Prompts.
+
+**Update:** einfach `npx skills add RankM8/listm8-skills` erneut ausführen.
 
 **Voraussetzung für `workflows/`:** verbundener Outreach-MCP (Einrichtungs-Seite der App,
 MCP-Tab). Die Skills nutzen dessen Auth — kein separates Login.
