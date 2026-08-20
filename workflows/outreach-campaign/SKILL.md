@@ -11,8 +11,8 @@ Dieser Skill erstellt oder bearbeitet vollstaendige, onboarding-aequivalente Kam
 
 | Eingabe | Verhalten |
 |---------|-----------|
-| `/mcp:campaign` | Briefing interaktiv abfragen, dann erstellen |
-| `/mcp:campaign <briefing-text oder datei>` | Blueprint aus Briefing bauen, dann erstellen |
+| `/outreach-campaign` | Briefing interaktiv abfragen, dann erstellen |
+| `/outreach-campaign <briefing-text oder datei>` | Blueprint aus Briefing bauen, dann erstellen |
 | `bearbeite kampagne 80 via mcp: <aenderungswunsch>` | Edit-Flow (Voll-Blueprint-Ersatz) |
 
 ## Phase 1: Briefing sammeln
@@ -23,7 +23,7 @@ Mindestens klaeren (fehlendes nachfragen, AskUserQuestion):
 2. **USPs** (2-4 Punkte) und **Tonalitaet** (z.B. locker-direkt vs. formal).
 3. **CTA/Offer**: Was ist der konkrete naechste Schritt (z.B. "Website-Vorschau schicken")?
 4. **Qualifizierung**: Wer ist ideal, was disqualifiziert?
-5. **Research-Fokus**: Wonach sollen Subagents suchen (Aufhaenger-Prioritaeten)?
+5. **Research-Fokus**: Wonach soll die Recherche suchen (Aufhaenger-Prioritaeten — steuert sowohl die Manuell-Subagents als auch die serverseitigen Agents)?
 6. **Sequenz**: Wie viele Steps (Empfehlung: 3), Abstaende (z.B. 0/3/4 Tage)?
 
 ## Phase 1b: Qualität nach SOP (Pflicht, bevor eine Zeile Blueprint entsteht)
@@ -102,9 +102,9 @@ Blueprint dem User zur Bestaetigung zeigen (kompakt: Name, Variablen, Step-Betre
 
 ## Abschluss
 
-Report: campaign_id, Name, importierte Steps/Variablen/Configs. Hinweis: "Naechster Schritt: /mcp:import — Leads in die Kampagne laden."
+Report: campaign_id, Name, importierte Steps/Variablen/Configs. Hinweis: "Naechster Schritt: /outreach-import — Leads in die Kampagne laden."
 
 ## Verwandt
 
-- `/mcp:import` (Leads laden), `/mcp:pipeline` (Qualify→Research→Generate)
+- `/outreach-import` (Leads laden), `/outreach-pipeline` (Qualify→Research→Generate)
 - die Tool-Beschreibungen des MCP-Servers

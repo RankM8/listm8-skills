@@ -5,7 +5,7 @@ description: Use when user says "outreach:qualify", "mcp:qualify", "qualifiziere
 
 # MCP Qualify — Lead-Qualifizierung durch Claude-Subagents
 
-Dieser Skill orchestriert die Lead-Qualifizierung via MCP Business Tools. Claude-Subagents bewerten jeden Lead gegen die Kampagnen-Kriterien (aus `get_lead_data.qualificationGeneration`) und schreiben das Ergebnis via `write_lead_details` zurueck. Die ListM8-interne Qualification-Pipeline (OpenRouter) wird NICHT verwendet.
+Dieser Skill orchestriert die Lead-Qualifizierung via MCP Business Tools. Claude-Subagents bewerten jeden Lead gegen die Kampagnen-Kriterien (aus `get_lead_data.qualificationGeneration`) und schreiben das Ergebnis via `write_lead_details` zurueck. Die serverseitige Qualification-Pipeline (OpenRouter) wird dabei bewusst NICHT verwendet — dieser Skill ist der **Manuell-Modus**: dein Client denkt selbst, mit eigenem Modell und eigenen Quellen. Standard fuer den kompletten Durchlauf ist der serverseitige Lauf via `/outreach-pipeline` (Tool `start_lead_run`). Vor dem Start `list_lead_runs(campaign_id, active_only=true)` pruefen: bei aktivem Lauf mit Qualifizierungs- ODER Research-Stufe blockt `write_lead_details` mit `lead_run_active` — warten (`get_lead_run_status`) oder `cancel_lead_run`.
 
 > **Hinweis zur Parallelisierung:** Wenn dein Client parallele Subagents unterstuetzt (z.B. Claude Code), spawne pro Lead einen Subagent wie beschrieben. Andernfalls arbeite die Leads **sequentiell** mit exakt denselben Schritten ab — das Ergebnis ist identisch, nur langsamer.
 
@@ -30,11 +30,11 @@ Dieser Skill orchestriert die Lead-Qualifizierung via MCP Business Tools. Claude
 
 | Eingabe | Verhalten |
 |---------|-----------|
-| `/mcp:qualify` | Zeigt Kampagnen via list_campaigns, User waehlt |
-| `/mcp:qualify 80` | Startet direkt fuer Kampagne 80 |
+| `/outreach-qualify` | Zeigt Kampagnen via list_campaigns, User waehlt |
+| `/outreach-qualify 80` | Startet direkt fuer Kampagne 80 |
 | `qualifiziere leads fuer kampagne 80` | Startet direkt fuer Kampagne 80 |
 
-**Batch-Groesse abfragen** (wie /mcp:generate): Default 10, Optionen 50/100/200.
+**Batch-Groesse abfragen** (wie /outreach-generate): Default 10, Optionen 50/100/200.
 
 ## Phase 0: Vorpruefung — kein paralleler Server-Lauf
 
@@ -102,9 +102,9 @@ LEAD: {lead.company} (ID: {lead.id})
 
 ## Phase 3: Report & naechster Batch
 
-Wie /mcp:generate: Batch-Report (Erfolg/Fehler/Verbleibend), dann erneut `list_leads` bis `remaining == 0`. Fehlgeschlagene Leads bleiben `qualification_status=pending` und tauchen im naechsten Lauf wieder auf — kein automatischer Einzel-Retry.
+Wie /outreach-generate: Batch-Report (Erfolg/Fehler/Verbleibend), dann erneut `list_leads` bis `remaining == 0`. Fehlgeschlagene Leads bleiben `qualification_status=pending` und tauchen im naechsten Lauf wieder auf — kein automatischer Einzel-Retry.
 
-Abschluss-Report + Hinweis: "Naechster Schritt: /mcp:research — qualifizierte Leads recherchieren".
+Abschluss-Report + Hinweis: "Naechster Schritt: /outreach-research — qualifizierte Leads recherchieren".
 
 ## Fehlerbehandlung
 
@@ -118,5 +118,5 @@ Abschluss-Report + Hinweis: "Naechster Schritt: /mcp:research — qualifizierte 
 
 ## Verwandt
 
-- `/mcp:research` — Research fuer qualifizierte Leads (naechste Phase)
-- `/mcp:generate` — AI-Variablen (nach Research)
+- `/outreach-research` — Research fuer qualifizierte Leads (naechste Phase)
+- `/outreach-generate` — AI-Variablen (nach Research)

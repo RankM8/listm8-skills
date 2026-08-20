@@ -5,7 +5,7 @@ description: Use when user says "outreach:generate", "mcp:generate", "generiere 
 
 # MCP Generate — AI-Variablen-Generierung
 
-Dieser Skill orchestriert die vollautomatische AI-Variablen-Generierung fuer Leads via MCP Business Tools. Claude generiert AI-Variablen basierend auf Research, Qualification und Screenshots, und speichert sie via `save_lead_variables`. Email-Body und Subject werden NICHT durch diesen Skill erzeugt — sie sind in der Email-Sequenz hardcoded und werden beim CSV-Export live mit den Variablen gerendert.
+Dieser Skill orchestriert die vollautomatische AI-Variablen-Generierung fuer Leads via MCP Business Tools. Claude generiert AI-Variablen basierend auf Research, Qualification und Custom Attributes, und speichert sie via `save_lead_variables`. Email-Body und Subject werden NICHT durch diesen Skill erzeugt — sie sind in der Email-Sequenz hardcoded und werden beim CSV-Export live mit den Variablen gerendert. Dieser Skill ist der **Manuell-Modus**; Standard ist der serverseitige Lauf via `/outreach-pipeline` (Tool `start_lead_run`, Stufe `email`). Vor dem Start `list_lead_runs(campaign_id, active_only=true)` pruefen: bei aktivem email-Lauf blockt `save_lead_variables` mit `lead_run_active`.
 
 > **Hinweis zur Parallelisierung:** Wenn dein Client parallele Subagents unterstuetzt (z.B. Claude Code), spawne pro Lead einen Subagent wie beschrieben. Andernfalls arbeite die Leads **sequentiell** mit exakt denselben Schritten ab — das Ergebnis ist identisch, nur langsamer.
 
@@ -31,8 +31,8 @@ Dieser Skill orchestriert die vollautomatische AI-Variablen-Generierung fuer Lea
 
 | Eingabe | Verhalten |
 |---------|-----------|
-| `/mcp:generate` | Zeigt Kampagnen via list_campaigns, User waehlt |
-| `/mcp:generate 76` | Startet direkt fuer Kampagne 76 |
+| `/outreach-generate` | Zeigt Kampagnen via list_campaigns, User waehlt |
+| `/outreach-generate 76` | Startet direkt fuer Kampagne 76 |
 | `generiere emails fuer kampagne 76` | Startet direkt fuer Kampagne 76 |
 
 ## Schritt-fuer-Schritt Anleitung
@@ -106,7 +106,7 @@ LEAD: {lead.company} (ID: {lead.id})
 1. Rufe get_lead_data(campaign_id={campaign.id}, lead_id={lead.id}) auf
 2. Lies den emailGeneration.systemPrompt sorgfaeltig — er definiert Ton, Stil und Kontext
 3. Analysiere Research, Qualification und Custom Attributes
-4. Analysiere die Screenshots visuell (falls URLs vorhanden und dein Client Bilder laden kann)
+4. Optional: Besuche die Lead-Website (lead.website), falls dein Client Websites laden kann — get_lead_data liefert KEINE Screenshots
 5. Generiere fuer JEDE Variable in emailGeneration.variables[] den Text gemaess ihrem Prompt
 6. REVIEW — Pruefe JEDE generierte Variable gegen diese Checkliste:
    - Umlaute korrekt geschrieben? (Ä/Ö/Ü/ä/ö/ü/ß — NIEMALS AE/OE/UE/ae/oe/ue/ss)
@@ -132,8 +132,8 @@ WICHTIG: variables ist ein JSON-STRING. ALLE Variablen aus emailGeneration.expec
 Warte bis ALLE Sub-Agents des Batches fertig sind (sie laufen im Background — du wirst benachrichtigt).
 
 Zaehle:
-- Erfolgreiche Generierungen (save_lead_variables returned `status: "success"`)
-- Fehler (save_lead_variables warf einen Tool-Fehler/isError, oder der Agent selbst schlug fehl)
+- Erfolgreiche Generierungen (`save_lead_variables` liefert das unveraenderte Erfolgs-Payload mit `status: "success"`)
+- Fehler (`save_lead_variables` liefert ein MCP-Tool-Result mit `isError: true`; der Text beginnt mit einem Code wie `validation_failed:` oder `contact_gate:` — oder der Agent selbst ist fehlgeschlagen)
 
 Zeige Batch-Report:
 ```
@@ -160,7 +160,7 @@ Gesamt verarbeitet: {total_processed} Leads
 Erfolg: {total_success} | Fehler: {total_errors}
 Status: Verarbeitete Leads auf "pending_review" gesetzt
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Naechster Schritt: /mcp:verify — Variablen pruefen und freigeben
+Naechster Schritt: /outreach-verify — Variablen pruefen und freigeben
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -233,12 +233,17 @@ Success-Response:
 }
 ```
 
-Fehler bei fehlenden Variablen: Das Tool liefert KEIN Error-JSON, sondern einen
-Tool-Fehler (isError) mit Text wie `validation_failed: Variable(s) missing from
-submission: 'intro'` — die fehlenden Namen stehen im Fehlertext. Alle Variablen
-aus `emailGeneration.expectedOutput` nachliefern und erneut senden.
+Fehler bei fehlenden Variablen: Das MCP-Tool-Result trägt `isError: true`; sein TextContent lautet:
 
-### Verification-Tools (siehe `/mcp:verify`)
+```text
+validation_failed: Variable(s) missing from submission: 'intro'
+```
+
+Die fehlenden Namen stehen im Fehlertext — alle Variablen aus `emailGeneration.expectedOutput` nachliefern und erneut senden.
+
+Das Tool liefert nur den Text `<lowercase_code>: <message>` und keine strukturierte Fehler-Response. Weitere erwartete Codes sind z.B. `contact_gate`, `variables_not_configured`, `campaign_not_found`, `lead_not_found`, `lead_not_in_campaign` und `insufficient_scope`.
+
+### Verification-Tools (siehe `/outreach-verify`)
 
 Die folgenden Tools werden im Verification-Workflow verwendet, NICHT in der Generierung:
 
@@ -246,7 +251,7 @@ Die folgenden Tools werden im Verification-Workflow verwendet, NICHT in der Gene
 - **approve_lead_variables** — gibt Variablen frei (`LeadCampaignStatus = approved`, ready fuer CSV-Export)
 - **reject_lead_variables** — lehnt Variablen ab mit `reason` (`LeadCampaignStatus = rejected`; NICHT final: der Lead zaehlt wieder als generierungsbeduerftig und wird beim naechsten Generate/Run neu erzeugt. Dauerhaft raus = aus Kampagne entfernen oder `mark_leads_contacted(emails, status="do_not_contact")`)
 
-Details: siehe `/mcp:verify` Skill.
+Details: siehe `/outreach-verify` Skill.
 
 ## Fehlerbehandlung
 
@@ -259,7 +264,7 @@ Details: siehe `/mcp:verify` Skill.
 | Alle Agents eines Batches fehlgeschlagen | Warnung ausgeben, User fragen ob fortfahren |
 | Netzwerk/MCP-Verbindungsfehler | 1x Retry, dann STOP mit Fehlermeldung |
 
-**Kein automatischer Retry einzelner Leads** — fehlgeschlagene Leads koennen spaeter mit `/mcp:generate` erneut verarbeitet werden (sie haben noch keinen `pending_review`-Status und tauchen wieder in list_leads auf).
+**Kein automatischer Retry einzelner Leads** — fehlgeschlagene Leads koennen spaeter mit `/outreach-generate` erneut verarbeitet werden (sie haben noch keinen `pending_review`-Status und tauchen wieder in list_leads auf).
 
 ## Wichtige Hinweise
 

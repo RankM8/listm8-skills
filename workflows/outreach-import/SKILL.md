@@ -5,14 +5,14 @@ description: Use when user says "outreach:import", "mcp:import", "importiere lea
 
 # MCP Import — Lead-Listen hochladen
 
-Dieser Skill laedt Lead-Listen ueber das MCP-Tool `import_leads` (Scope `leads:write`) in ListM8 — aus CSV-Dateien (z.B. OutScraper-Exporte), JSON oder Inline-Daten. Mit `campaign_id` startet die Pipeline (Status `processing`); ohne entstehen unkategorisierte Leads in der globalen Liste.
+Dieser Skill laedt Lead-Listen ueber das MCP-Tool `import_leads` (Scope `leads:write`) in ListM8 — aus CSV-Dateien (z.B. OutScraper-Exporte), JSON oder Inline-Daten. Mit `campaign_id` werden die Leads der Kampagne zugeordnet (Status `processing`); ohne entstehen unkategorisierte Leads in der globalen Liste. Der Import startet KEINE Verarbeitung — anschliessend `/outreach-pipeline` (serverseitiger Lauf via `start_lead_run`) oder die Manuell-Skills.
 
 ## Aufruf
 
 | Eingabe | Verhalten |
 |---------|-----------|
-| `/mcp:import <datei> 80` | Datei parsen, in Kampagne 80 importieren |
-| `/mcp:import <datei>` | Kampagne via list_campaigns waehlen (oder "ohne Kampagne") |
+| `/outreach-import <datei> 80` | Datei parsen, in Kampagne 80 importieren |
+| `/outreach-import <datei>` | Kampagne via list_campaigns waehlen (oder "ohne Kampagne") |
 | `importiere diese leads: ...` | Inline-Daten importieren |
 
 ## Phase 1: Daten parsen (Claude-seitig)
@@ -27,7 +27,7 @@ Dieser Skill laedt Lead-Listen ueber das MCP-Tool `import_leads` (Scope `leads:w
    { "rating": {"action": "create_new", "name": "Google Rating", "fieldType": "text"},
      "branche": {"action": "map_existing", "fieldKey": "branche"} }
    ```
-4. Vorab-Check: Zeilen ohne gueltige E-Mail zaehlen und dem User melden — das Tool weist den GESAMTEN Call ab, wenn ungueltige E-Mails enthalten sind (die Fehlermeldung nennt die ersten 20 betroffenen Zeilen im Text). Ungueltige Zeilen vor dem Call entfernen und im Report ausweisen.
+4. Vorab-Check: Zeilen ohne gueltige E-Mail zaehlen und dem User melden — das Tool weist den GESAMTEN Call ab, wenn ungueltige E-Mails enthalten sind. Die ersten 20 Zeilendiagnosen stehen direkt im `isError`-Text nach dem Prefix `validation_failed:`; es gibt kein strukturiertes `invalid_rows`-Feld. Ungueltige Zeilen vor dem Call entfernen und im Report ausweisen.
 5. Vorab-Dedup bei gescrapten Listen: VOR dem Import `check_leads_exist` (bzw. den kompletten Listen-Flow aus `/outreach-lists`) fahren — Bestands-Leads und `do_not_contact`-Treffer dem User zeigen, bevor Geld oder Kampagnenplaetze draufgehen.
 
 ## Phase 2: Import
@@ -57,11 +57,14 @@ Der Import ist ERST fertig, wenn der Job es sagt — nie nach festem Warten zaeh
 
 ## Fehlerbehandlung
 
+Erwartete Tool-Fehler sind MCP-Tool-Results mit `isError: true`; ihr Text beginnt mit `<lowercase_code>:`. Es gibt kein strukturiertes Fehler-Payload.
+
 | Code | Aktion |
 |------|--------|
-| `VALIDATION_FAILED` | Fehlermeldung nennt die ungueltigen Zeilen (max 20) im Text — fixen/entfernen, erneut senden |
-| `LIMIT_REACHED` | Chunk verkleinern bzw. User informieren (Plan-Limit MAX_LEADS) |
-| `CAMPAIGN_NOT_FOUND` / `LIST_NOT_FOUND` | IDs pruefen (`list_campaigns` / `list_lists`) |
+| `validation_failed` mit inline aufgefuehrten Zeilen | Genannte Zeilen fixen/entfernen, erneut senden |
+| `limit_reached` | Chunk verkleinern bzw. User informieren (Plan-Limit MAX_LEADS) |
+| `campaign_not_found` / `list_not_found` | IDs pruefen (`list_campaigns` / `list_lists`) |
+| `insufficient_scope` | Token mit Scope `leads:write` verwenden |
 | Job `failed` in get_job_status | Fehlertext aus dem Job-Result berichten; Import NICHT blind wiederholen (Teilzustand pruefen via list_leads) |
 
 ## Hinweise
@@ -71,5 +74,5 @@ Der Import ist ERST fertig, wenn der Job es sagt — nie nach festem Warten zaeh
 ## Verwandt
 
 - `/outreach-lists` (Vorab-Dedup, Listen-Verwaltung, Liste→Kampagne)
-- `/mcp:campaign` (Kampagne zuerst), `/mcp:pipeline` (naechster Schritt)
+- `/outreach-campaign` (Kampagne zuerst), `/outreach-pipeline` (naechster Schritt)
 - die Tool-Beschreibungen des MCP-Servers

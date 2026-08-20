@@ -9,7 +9,7 @@ Dieser Skill orchestriert den automatischen Review von AI-generierten Variablen 
 
 > **Hinweis zur Parallelisierung:** Wenn dein Client parallele Subagents unterstuetzt (z.B. Claude Code), spawne pro Lead einen Subagent wie beschrieben. Andernfalls arbeite die Leads **sequentiell** mit exakt denselben Schritten ab — das Ergebnis ist identisch, nur langsamer.
 
-> **Wichtig:** Reviewt werden die **AI-Variablen-Werte** (z.B. `hallo`, `intro`), NICHT der Email-Body. Der Email-Body ist in der Email-Sequenz hardcoded und wird beim CSV-Export live mit den Variablen gerendert. Falls Variablen unbrauchbar sind, gibt es **keine Inline-Korrektur** — entweder approve, reject mit Begruendung, oder neu generieren via `/mcp:generate` bzw. `save_lead_variables`.
+> **Wichtig:** Reviewt werden die **AI-Variablen-Werte** (z.B. `hallo`, `intro`), NICHT der Email-Body. Der Email-Body ist in der Email-Sequenz hardcoded und wird beim CSV-Export live mit den Variablen gerendert. Falls Variablen unbrauchbar sind, gibt es **keine Inline-Korrektur** — entweder approve, reject mit Begruendung, oder neu generieren — via serverseitigem Lauf (`start_lead_run` mit `stages: ["email"]` auf den abgelehnten Leads) oder manuell via `/outreach-generate` bzw. `save_lead_variables`. Waehrend ein Lauf mit email-Stufe aktiv ist, blocken `approve_lead_variables`/`reject_lead_variables` mit `lead_run_active` — erst nach dessen Terminal-Status reviewen.
 
 ## Workflow-Uebersicht
 
@@ -33,8 +33,8 @@ Dieser Skill orchestriert den automatischen Review von AI-generierten Variablen 
 
 | Eingabe | Verhalten |
 |---------|-----------|
-| `/mcp:verify` | Zeigt Kampagnen via list_campaigns, User waehlt |
-| `/mcp:verify 76` | Startet direkt fuer Kampagne 76 |
+| `/outreach-verify` | Zeigt Kampagnen via list_campaigns, User waehlt |
+| `/outreach-verify 76` | Startet direkt fuer Kampagne 76 |
 | `pruefe emails fuer kampagne 76` | Startet direkt fuer Kampagne 76 |
 
 ## Schritt-fuer-Schritt Anleitung
@@ -157,7 +157,7 @@ Pruefe JEDE Variable gegen ALLE folgenden Kriterien:
   - Anrede-Mix oder andere Style-Bruch
   - Falsche HTTPS/SSL-Behauptungen
 
-`reason` muss konkret sein (nennt die problematische Variable + den Defekt), damit beim Re-Generate via `/mcp:generate` oder `save_lead_variables` der Fehler vermieden werden kann.
+`reason` muss konkret sein (nennt die problematische Variable + den Defekt), damit beim Re-Generate via `/outreach-generate` oder `save_lead_variables` der Fehler vermieden werden kann.
 
 Gib am Ende eine kurze Zusammenfassung zurueck:
 - Entscheidung: approved / rejected
@@ -297,7 +297,7 @@ Success-Response:
 | Alle Agents eines Batches fehlgeschlagen | Warnung ausgeben, User fragen ob fortfahren |
 | Netzwerk/MCP-Verbindungsfehler | 1x Retry, dann STOP mit Fehlermeldung |
 
-**Kein automatischer Retry einzelner Leads** — fehlgeschlagene Leads koennen spaeter mit `/mcp:verify` erneut verarbeitet werden (sie behalten den Status `pending_review` und tauchen wieder in list_leads auf).
+**Kein automatischer Retry einzelner Leads** — fehlgeschlagene Leads koennen spaeter mit `/outreach-verify` erneut verarbeitet werden (sie behalten den Status `pending_review` und tauchen wieder in list_leads auf).
 
 ## Wichtige Hinweise
 
@@ -305,5 +305,5 @@ Success-Response:
 2. **{batch_size}er-Batches** — {batch_size} Leads pro Batch (vom User gewaehlt, Default 10, Maximum 200).
 3. **Parallel** — Alle Agents eines Batches gleichzeitig spawnen (ein Message-Block).
 4. **Idempotent** — Freigegebene/abgelehnte Leads tauchen nicht mehr in list_leads(`pending_review`) auf.
-5. **Binaere Entscheidung** — Approve oder Reject. Keine Inline-Korrektur. Fuer Korrekturen: re-generate via `/mcp:generate` oder `save_lead_variables`.
+5. **Binaere Entscheidung** — Approve oder Reject. Keine Inline-Korrektur. Fuer Korrekturen: re-generate via `/outreach-generate` oder `save_lead_variables`.
 6. **Audit-Trail** — Reject-Reasons werden via Logger persistiert (siehe `RejectLeadVariablesTool`).
