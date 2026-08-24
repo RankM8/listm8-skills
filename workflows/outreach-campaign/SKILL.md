@@ -85,7 +85,7 @@ Blueprint dem User zur Bestaetigung zeigen (kompakt: Name, Variablen, Step-Betre
 
 ## Phase 3: Erstellen / Bearbeiten
 
-**Neu:** `create_campaign(blueprint=<object>)` → Response enthaelt `campaign_id`, `imported` (steps/variables/intelligence/configs). Kampagne startet als `draft`.
+**Neu:** `create_campaign(blueprint=<object>)` → Response enthaelt `campaign_id`, `imported` (steps/variables/intelligence/configs). Kampagne startet in der abgeleiteten Lifecycle-Stufe `draft` — der Lebenszyklus (`lifecycle` in `list_campaigns`: `draft` → `in_progress` → `exported` → `active` → `completed`) wird aus den Lead-Signalen berechnet, nicht gespeichert, und kann daher nicht manuell gesetzt werden.
 
 **Bearbeiten:** `edit_campaign(campaign_id=<id>, blueprint=<object>, confirm_overwrite=true)` — **Replace-all**: Immer das KOMPLETTE Ziel-Blueprint senden, nie nur die Aenderung. Den Ist-Stand IMMER zuerst mit dem MCP-Tool `export_campaign_blueprint(campaign_id)` holen (nie aus dem Gedaechtnis rekonstruieren — alles, was im gesendeten Blueprint fehlt, wird geloescht), anpassen, komplett zuruecksenden. Ohne `confirm_overwrite` → `CONFIRM_OVERWRITE_REQUIRED` (Schutz).
 
