@@ -39,8 +39,8 @@ list_campaigns -> list_lead_runs(active_only=true) -> start_lead_run(stages=[...
 |--------|-----------|-------------------|
 | `completed` | Alle Leads durch | /outreach-verify |
 | `completed_with_failures` | Mind. ein Job endgueltig gescheitert | Fehl-Leads berichten, Folgelauf anbieten |
-| `credits_exhausted` | Credit-Guthaben oder Credit-Laufbudget erschoepft | An den User (aufladen oder Tier wechseln), danach `resume_lead_run(lead_run_id)` fuer DENSELBEN Lauf statt `start_lead_run`; anschliessend wieder pollen |
-| `budget_exhausted` | Uebergangs-USD-Budget erreicht, Rest storniert | Restmenge beziffern, Folgelauf mit passendem Budget anbieten |
+| `credits_exhausted` | Credit-Guthaben des Kontos erschoepft (ein erreichtes Lauf-Budget endet dagegen als `budget_exhausted`) | An den User (aufladen oder Tier wechseln), danach `resume_lead_run(lead_run_id)` fuer DENSELBEN Lauf statt `start_lead_run`; anschliessend wieder pollen |
+| `budget_exhausted` | Lauf-Budget erreicht (Credit-Anteil aus `budget_percent` oder Uebergangs-USD-Budget), Rest storniert | Restmenge beziffern, Folgelauf mit passendem Budget anbieten |
 | `limit_exhausted` | Plan-Limit, nicht Credit-Guthaben | An den User (Kontogrenzen fuer Kampagnen/Leads), kein Auto-Retry |
 | `provider_exhausted` | Provider-Stoerung oder serverseitiges Key-Problem | An den User bzw. Support, kein Retry; kein eigenes OpenRouter-Guthaben nachladen lassen |
 | `cancelled` | Vom User gestoppt | Stand berichten |
