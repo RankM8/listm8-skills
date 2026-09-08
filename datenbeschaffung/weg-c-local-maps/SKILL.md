@@ -1,91 +1,100 @@
 ---
 name: weg-c-local-maps
-description: Weg C des Datenbeschaffungs-Pakets — local businesses (Handwerk, Praxen, Gastro, Dienstleister mit Google-Maps-Eintrag) via Google Maps scraping with built-in contact enrichment. Invoked by the datenbeschaffung master; never triggered directly by the user.
+description: Dieser Skill wird vom Datenbeschaffungs-Master für lokale Betriebe, Handwerk, Praxen, Gastro oder Unternehmen mit Google-Maps-Eintrag geladen. Verwendet die ListM8-MCP-Quelle google_maps_local mit Kostenschätzung, Freigabe und serverseitiger Verarbeitung. Kein direkter Nutzereinstieg.
 ---
 
-# Weg C — Local Business über Google Maps
+# Weg C: Lokale Unternehmen über Google Maps
 
-Der Standardweg für die meisten DACH-Zielgruppen. Belegt (19.08.2026, SHK Köln): 440 Places in
-10 Minuten, **77 % mit E-Mail direkt aus dem Scrape** — einstufig für die große Mehrheit,
-Impressum nur noch als Lückenfüller.
+Die Quelle `google_maps_local` verwenden. Voraussetzung sind ein bestätigter ICP, der aktuelle
+Katalog aus `list_lead_sources()` und ein in ListM8 verbundenes Apify-Konto.
+Kostenfreigabe, Polling und Abschluss nach `../master/SKILL.md` durchführen.
 
-Voraussetzungen vom Master: bestätigter ICP-Satz, Zugriffsweg steht (`../datenbeschaffung-referenzen/references/zugriff.md`),
-Vorab-Abgleich gelaufen (falls MCP verbunden).
+## Parameter aus dem ICP ableiten
 
-## Schritt 1 — Kategorien statt Freitext
+Nur Formularfelder des aktuellen Katalogs an `params` übergeben. Keine Actor-Inputs wie
+`searchStringsArray`, `scrapeContacts` oder `maxCrawledPlacesPerSearch` senden.
 
-**Nie Freitext-Queries.** Google Maps arbeitet mit englischen Kategorien — Freitext liefert
-überwiegend Beifang. 3–5 verwandte Kategorien je Lauf, nicht 20:
+| Kundenangabe | Parameter | Typ und Grenzen |
+|---|---|---|
+| Branche oder Suchbegriff | `query` | Pflicht, Text mit 1 bis 200 Zeichen |
+| Stadt oder Region | `location` | Pflicht, Text mit 1 bis 200 Zeichen |
+| Land | `country` | ISO-Ländercode in Großbuchstaben, Default `DE` |
+| Mindestbewertung | `minimumStars` | String: `""`, `"3"`, `"3.5"`, `"4"`, `"4.5"`; Default `""` |
+| Mindestzahl Bewertungen | `minimumReviews` | Ganze Zahl, 0 bis 1000000; Default 0 |
+| Nur Firmen mit Website | `onlyWithWebsite` | JSON-Bool, Default `false` |
+| Maximale Treffer | `maxItems` | Ganze Zahl, 1 bis 5000; Default 500 |
 
-| Zielgruppe | Kategorien (searchStringsArray) |
-|---|---|
-| SHK / Sanitär / Heizung | `plumber`, `heating contractor`, `hvac contractor` |
-| Elektro | `electrician`, `electrical installation service` |
-| Dachdecker / Bau | `roofing contractor`, `general contractor` |
-| Zahnärzte / Praxen | `dentist`, `dental clinic` (Vorsicht: `doctor` ist zu breit) |
-| Gastro | `restaurant` gezielt mit Küche/Stadtteil eingrenzen — sonst Massen-Beifang |
-| Kfz | `auto repair shop`, `car dealer` |
+Ein Land pro Lauf verwenden. Kein Radius- oder Sprachfeld ergänzen. Die Maps-Sprache wird
+serverseitig aus dem Land abgeleitet. Ein gewünschter Umkreis ist kein unterstützter Filter;
+eine verständliche Orts- oder Regionsangabe abstimmen, keine exakte Entfernung versprechen.
 
-Unbekannte Zielgruppe: die Kategorie eines bekannten Ziel-Betriebs auf Google Maps nachschlagen
-(dort steht sie unter dem Namen) — nicht raten.
+Konkrete Branchenbegriffe wie „Zahnarzt“, „Elektriker“ oder „Sanitär Heizung“ wählen. Kategorien
+können bei der Begriffswahl helfen, sind aber kein separater MCP-Parameter. Keine erzwungenen
+Multi-Query-Arrays bauen. Bewertung und Bewertungszahl nur nach ICP setzen, nicht reflexhaft.
 
-## Schritt 2 — Pilot (Pflicht)
+Für Personalisierung `onlyWithWebsite=true` vorschlagen. Bei Website-losen Zielkunden `false`
+verwenden und erklären: Das bedeutet **kein Website-Filter**, nicht „nur ohne Website“.
 
-Actor: **Primär aus `../datenbeschaffung-referenzen/references/apify-actors.md`** (Maps-Kategorie). Standard-Input:
+## Pilot schätzen und bestätigen
+
+Mit etwa 50 Treffern in einer Stadt beginnen. Beispielargumente für
+`estimate_lead_source_run` mit einem ausdrücklich gewählten Pilotdeckel von 0,50 USD:
 
 ```json
 {
-  "searchStringsArray": ["<kategorie-1>", "<kategorie-2>"],
-  "locationQuery": "<Pilotstadt>, <Land>",
-  "maxCrawledPlacesPerSearch": 30,
-  "language": "de",
-  "website": "withWebsite",
-  "skipClosedPlaces": true,
-  "scrapeContacts": true
+  "source_key": "google_maps_local",
+  "params": {
+    "query": "Zahnarzt",
+    "location": "Köln",
+    "country": "DE",
+    "minimumStars": "4",
+    "minimumReviews": 10,
+    "onlyWithWebsite": true,
+    "maxItems": 50
+  },
+  "max_total_charge_micro_usd": 500000
 }
 ```
 
-Deckel ≤ 0,50 $. Kosten vorher nennen (Pilot liegt unter 0,25 $, siehe `kosten.md`).
-Auswertung: `categoryName` gegen den ICP halten — **ab ~70 % Fit skalieren**, darunter Kategorien
-schärfen und Pilot wiederholen. Beifang-Kategorien (Baumärkte, Handel, Ketten) notieren: sie werden
-in Schritt 4 herausgefiltert und wandern in den Anti-ICP.
+Schätzung, Spanne, Apify-Staffel, Preisstand, `budgetLimited` und Kostendeckel vorlegen.
+Der Beispieldeckel ist keine Preiszusage. Reicht er nicht, Zielmenge oder Budget abstimmen,
+erneut schätzen und bestätigen lassen. **Erst danach** `start_lead_source_run` mit demselben
+JSON-Argumentobjekt aufrufen. Keine Schätzpreise aus alten manuellen Actor-Läufen übernehmen.
 
-Hinweis zum `website`-Filter: `withWebsite` ist für Cold Mail fast immer richtig (ohne Website kein
-Personalisierungs-Anker). Ausnahme nur, wenn der ICP gerade Betriebe OHNE Website sucht
-(z. B. Webdesign-Angebote) — dann `allPlaces` und die Lücke ist das Verkaufsargument.
+`max_items` ist eine optionale äußere Grenze und überschreibt `params.maxItems`. Möglichst
+nur `params.maxItems` verwenden; bei einem Override den effektiven Wert in der Schätzung prüfen.
+Ohne expliziten Kostendeckel gilt der Benutzerstandard, initial 20 USD. Für Starts den
+bestätigten Deckel ausdrücklich mitsenden; erlaubt sind 1 bis 1000000000 Micro-USD.
 
-## Schritt 3 — Skalierung
+## Ausführen und skalieren
 
-Gleicher Input, `maxCrawledPlacesPerSearch` hoch (250–500 je Kategorie), `locationQuery` kann
-direkt Bundesland oder Land sein (der Actor teilt intern — keine Stadt-Schleife nötig, siehe
-`staedte.md`). Ein Land pro Lauf. Deckel: kalkulierte Kosten + 50 %.
-Laufzeit: mehrere Minuten je 100 Places — alle 2–4 Minuten pollen.
+`run_id` aus dem Start merken und mit `get_lead_source_run` bis `completed`, `failed` oder
+`cancelled` pollen. Details und Abbruchregeln stehen in
+`../datenbeschaffung-referenzen/references/listm8-mcp.md`.
 
-## Schritt 4 — Roh-CSV bauen
+Serverseitig laufen Quellenabruf, Bestandsabgleich, DACH-Impressum für E-Mail-Lücken,
+Verifizierung und Import in eine neue Liste. Kein eigenes Dataset abholen, keine Roh-CSV
+bauen und keinen zusätzlichen Impressum- oder Verifier-Actor für diese Kette starten.
 
-```
-python3 ../datenbeschaffung-referenzen/scripts/build_csv.py --in maps.json \
-  --quelle "apify:<actor-id> <datum>" --land <de|at|ch> --out leads-<nische>-<region>-<datum>.csv
-```
+Den Pilot anhand der importierten Liste auf ICP-Fit prüfen. Ab 80 % einen größeren Lauf
+planen. Darunter Suchbegriff, Region oder Filter verbessern. Neue Mengen bis 5000 erneut
+schätzen und bestätigen lassen. Mehrere Läufe benötigen ein abgestimmtes Gesamtbudget.
 
-Danach ICP-Fremde Kategorien aussortieren (die notierten Beifang-Kategorien) — mechanisch nach
-`kategorie`-Spalte, nicht Lead für Lead.
+## Report und Grenzen
 
-## Schritt 5 — Die E-Mail-Lücke (die ~20–25 % ohne E-Mail)
+Den vollständigen Laufreport lesen und insbesondere berichten:
 
-Nur wenn das Volumen gebraucht wird ODER Entscheider-Namen gewünscht sind:
-`impressum-enrichment` mit den Websites der Leads ohne E-Mail aufrufen. Sonst die Lücke
-akzeptieren (Trichter-Prinzip) und weitergeben.
+- `found`, `known`, `newCandidates` und `enrichedByImprint`.
+- `verifiedValid`, `verifiedCatchAll`, `verifiedInvalid` und `verifiedUnknown`.
+- `discardedNoContact`, `doNotContactHits`, `imported` und `leadListId`.
+- `status`, `currentStep`, gegebenenfalls `failureKind` und `failureMessage`.
+- `estimatedCostMicroUsd`, `actualCostMicroUsd` und `maxTotalChargeMicroUsd`, in USD umgerechnet.
 
-## Schritt 6 — Übergabe
+Eine Zielmenge ist keine Liefergarantie. Firmen ohne E-Mail können trotz Telefon verworfen
+werden. Außerhalb DE, AT und CH wird Impressum übersprungen. Unklare oder Catch-all-Adressen
+sind markierte Kandidaten, keine garantiert zustellbaren Kontakte. `imported` zählt neu importierte
+eindeutige E-Mail-Adressen. Bekannte oder bereits kontaktierte Leads können zusätzlich mit der Liste verknüpft sein, ohne neue anschreibbare Leads zu sein.
 
-An `listen-qualitaet` — immer, ohne Ausnahme. Diesem Skill gehört kein Qualitäts-Urteil und
-keine Übergabe.
-
-## Bekannte Fallen
-
-- Duplikate über Kategorien hinweg dedupliziert der Actor per placeId selbst; über LÄUFE hinweg
-  fängt es `dedup.py` (Bestand-Index) — deshalb Vorab-Abgleich nicht überspringen.
-- Ballungsräume doppeln Betriebe mit mehreren Standorten — gleiche E-Mail = ein Lead
-  (macht build_csv.py automatisch; 440 Places → ~308 eindeutige E-Mail-Leads ist normal).
-- Jeder zusätzliche Filter kostet je Place extra — nur nutzen, was der ICP wirklich braucht.
+An `../listen-qualitaet/SKILL.md` im **MCP-Katalogpfad** übergeben. Stichprobe und Report prüfen,
+aber keinen zweiten Import starten. Qualifizierung, Recherche und E-Mail-Variablen folgen
+auf Auftrag über `start_lead_run`, nicht innerhalb der Beschaffung.

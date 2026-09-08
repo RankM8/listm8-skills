@@ -1,121 +1,99 @@
 ---
 name: weg-a-b2b-google
-description: Weg A des Datenbeschaffungs-Pakets — B2B service providers (Agenturen, Kanzleien, Beratungen, IT-Dienstleister, Makler, Planungsbüros) via Google SERP scraping plus Impressum enrichment for contact data. Invoked by the datenbeschaffung master; never triggered directly by the user.
+description: Dieser Skill wird vom Datenbeschaffungs-Master für B2B-Dienstleister, Agenturen, Kanzleien, Beratungen, Systemhäuser, Makler oder Planungsbüros über Google geladen. Verwendet die ListM8-MCP-Quelle google_serp_companies mit serverseitigem Bestandsabgleich, DACH-Impressum, Verifizierung und Import. Kein direkter Nutzereinstieg.
 ---
 
-# Weg A — B2B-Dienstleister über Google
+# Weg A: B2B-Unternehmen über Google
 
-Der Weg für Firmen, die man über ihre Website findet, nicht über einen Maps-Eintrag: Agenturen,
-Kanzleien, Beratungen, Systemhäuser, Makler-, Architektur- und Ingenieurbüros. Zweistufig —
-SERP liefert Domains, Kontaktdaten kommen erst danach über `impressum-enrichment`.
+Firmen über ihre Websites mit `google_serp_companies` finden. Der SERP-Abruf liefert vor allem
+Domains, nicht bereits vollständige Kontakte. ListM8 übernimmt die nachgelagerte Kette.
+Voraussetzung sind ein bestätigter ICP, der aktuelle Katalog aus `list_lead_sources()` und ein
+in ListM8 verbundenes Apify-Konto. Den Master-Ablauf für Freigabe und Polling befolgen.
 
-Voraussetzungen vom Master: bestätigter ICP-Satz, Zugriffsweg steht (`../datenbeschaffung-referenzen/references/zugriff.md`),
-Vorab-Abgleich gelaufen (falls MCP verbunden).
+## Suchstrategie und Parameter
 
-Braucht der Nutzer Kontaktdaten ab Werk und ist die Zielgruppe über Firmografien beschreibbar,
-ist `weg-a-apollo` der kürzere Weg — einmal erwähnen, dann hier weitermachen.
+Einen präzisen Branchenbegriff mit Stadt oder Region kombinieren, etwa „Personalvermittlung
+München“, „IT Systemhaus Hamburg“ oder „Steuerkanzlei Graz“. Bei zu viel Beifang den Begriff
+schärfen, statt ungeprüft größere Mengen zu bestellen. Firmengröße, Entscheiderrolle und
+fachliche Passung sind keine SERP-Formularfilter; sie gehören in die spätere Qualifizierung.
 
-## Schritt 1 — Query-Strategie je Branche
+| Kundenangabe | Parameter in `params` | Typ und Grenzen |
+|---|---|---|
+| Branche und Region als Suchbegriff | `query` | Pflicht, Text mit 1 bis 200 Zeichen |
+| Land | `country` | ISO-Ländercode in Großbuchstaben, Default `DE` |
+| Suchsprache | `language` | String `de` oder `en`, Default `de` |
+| Maximale Treffer | `maxItems` | Ganze Zahl, 1 bis 5000; Default 500 |
 
-Zwei bis drei Varianten je Branche, immer mit Stadt. Die dritte ist optional und wird bei knappem
-Budget zuerst gestrichen.
+Nur diese vom Katalog bestätigten Felder senden. `location`, Seitenzahlen, Actor-IDs,
+Multi-Query-Arrays oder `maxPagesPerQuery` gehören nicht in dieses Formular. Die Region in
+`query` aufnehmen. Ein Land je Lauf verwenden. Portalfilterung und Domain-Deduplizierung
+übernimmt die Kette; keine lokale `process_serp.py`-Schleife für Katalogläufe bauen.
 
-| Branche | Query-Varianten (für `--keywords`) |
-|---|---|
-| Recruiting / Personalvermittlung | Recruiting Agentur, Personalvermittlung, Headhunter |
-| Personalberatung | Personalberatung, Executive Search, Personalberater |
-| Zeitarbeit | Zeitarbeitsfirma, Personaldienstleister, Arbeitnehmerüberlassung |
-| Marketingagentur | Marketingagentur, Marketing Agentur, Online Marketing Agentur |
-| Werbeagentur | Werbeagentur, Kreativagentur, Full-Service Agentur |
-| PR-Agentur | PR Agentur, PR-Agentur, Presseagentur |
-| Social-Media-Agentur | Social Media Agentur, Social-Media-Agentur, Social Media Marketing |
-| SEO-Agentur | SEO Agentur, SEO-Agentur, Suchmaschinenoptimierung |
-| Webdesign / Digitalagentur | Webdesign Agentur, Webdesign, Webagentur |
-| IT-Dienstleister | IT-Dienstleister, IT Systemhaus, IT-Service |
-| Softwareentwicklung | Softwareentwicklung, Software Agentur, App Entwicklung |
-| Unternehmensberatung | Unternehmensberatung, Managementberatung, Strategieberatung |
-| Steuerberater | Steuerberater, Steuerkanzlei, Steuerberatung |
-| Anwaltskanzlei | Anwaltskanzlei, Rechtsanwalt, Wirtschaftskanzlei |
-| Finanzberatung | Finanzberater, Finanzberatung, Vermögensberater |
-| Versicherungsmakler | Versicherungsmakler, Versicherungsberater, Versicherungsagentur |
-| Immobilienmakler | Immobilienmakler, Immobilienbüro, Makler |
-| Architekturbüro | Architekturbüro, Architekt, Architektur |
-| Ingenieurbüro | Ingenieurbüro, Ingenieurgesellschaft, Planungsbüro |
-| E-Commerce-Agentur | E-Commerce Agentur, Online-Shop Agentur, Shopify Agentur |
-| Film / Video | Filmproduktion, Videoproduktion, Imagefilm |
-| Business-Fotografie | Business Fotograf, Werbefotograf, Corporate Fotografie |
-| Eventagentur | Eventagentur, Veranstaltungsagentur, Event Management |
-| Druckerei | Druckerei, Digitaldruck, Offsetdruck |
-| Übersetzung | Übersetzungsbüro, Übersetzungsagentur, Übersetzer |
+## Pilot schätzen und bestätigen
 
-Branche nicht in der Tabelle: dasselbe Muster ableiten — Branchenname, deutsches Synonym,
-Leistungsvariante. Formulierungsregeln und die `-site:`-Obergrenze stehen in
-`../datenbeschaffung-referenzen/references/erfahrungswerte.md`; Queries nicht von Hand bauen:
+Mit einer Stadt und etwa 50 Treffern beginnen. Beispielargumente für
+`estimate_lead_source_run` mit 0,50 USD Pilotdeckel:
 
-```
-python3 ../datenbeschaffung-referenzen/scripts/build_queries.py --keywords "Recruiting Agentur,Personalvermittlung,Headhunter" \
-  --cities "München" --exclude 8
+```json
+{
+  "source_key": "google_serp_companies",
+  "params": {
+    "query": "Personalvermittlung München",
+    "country": "DE",
+    "language": "de",
+    "maxItems": 50
+  },
+  "max_total_charge_micro_usd": 500000
+}
 ```
 
-## Schritt 2 — Pilot (Pflicht)
+`estimatedCostMicroUsd`, `minCostMicroUsd`, `maxCostMicroUsd`, `tier`, `pricingUpdatedAt`,
+`budgetLimited` und den tatsächlichen Deckel vorlegen. Eine Million Micro-USD entspricht einem
+USD. Die Kette kostet mehr als nur den SERP-Abruf; alte Discovery-Preise nicht als Gesamtpreis
+ausgeben. Der Beispieldeckel garantiert nicht, dass alle geplanten Stufen hineinpassen.
 
-Eine Stadt, alle Query-Varianten in EINEM Lauf (eine Query je Zeile im Multi-Query-Feld des
-Actors). Actor: **Primär aus `../datenbeschaffung-referenzen/references/apify-actors.md`** (SERP-Kategorie) — dort steht
-auch die Schreibweise des Länder-Codes, die sich zwischen Primär und Fallback unterscheidet.
-5 Seiten je Query (`erfahrungswerte.md`), ein Land pro Lauf. Kosten vorher nennen
-(`../datenbeschaffung-referenzen/references/kosten.md`: SERP-Discovery für eine Nische DACH-weit bleibt unter 1 $),
-harter Deckel ≤ 0,50 $ für den Piloten.
+Bei `budgetLimited=true` kleinere Mengen oder einen anderen Deckel erneut schätzen und
+freigeben lassen. Erst nach ausdrücklicher Freigabe `start_lead_source_run` mit demselben
+JSON-Argumentobjekt aufrufen. Ein optionales äußeres `max_items` überschreibt `params.maxItems`;
+keine widersprüchlichen Mengen verwenden. Zulässig sind 1 bis 5000 Treffer und 1 bis
+1000000000 Micro-USD Deckel. Ohne Deckel gilt der Benutzerstandard, initial 20 USD;
+beim Start dennoch den bestätigten Wert ausdrücklich senden.
 
-```
-python3 ../datenbeschaffung-referenzen/scripts/process_serp.py --in serp-pilot.json --out domains-pilot.csv --report
-```
+## Serverseitige Kette verfolgen
 
-Auswertung gegen den ICP: **ab ~70 % Fit skalieren.** Darunter erst Queries schärfen (spezifischer
-statt mehr Seiten) und Piloten wiederholen. Der `--report` nennt die häufigsten gefilterten
-Domains — Portale, die durchgerutscht sind, gehören in `noise-domains.md`, bevor skaliert wird.
+Die erhaltene `run_id` speichern und über `get_lead_source_run` pollen. Nicht wegen langer
+Laufzeit erneut starten. Bis `completed`, `failed` oder `cancelled` abfragen; ein Abbruchwunsch
+läuft über `cancel_lead_source_run` und beendet das Polling nicht sofort.
 
-Kein Lead ist, was zwar eine eigene Website hat, aber selbst kein Dienstleister ist: Verzeichnis
-oder Portal, Jobbörse, Branchenverband oder Kammer (IHK, HWK), reine SaaS-Plattform,
-Franchise-Zentrale ohne Standort, News- oder Lexikonartikel über die Branche.
+1. `source` ruft Suchtreffer ab und bereitet Firmen-Domains auf.
+2. `dedupe` gleicht gegen vorhandene Leads ab. Bekannte Treffer benötigen keine erneute Anreicherung.
+3. `imprint` ergänzt E-Mail-Lücken nur in DE, AT und CH.
+4. `verify` prüft neue E-Mail-Adressen. `invalid` wird verworfen, `catch_all` und `unknown`
+   bleiben ausdrücklich markiert importierbar.
+5. `import` erstellt die Ergebnisliste und verknüpft beziehungsweise importiert Leads.
 
-## Schritt 3 — Skalierung
+**Außerhalb DACH keinen Kontaktreichtum versprechen.** Der Impressum-Schritt wird übersprungen;
+SERP-Domains ohne E-Mail reichen nicht für den Import. Vor dem Start diese Einschränkung
+nennen. Eine gesonderte manuelle Quelle nur verwenden, wenn der benötigte Quellentyp nicht im
+Katalog verfügbar ist. Einen laufenden Kataloglauf nicht durch zusätzliche Actors ergänzen.
 
-Gleiche Queries, Städteliste aus `../datenbeschaffung-referenzen/references/staedte.md`, ein Land je Lauf (der
-Länder-Code gilt pro Lauf, deshalb DE/AT/CH getrennt starten — parallel ist erlaubt).
-Alle Stadt-mal-Query-Kombinationen eines Landes gehen in EINEN Lauf; das spart Actor-Overhead,
-nicht Geld. Danach alle Datasets zusammenführen und einmal durch `process_serp.py` schicken —
-der Dedup auf Root-Domain wirkt dadurch über Städte hinweg.
+Kein manueller Impressum-Lauf, Verifier-Aufruf, CSV-Bau oder Import für diese Kette.
+Bei `failed` die Fehlerfelder und Kosten berichten, nicht automatisch wiederholen.
+`limit_exceeded` kann trotz bezahlter Beschaffung einen Import wegen ListM8-Kontingent verhindern.
 
-Deckel: kalkulierte Kosten + 50 %. Läuft ein Lauf länger als ein paar Minuten: pollen, nicht neu starten.
+## Pilot bewerten, skalieren und berichten
 
-## Schritt 4 — Kontaktdaten holen
+Die tatsächliche Liste und den Pilot-Fit prüfen, nicht nur die Anzahl Google-Treffer. Portale,
+Jobbörsen, Kammern oder Branchenartikel können weiterhin Beifang sein. Ab 80 % ICP-Fit
+mit derselben Strategie skalieren. Neue Regionen oder Query-Varianten als eigene Läufe erneut
+schätzen und freigeben lassen. Gesamtausgaben mehrerer Läufe nicht hinter Einzeldeckeln verstecken.
 
-Die Domain-CSV aus Schritt 3 an `impressum-enrichment` geben (dort stehen Actor, Betriebsregeln
-und Kosten). Wichtig: **Domain-Liste vorher gegen den Bestand abgleichen** (`dedup.py`) — bekannte
-Leads dürfen keine Anreicherung kosten. Nicht-DACH-Domains und Onepager ohne Impressum landen im
-`kontaktseiten-fallback`, nicht in einer zweiten Impressum-Runde.
+Report mit `found`, `known`, `newCandidates`, `enrichedByImprint`, allen vier Verifizierungszählern,
+`discardedNoContact`, `doNotContactHits` und `imported` ausgeben. Run-ID, Status, Query, Filter,
+Schätzung, tatsächliche Kosten, Kostendeckel sowie `leadListId` ergänzen. Null bei `leadListId`
+heißt, dass keine Ergebnisliste verfügbar ist. `imported` nicht als Zahl sicher kontaktierbarer
+Neukontakte interpretieren.
 
-## Schritt 5 — Roh-CSV bauen
-
-```
-python3 ../datenbeschaffung-referenzen/scripts/build_csv.py --in impressum.json \
-  --quelle "apify:<serp-actor>+impressum <datum>" --land <de|at|ch> \
-  --out leads-<branche>-<region>-<datum>.csv
-```
-
-## Schritt 6 — Übergabe
-
-An `listen-qualitaet` — immer, ohne Ausnahme. Diesem Skill gehört kein Qualitäts-Urteil und
-keine Übergabe.
-
-## Bekannte Fallen
-
-- **Zu viele `-site:`-Ausschlüsse leeren das Ergebnis.** Über 8–10 je Zeile liefert der Actor
-  nichts zurück — die Filterung gehört in `process_serp.py`, nicht in die Query.
-- **Leere Trefferseiten weiter hinten sind normal** (Google liefert ab Seite 4–5 oft nichts mehr).
-  Kein Fehler, kein Neustart — die Seiten sind bereits bezahlt.
-- **Google-Titel ist kein Firmenname.** `build_csv.py` normalisiert, aber SEO-Titel wie
-  „Marketingagentur München | Ihre Nr. 1" ergeben keinen brauchbaren `companyClean` — solche
-  Zeilen markiert die Qualitätsstufe, hier nicht von Hand nacharbeiten.
-- **Die SERP-Stufe kennt keine Firmengröße.** Der Größen-Filter des ICP greift erst über
-  Impressum-Daten (HRB, Entscheider) und die Qualifizierung — im Piloten nicht darauf warten.
+`../listen-qualitaet/SKILL.md` im **MCP-Katalogpfad** laden. Die vorhandene Liste per Stichprobe
+prüfen, aber nicht erneut importieren oder verifizieren. Die Weiterverarbeitung erfolgt auf
+Auftrag über den Outreach-Workflow mit `start_lead_run`.
