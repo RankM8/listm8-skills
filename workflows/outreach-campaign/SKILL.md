@@ -96,6 +96,7 @@ Blueprint dem User zur Bestaetigung zeigen (kompakt: Name, Variablen, Step-Betre
 | Code | Aktion |
 |------|--------|
 | `VALIDATION_FAILED` | Fehlerliste lesen, Blueprint korrigieren, erneut senden |
+| `credits_exhausted` (CREDITS_EXHAUSTED) | Benoetigte und verfuegbare Credits nennen, User um Aufladen oder Tier-Wechsel bitten; kein Auto-Retry |
 | `LIMIT_REACHED` | User informieren (MAX_CAMPAIGNS bzw. Variablen-/Step-Plan-Limit) |
 | `CONFIRM_OVERWRITE_REQUIRED` | User fragen, ob ueberschreiben, dann confirm_overwrite=true |
 | `CAMPAIGN_NOT_FOUND` | campaign_id pruefen (list_campaigns) |
