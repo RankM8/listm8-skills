@@ -28,6 +28,13 @@ manuellen Schritte 1 bis 3 sowie 5 unten **nicht** ausführen.
 7. Nur auf ausdrücklichen Folgeauftrag an den Outreach-Workflow zur Kampagnenzuordnung und
    `start_lead_run` für Qualifizierung, Recherche und E-Mail-Variablen weitergeben.
 
+**Gezieltes Nachholen:** Bei `completed` und `countersJson.unverified > 0` die
+unbeantworteten Kontakte getrennt berichten. Nur auf ausdrücklichen Folgeauftrag
+mit Freigabe der weiteren Kosten `retry_lead_source_verification(run_id)` aufrufen.
+Danach dieselbe Run-ID bis terminal verfolgen. Keine neue Liste und kein separater
+Import; Budgetdeckel und Ergebnisliste bleiben erhalten. Ein echtes Unknown-Urteil
+ist keine unbeantwortete Prüfung. Bei `conflict` den aktuellen Lauf erneut lesen.
+
 **Hier endet der MCP-Katalogpfad.** Die folgenden CSV-, Actor- und Importanweisungen gelten nur
 für manuelle Nicht-Katalog-Quellen oder separat angelieferte Rohdateien.
 

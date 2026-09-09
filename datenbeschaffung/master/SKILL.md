@@ -58,7 +58,9 @@ Den aktuellen Katalog als Autorität behandeln, nicht diese Momentaufnahme:
 | Lokale Betriebe, Handwerk, Praxen, Gastro | `google_maps_local` | `weg-c-local-maps` |
 | Firmen über Websites, etwa B2B-Dienstleister, Agenturen, Kanzleien, Shops oder Coaches | `google_serp_companies` | `weg-a-b2b-google` |
 
-Suchbegriff, Ort beziehungsweise Land, Filter und maximale Treffermenge aus dem ICP ableiten.
+Suchbegriffe, Gebiet, Filter und gegebenenfalls eine Treffergrenze aus dem ICP ableiten.
+Für Maps gilt: Orte, Stadtteile, PLZ oder ein Landkreis sind ein Einzellauf; Bundesland, Kanton
+oder ganzes Land sind immer ein Beschaffungsauftrag mit Ziel, Gesamtbudget und `parallel_cells`.
 Eine Quelle mit kurzer Begründung vorschlagen. Nur wenn keine Katalogquelle den benötigten
 Quellentyp abdeckt, den Fallback-Abschnitt verwenden.
 
@@ -69,8 +71,10 @@ Den passenden Weg-Skill für das Parameter-Mapping lesen. Dann
 
 Vor der Freigabe nennen:
 
-- Quelle, Suchbegriff, Region, Filter und maximale Trefferzahl.
+- Quelle, Suchbegriffe, Gebiet, Filter und gegebenenfalls die Treffergrenze je Suchbegriff und Einheit.
 - `tier`, `pricingUpdatedAt`, Schätzung sowie Spanne aus `minCostMicroUsd` und `maxCostMicroUsd`.
+- Bei Maps die Gebietseinheiten aus `cells[].areaUnit` mit erwarteten Orten, Kostenspanne und
+  Auffächerungsgrund; `warnings` wie `overlapping_units` ansprechen.
 - Den harten Deckel aus `maxTotalChargeMicroUsd` und den Hinweis auf `budgetLimited`.
 - Abrechnung auf dem eigenen Apify-Konto. ListM8 erfasst die externen Kosten, verrechnet sie aber nicht.
 
@@ -80,8 +84,10 @@ verwenden und beim Start ausdrücklich mitsenden. Die Schätzung ist keine Preis
 
 `budgetLimited=true` bedeutet, dass der Deckel die Planung begrenzt. Keine vollständige
 Treffermenge zusagen und den Deckel niemals still erhöhen. Weniger Treffer oder mehr Budget
-erneut schätzen und bestätigen lassen. Pro Lauf sind 1 bis 5000 Treffer und höchstens 1000 USD
-Deckel zulässig. Bei mehreren Läufen auch das Gesamtbudget bestätigen lassen.
+erneut schätzen und bestätigen lassen. Der Deckel je Lauf ist höchstens 1000 USD. Bei SERP sind
+1 bis 5000 Treffer je Lauf zulässig; bei Maps ist `maxItems` optional, gilt je Suchbegriff und
+Gebietseinheit und bleibt in der Regel leer, ein Einzellauf umfasst höchstens 50 Einheiten.
+Bei mehreren Läufen auch das Gesamtbudget bestätigen lassen.
 
 Das ListM8-Lead-Kontingent gilt zusätzlich zum Apify-Budget. Die konkrete Importmenge wird erst
 beim Import geprüft. Ein bezahlter Scrape garantiert daher weder ausreichendes Kontingent noch
@@ -99,6 +105,14 @@ eine fertige Liste.
    Den Verlauf in ListM8 prüfen und die bereits angelegte Run-ID klären.
 6. Auf Abbruchwunsch `cancel_lead_source_run(run_id)` aufrufen und weiterhin bis terminal pollen.
    `cancelRequestedAt` bestätigt nur die Anforderung. Bereits entstandene Kosten bleiben bestehen.
+
+Beschaffungsaufträge (Bundesland, Kanton, Land oder große Gebietslisten) laufen über
+`create_sourcing_order` mit Ziel, Gesamtbudget und `parallel_cells`; das Gesamtbudget vorher
+ausdrücklich freigeben lassen. Fortschritt über `list_sourcing_order_cells` (`hitsSoFar` je
+Einheit) und `get_sourcing_order` (Auftragszähler) berichten. Vor Pause oder Abbruch dem Nutzer
+sagen: Pause lässt laufende Einheiten zu Ende laufen, bei Bundesländern dauert das Minuten;
+Abbruch bricht den Actor-Lauf ab und verbucht Teilkosten. Details in
+`../datenbeschaffung-referenzen/references/listm8-mcp.md`.
 
 Serverseitige Kette: `source`, `dedupe`, `imprint`, `verify`, `import`.
 Impressum gilt nur für DE, AT und CH und für fehlende E-Mail-Adressen. Bekannte Leads werden
