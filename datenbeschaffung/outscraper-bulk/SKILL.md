@@ -7,10 +7,11 @@ description: Stufe 2 des Datenbeschaffungs-Pakets — bulk Google Maps harvestin
 
 > ## ⚠️ Laufzeit: 12–24 Stunden je Job
 > Das ist keine Ausnahme, das ist der Normalfall. Deshalb ist dieser Weg **nie die erste Wahl**:
-> `weg-c-local-maps` liefert dieselbe Datenart über Apify in Minuten. Outscraper lohnt erst, wenn
-> ein Lauf mehrere Bundesländer oder Kantone in einem Rutsch abräumen soll und der Nutzer die
-> Wartezeit ausdrücklich akzeptiert. Diese Warnung gehört ungefragt in den ersten Satz, bevor
-> irgendein Job startet.
+> `weg-c-local-maps` liefert dieselbe Datenart über Apify in Minuten, und ein Beschaffungsauftrag
+> (`create_sourcing_order` mit `area_mode` `bundesland` oder `land`) deckt seit E23 ganze
+> Bundesländer, Kantone und Länder mit Ziel, Budget und Gedächtnis ab. Outscraper lohnt erst, wenn
+> ein Nutzer sehr große Flächen wiederkehrend als Rohexport braucht und die Wartezeit ausdrücklich
+> akzeptiert. Diese Warnung gehört ungefragt in den ersten Satz, bevor irgendein Job startet.
 
 Sinnvoll ab: **>10.000 Leads**, ganze Länder, wiederkehrende Flächen-Scrapes. Darunter ist der
 Apify-Weg schneller, billiger zu steuern und iterativ korrigierbar.
