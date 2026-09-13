@@ -15,9 +15,13 @@ Dieser Skill laedt Lead-Listen ueber das MCP-Tool `import_leads` (Scope `leads:w
 | `/outreach-import <datei>` | Kampagne via list_campaigns waehlen (oder "ohne Kampagne") |
 | `importiere diese leads: ...` | Inline-Daten importieren |
 
-## Phase 1: Daten parsen (Claude-seitig)
+## Phase 0: Zielkontext prüfen
 
-`import_leads` nimmt KEINE Dateien an — Claude parst lokal und uebergibt ein JSON-Array:
+`get_context()` aufrufen und Konto, Tenant, Basis-URL sowie konfigurierte Umgebung mit dem Auftrag abgleichen. Ein `prod`-Kernel unterscheidet Staging nicht verlässlich; fehlende `deployment_environment` nicht aus dem Hostnamen erraten. Für den geprüften Import `leads:read` und `leads:write` verlangen. Bei abweichendem Kontext stoppen.
+
+## Phase 1: Daten lokal lesen und vorprüfen
+
+Keine Dateipfade oder URLs an den Server übergeben. `preview_import` akzeptiert entweder Inline-JSON in `leads` oder Inline-CSV in `csv`, nicht beides; maximal 500 Zeilen und 1 MiB. XLSX lokal in JSON umwandeln. Für CSV `column_mapping={"name":"company","site":"website"}` und bei Bedarf `delimiter=";"` nutzen. `import_leads` selbst erhält weiterhin ein JSON-Array:
 
 1. CSV/XLSX mit Read/Bash lesen; Trennzeichen und Encoding pruefen (UTF-8 sicherstellen, Umlaute!).
 2. Spalten auf Kernfelder mappen: `email` (Pflicht), `company`, `website`, `phoneNumber`, `city`.
@@ -30,18 +34,26 @@ Dieser Skill laedt Lead-Listen ueber das MCP-Tool `import_leads` (Scope `leads:w
 4. Vorab-Check: Zeilen ohne gueltige E-Mail zaehlen und dem User melden — das Tool weist den GESAMTEN Call ab, wenn ungueltige E-Mails enthalten sind. Die ersten 20 Zeilendiagnosen stehen direkt im `isError`-Text nach dem Prefix `validation_failed:`; es gibt kein strukturiertes `invalid_rows`-Feld. Ungueltige Zeilen vor dem Call entfernen und im Report ausweisen.
 5. Vorab-Dedup bei gescrapten Listen: VOR dem Import `check_leads_exist` (bzw. den kompletten Listen-Flow aus `/outreach-lists`) fahren — Bestands-Leads und `do_not_contact`-Treffer dem User zeigen, bevor Geld oder Kampagnenplaetze draufgehen.
 
-## Phase 2: Import
+## Phase 2: Gebundene Vorschau und Import
 
-```
+`preview_import(leads=[…], campaign_id=…, list_id=…, attribute_mappings={…})` aufrufen. Zeilenergebnisse, bekannte E-Mails, Kontaktsperren, Website-Zusammenführungen und Attributplan prüfen. Bestehende E-Mail-Treffer werden nicht blind überschrieben; Website-Konsolidierung kann eine andere bestehende Primäridentität schützen. Attribute ohne Website werden im bestehenden Bulkpfad nicht übernommen; die Vorschau weist das aus.
+
+Nach Freigabe exakt die zurückgegebenen `execution`-Felder zusammen mit `preview_token` an `import_leads` senden. Nur vorhandene optionale Felder übernehmen; fehlende Felder nicht als null ergänzen (insbesondere `attribute_mappings` verlangt bei Angabe ein Objekt):
+
+```text
 import_leads(
-  campaign_id = <ID oder weglassen>,
-  list_id = <ID oder weglassen>,   // von create_list — sammelt ALLE Leads des Imports in einer Liste
-  leads = [ {...}, ... ],          // max 10000 pro Call
-  attribute_mappings = {...}       // optional
+  leads=<preview.execution.leads>,
+  campaign_id=<preview.execution.campaign_id>,
+  list_id=<preview.execution.list_id>,
+  attribute_mappings=<preview.execution.attribute_mappings>,
+  preview_token=<preview.preview_token>
 )
 ```
 
-- Bei > 10000 Leads: in 10000er-Chunks aufteilen, sequentiell importieren.
+Token gilt 30 Minuten. Payload, Mapping, Ziele und relevanter Bestand werden vor dem Einplanen und nochmals im Worker unter dem User-Mutationslock geprüft. Bei `import_preview_conflict` oder Ablauf eine neue Vorschau holen; den Token niemals einfach weglassen, um den Konflikt zu umgehen. Eine abgelehnte Worker-Ausführung kann Job-Metadaten hinterlassen, verändert aber keine Leads.
+
+- Größere Datenmengen in maximal 500er-Chunks teilen, jeweils unmittelbar vor Ausführung prüfen und sequentiell importieren. Der vorherige Import kann den Bestand für den nächsten Chunk ändern.
+- Der alte ungebundene `import_leads`-Aufruf bleibt technisch kompatibel (maximal 10.000), ist aber kein geprüfter Import.
 - `list_id` fuer gescrapte/beschaffte Listen immer setzen (Herkunft + spaeteres Aufraeumen via `delete_list`) — Listen-Verwaltung: `/outreach-lists`.
 - Response: `job_id` — der Import laeuft async ueber den Fair-Scheduler.
 - Dedup macht das Backend: listen-intern + gegen bestehende Leads; bestehende Leads werden nur zur Kampagne verlinkt (kein Duplikat, keine Feld-Ueberschreibung).

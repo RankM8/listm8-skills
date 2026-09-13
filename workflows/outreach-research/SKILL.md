@@ -9,6 +9,10 @@ Dieser Skill orchestriert das Lead-Research via MCP Business Tools. Claude-Subag
 
 > **Hinweis zur Parallelisierung:** Wenn dein Client parallele Subagents unterstuetzt (z.B. Claude Code), spawne pro Lead einen Subagent wie beschrieben. Andernfalls arbeite die Leads **sequentiell** mit exakt denselben Schritten ab — das Ergebnis ist identisch, nur langsamer.
 
+## Websitehinweise und gespeicherte Sperren getrennt halten
+
+Vor dem Workflow `get_context()` und `get_agent(stage="researcher", campaign_id=…, include_rules=true)` prüfen. Allgemeine Hinweise gegen Werbung in Website, Impressum oder AGB nur informativ mit Quelle im Report erfassen. Sie allein begründen weder Score-Abwertung noch fachliches `not_qualified` oder das Unterdrücken weiterer Research. Sie niemals in `contact_status`/`do_not_contact` umdeuten. Echte gespeicherte DNC-/Abmelde-/Kundensperren bleiben verbindlich; nicht entsperren. Opt-in, rechtliche Prüfung und Versandentscheidung liegen beim Kunden, nicht in der Research-Klassifizierung.
+
 ## Workflow-Uebersicht
 
 ```
@@ -98,6 +102,7 @@ LEAD: {lead.company} (ID: {lead.id})
 
 - NICHTS ERFINDEN: Jede Aussage im Report braucht eine Quelle (URL). "pattern_inferred"-E-Mails explizit als Vermutung kennzeichnen oder weglassen.
 - Keine internen Metriken/Scores in den Report-Text.
+- Allgemeine Website-/Impressums-Werbehinweise ausschließlich als Information mit Quelle dokumentieren. Dadurch allein keinen Score/Fit abwerten, Research unterdrücken oder internen DNC-/Abmeldestatus setzen. Echte gespeicherte Sperren erhalten; Opt-in und Versandentscheidung bleiben beim Kunden.
 - Deutsch, korrekte Umlaute (Ä/Ö/Ü/ß — niemals AE/OE/UE/ss).
 - Antworte am Ende NUR mit: "OK lead={lead.id} aufhaenger=<kurz>" oder "FEHLER lead={lead.id}: <Grund>".
 ```

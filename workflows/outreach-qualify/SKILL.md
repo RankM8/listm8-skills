@@ -9,6 +9,10 @@ Dieser Skill orchestriert die Lead-Qualifizierung via MCP Business Tools. Claude
 
 > **Hinweis zur Parallelisierung:** Wenn dein Client parallele Subagents unterstuetzt (z.B. Claude Code), spawne pro Lead einen Subagent wie beschrieben. Andernfalls arbeite die Leads **sequentiell** mit exakt denselben Schritten ab — das Ergebnis ist identisch, nur langsamer.
 
+## Fachlicher Fit ist keine Kontaktfreigabe
+
+Vor dem Workflow `get_context()` prüfen und `get_agent(stage="qualifier", campaign_id=…, include_rules=true)` lesen. Ausschließlich den fachlichen ICP-/Angebots-Fit bewerten. Allgemeine Werbeverbote aus Website, Impressum, AGB oder Datenschutzerklärung nur als `contactNotices` mit Quelle in `qualificationSnapshotJson` festhalten: deswegen allein weder Score senken noch `not_qualified` setzen oder Research unterdrücken. „Bestehende Kontaktsperre“ meint echte gespeicherte DNC-/Abmelde-/Kundensperren, nicht Website-Prosa. Keine internen Kontaktstatus aus solchen Texten ableiten oder echte Sperren entfernen. Opt-in, rechtliche Prüfung und Versandentscheidung bleiben beim Kunden; ein positiver Fit gibt keinen Versand frei.
+
 ## Workflow-Uebersicht
 
 ```
@@ -79,7 +83,7 @@ LEAD: {lead.company} (ID: {lead.id})
    - Custom Attributes (Google-Rating, Kategorie etc.) einbeziehen.
    - Website nicht erreichbar ist KEIN automatischer Disqualifier — bewerte streng nach den Kampagnen-Kriterien (eine fehlende/schwache Website kann je nach Angebot sogar FUER den Lead sprechen).
 4. Bewerte gegen die Kriterien:
-   - Trifft ein Disqualifier zu -> fitLevel "not_qualified".
+   - Trifft ein fachlicher Disqualifier zu → fitLevel "not_qualified". Allgemeine Website-/Impressums-Werbehinweise zählen ausdrücklich NICHT dazu; sie verändern weder Fit noch Score und werden nur als contactNotices dokumentiert. Echte gespeicherte DNC-/Abmeldestatus niemals entfernen oder aus Website-Text ableiten.
    - Sonst fitLevel nach Staerke des Fits: "mid_qualified" | "qualified" | "highly_qualified".
    - score 0-100 konsistent zum fitLevel (not_qualified: 0-39, mid: 40-59, qualified: 60-79, highly: 80-100).
 5. Schreibe das Ergebnis:
@@ -89,7 +93,7 @@ LEAD: {lead.company} (ID: {lead.id})
      "score": <int>,
      "qualificationCategory": "<kurze Branchen-/Fit-Kategorie>",
      "qualificationSummary": "<2-4 Saetze: warum dieses fitLevel, welche Kriterien erfuellt/verletzt>",
-     "qualificationSnapshotJson": { "criteria_matched": [...], "disqualifiers_hit": [...], "evidence": [{"claim": "...", "source": "<URL>"}] }
+     "qualificationSnapshotJson": { "businessFitLevel": "<fitLevel>", "contactNotices": [...], "criteria_matched": [...], "disqualifiers_hit": [...], "evidence": [{"claim": "...", "source": "<URL>"}] }
    })
 
 ## Regeln

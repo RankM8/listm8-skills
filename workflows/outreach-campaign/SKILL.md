@@ -5,7 +5,7 @@ description: 'Use when user says "outreach:campaign", "mcp:campaign", "erstelle 
 
 # MCP Campaign — Kampagnen erstellen & bearbeiten via Blueprint
 
-Dieser Skill erstellt oder bearbeitet vollstaendige, onboarding-aequivalente Kampagnen ueber die MCP-Tools `create_campaign` und `edit_campaign` (Scope `campaigns:write`). Kern ist das **CampaignBlueprint-Schema v1** — Claude baut aus einem Briefing ein vollstaendiges Blueprint mit allen 7 Bausteinen.
+Dieser Skill erstellt vollständige Kampagnen über `create_campaign` und ändert vorhandene Kampagnen gezielt über `update_email_step`, `update_ai_variable` und `patch_campaign_settings` (Scope `campaigns:write`). `edit_campaign` bleibt ausschließlich der ausdrücklich bestätigte Vollersatz. Das CampaignBlueprint-Schema v1 gilt weiterhin für die Neuanlage.
 
 ## Aufruf
 
@@ -13,7 +13,13 @@ Dieser Skill erstellt oder bearbeitet vollstaendige, onboarding-aequivalente Kam
 |---------|-----------|
 | `/outreach-campaign` | Briefing interaktiv abfragen, dann erstellen |
 | `/outreach-campaign <briefing-text oder datei>` | Blueprint aus Briefing bauen, dann erstellen |
-| `bearbeite kampagne 80 via mcp: <aenderungswunsch>` | Edit-Flow (Voll-Blueprint-Ersatz) |
+| `bearbeite kampagne 80 via mcp: <änderungswunsch>` | Gezielter Patch; kein Vollersatz für Einzeländerungen |
+
+## Phase 0: Umgebung und Konto prüfen
+
+Vor jedem Schreibworkflow `get_context()` aufrufen. `environment`, `environment_source`, `deployment_environment`, `base_url`, `account`, `tenant` und `scopes` mit dem Auftrag abgleichen. Ein `prod`-Kernel beweist keine Produktionsumgebung; bei fehlender Deploymentangabe und relevantem Zweifel nachfragen. Bei falschem Host/Konto/Tenant stoppen, niemals IDs auf eine andere Umgebung übertragen. Fehlen die neuen Tools in der Discovery, Verbindung neu laden; keine Einzelkorrektur heimlich über `edit_campaign` ersetzen.
+
+Für bestehende Kampagnen `get_campaign(campaign_id)` lesen. IDs und `revision` aus dieser Antwort übernehmen. Bei Fragen zu Defaults `list_agents()` und `get_agent(stage="email", campaign_id=…, include_rules=true)` verwenden. Die Modellangaben sind konfigurierte Slots, kein live geprüfter Providerkatalog.
 
 ## Phase 1: Briefing sammeln
 
@@ -65,7 +71,7 @@ Struktur (Schema v1 — die vollstaendige Referenz liefert der MCP-Prompt `campa
     },
     "qualificationSettings": { "idealCustomer": "...", "disqualifiers": "..." },
     "researchAgentConfig": { "researchGoals": "...", "researchPriorities": "..." },
-    "emailAgentConfig": { "emailLanguage": "Deutsch (DACH)", "emailTone": "..." }
+    "emailAgentConfig": { "additionalPrompt": "Auf Deutsch für DACH schreiben; Ton und Ansprache konsistent mit dem bestätigten Briefing halten." }
   },
   "aiVariables": [
     {"name": "hallo", "prompt": "<Anrede-Anweisung, min 10 Zeichen>", "sortOrder": 1},
@@ -77,7 +83,7 @@ Struktur (Schema v1 — die vollstaendige Referenz liefert der MCP-Prompt `campa
 
 **Pflicht-Regeln (Cold-Mailing-SOP):**
 - AI-Variablen `hallo` (Anrede) und `intro` (personalisierter Opener) IMMER anlegen; Namen-Regex `^[a-zA-Z][a-zA-Z0-9_]*$`, Prompt min 10 Zeichen.
-- Sequenz-Bodies nutzen `{{ai.hallo}}`/`{{ai.intro}}` + `{{companyName}}`-Platzhalter; Step 1 `delayDays: 0`.
+- Sequenz-Bodies nutzen `{{ai.hallo}}`/`{{ai.intro}}` und `{{lead.company}}`; Step 1 `delayDays: 0`. Keine nackten `{{companyName}}`-Tokens, If-Blöcke oder Default-Syntax verwenden.
 - `agentKey` in den Configs WEGLASSEN, ausser der User nennt explizit einen bestehenden Agenten (Referenz + Fallback: ohne Key greifen System-Defaults; unbekannte Keys → VALIDATION_FAILED).
 - Max 25 Variablen, max 25 Steps, Blueprint < 256 KB.
 
@@ -87,7 +93,23 @@ Blueprint dem User zur Bestaetigung zeigen (kompakt: Name, Variablen, Step-Betre
 
 **Neu:** `create_campaign(blueprint=<object>)` → Response enthaelt `campaign_id`, `imported` (steps/variables/intelligence/configs). Kampagne startet in der abgeleiteten Lifecycle-Stufe `draft` — der Lebenszyklus (`lifecycle` in `list_campaigns`: `draft` → `in_progress` → `exported` → `active` → `completed`) wird aus den Lead-Signalen berechnet, nicht gespeichert, und kann daher nicht manuell gesetzt werden.
 
-**Bearbeiten:** `edit_campaign(campaign_id=<id>, blueprint=<object>, confirm_overwrite=true)` — **Replace-all**: Immer das KOMPLETTE Ziel-Blueprint senden, nie nur die Aenderung. Den Ist-Stand IMMER zuerst mit dem MCP-Tool `export_campaign_blueprint(campaign_id)` holen (nie aus dem Gedaechtnis rekonstruieren — alles, was im gesendeten Blueprint fehlt, wird geloescht), anpassen, komplett zuruecksenden. Ohne `confirm_overwrite` → `CONFIRM_OVERWRITE_REQUIRED` (Schutz).
+**Gezielt bearbeiten (Standard):**
+
+```text
+update_email_step(campaign_id=80, step_id=<aus get_campaign>, expected_revision=<revision>, patch={"body":"{{ai.hallo}}\n\nNeuer Text"})
+update_ai_variable(campaign_id=80, variable_id=<aus get_campaign>, expected_revision=<aktuelle revision>, patch={"prompt":"Neuer vollständiger Prompt mit mindestens zehn Zeichen"})
+patch_campaign_settings(campaign_id=80, expected_revision=<aktuelle revision>, patch={"researchAgentConfig":{"additionalPrompt":"Nur diesen Fokus ändern"}})
+```
+
+Nach jedem erfolgreichen Patch dessen neue `revision` verwenden und `changedFields`, `invalidation`, `rerunRequired` sowie `reviewRequired` berichten. Bei `revision_conflict` zuerst neu lesen und die Benutzeränderung erneut mit dem aktuellen Stand abgleichen; nie blind überschreiben. Bereits gespeicherte UI-Änderungen werden erfasst; spätere unversionierte UI-Schreibvorgänge sind weiterhin eine ausdrücklich ausgewiesene Konkurrenzgrenze.
+
+Omitted bleibt erhalten. Step-/Variablenfelder erlauben kein null; leerer Body ist erlaubt, leerer Betreff/Prompt nicht. Settings: null entfernt Feld/Block, Arrays ersetzen, nicht leere Objekte werden rekursiv zusammengeführt. Ein leeres Settings-Blockobjekt `{}` leert den Block. Für `intelligence` gilt stattdessen der UI-Merge: `{}` erhält die Slices und normalisiert auf `version=1`; null-Slices bleiben explizit null. Vererbte Domain-Defaults danach über `get_agent` prüfen. Nur tatsächlich ausgewertete Runtimefelder setzen: E-Mail-Konfiguration unterstützt `agentKey` und `additionalPrompt`, keine wirkungslosen `emailTone`-/`emailLanguage`-Felder; Sprache/Ton als klare Anweisung in `additionalPrompt` ausdrücken. Research unterstützt zusätzlich `allowedTools`, `researchGoals`, `researchPriorities`; Qualifizierungs-Agentkonfiguration `agentKey`/`allowedTools`. Alte ungenutzte Schlüssel bei Bedarf mit null entfernen.
+
+Promptänderungen erhalten Texte und Historie; aktuelle erfolgreiche Werte der Definition und expliziter transitiver `{{ai.*}}`-Abhängigkeiten werden `stale`. Betroffene freigegebene oder im Review stehende Leads mit unvollständigen benötigten Werten wechseln atomar zurück auf `processing`; `requeuedLeadCount` und `rerunRequired` berichten. Benötigt sind Vorlagenvariablen, über persistierte Instantly-Mappings verbrauchte AI-Variablen und deren explizite transitive Prompt-Abhängigkeiten, nicht alle gespeicherten Definitionen. Auch ein normaler serieller UI-Promptedit invalidiert die betroffenen Werte und öffnet die Verarbeitung wieder; daraus folgt keine Versions-/CAS-Garantie für unversionierte UI-Schreibvorgänge. Instantly-Payloads verwenden ausschließlich aktuelle `success`-Werte; `stale`-Alttexte werden nicht übertragen. Ein gezielter `start_lead_run(stages=["email"], lead_ids=[…])` erzeugt diese benötigte Variablenmenge für die ausgewählten Leads neu, nicht ausschließlich eine einzelne Variable. Keine globale Invalidierung oder automatische Neugenerierung behaupten. Rename wird bei Referenzen oder Instantly-Verknüpfung abgelehnt; keine implizite Umschreibung. `sortOrder` verschiebt die Variable auf die 1-basierte Position und lehnt Vorwärtsabhängigkeiten ab. Aktive Verarbeitung erst terminal werden lassen.
+
+Anschließend `validate_campaign(campaign_id=80, lead_ids=[…])` und für ausgewählte Leads `preview_campaign(campaign_id=80, lead_ids=[…])` verwenden (maximal 20 pro Aufruf). Vollständige Betreffe/Bodies prüfen. Validierung ist deterministisch, keine semantische Copy-Garantie. Formal/Team sind implementiert, persönliches Du ist kein eigener Ansprachemodus. Preview/Validation lösen keine Freigabe oder externen Aktionen aus.
+
+**Ausdrücklich gewünschter Vollersatz:** `edit_campaign(campaign_id=<id>, blueprint=<object>, confirm_overwrite=true)` — **Replace-all**: Immer das KOMPLETTE Ziel-Blueprint senden, nie nur die Aenderung. Den Ist-Stand IMMER zuerst mit dem MCP-Tool `export_campaign_blueprint(campaign_id)` holen (nie aus dem Gedaechtnis rekonstruieren — alles, was im gesendeten Blueprint fehlt, wird geloescht), anpassen, komplett zuruecksenden. Ohne `confirm_overwrite` → `CONFIRM_OVERWRITE_REQUIRED` (Schutz).
 
 **WARNUNG Datenverlust:** Ersetzt `edit_campaign` die AI-Variablen, werden kaskadiert ALLE bereits generierten Variablen-Werte saemtlicher Leads der Kampagne geloescht — nach einer Generierung fuer z.B. 500 Leads ist diese Arbeit unwiederbringlich weg. Vor dem Edit pruefen: Sind schon Variablen generiert (`list_leads` mit `campaign_status="pending_review"`/`approved`)? Dann dem User die Konsequenz ausdruecklich nennen und bestaetigen lassen — `confirm_overwrite=true` alleine ist KEINE informierte Zustimmung. Nie bei aktivem Lead-Run editieren (`list_lead_runs(active_only=true)` vorher pruefen).
 

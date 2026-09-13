@@ -9,7 +9,7 @@ Dieser Skill orchestriert den automatischen Review von AI-generierten Variablen 
 
 > **Hinweis zur Parallelisierung:** Wenn dein Client parallele Subagents unterstuetzt (z.B. Claude Code), spawne pro Lead einen Subagent wie beschrieben. Andernfalls arbeite die Leads **sequentiell** mit exakt denselben Schritten ab — das Ergebnis ist identisch, nur langsamer.
 
-> **Wichtig:** Reviewt werden die **AI-Variablen-Werte** (z.B. `hallo`, `intro`), NICHT der Email-Body. Der Email-Body ist in der Email-Sequenz hardcoded und wird beim CSV-Export live mit den Variablen gerendert. Falls Variablen unbrauchbar sind, gibt es **keine Inline-Korrektur** — entweder approve, reject mit Begruendung, oder neu generieren — via serverseitigem Lauf (`start_lead_run` mit `stages: ["email"]` auf den abgelehnten Leads) oder manuell via `/outreach-generate` bzw. `save_lead_variables`. Waehrend ein Lauf mit email-Stufe aktiv ist, blocken `approve_lead_variables`/`reject_lead_variables` mit `lead_run_active` — erst nach dessen Terminal-Status reviewen.
+> **Wichtig:** Vor dem Review `get_context()` und `get_campaign(campaign_id)` prüfen. Konto, Tenant und Umgebung müssen zum Auftrag passen. Über `preview_campaign(campaign_id, lead_ids=[…])` vollständige Betreffe und Bodies für maximal 20 explizite Leads rendern und über `validate_campaign` fehlende, leere, fehlgeschlagene oder `stale`-Werte prüfen. Diese beiden Tools verändern keine Freigaben und lösen keinen Push aus. `approve_lead_variables` dagegen kann bei aktivem Instantly-Auto-Push extern übertragen: `get_campaign` → `instantly.autoPushEnabled` prüfen und die Freigabe entsprechend ausdrücklich bestätigen lassen. Eine reine Vorschau ist niemals eine Freigabe. Während aktiver E-Mail-Läufe warten. Für einzelne Templateänderungen den revisionsgeschützten `update_email_step` nutzen, nie den Vollersatz `edit_campaign`. Inhaltliche Korrekturen von Werten weiterhin über eine vollständige neue Version mit `save_lead_variables` oder ausdrücklich gestartete Neugenerierung ausführen.
 
 ## Workflow-Uebersicht
 
@@ -89,12 +89,9 @@ Wenn `leads` leer ist: "Keine Leads zur Review. Alle Leads sind bereits freigege
 
 ### Phase 3: Sub-Agents spawnen (parallel)
 
-Fuer JEDEN Lead im Batch einen Agent spawnen. Verwende das Agent-Tool mit:
-- `subagent_type`: nicht gesetzt (general-purpose)
-- `mode`: "bypassPermissions"
-- `run_in_background`: true (fuer echte Parallelitaet)
-- `name`: "verify-{lead.company}" (gekuerzt auf 20 Zeichen)
-- `description`: "Review variables for {lead.company}"
+Für jeden Lead ausschließlich die tatsächlich verfügbare Agent-Signatur nutzen und den Berechtigungsmodus erben. Keine Umgehungsmodi oder nicht unterstützten Background-Parameter setzen; ohne Parallelisierung sequentiell arbeiten.
+- `name`: "verify-{lead.company}" (auf 20 Zeichen begrenzen)
+- `description`: "Mailvorschau und Variablen für {lead.company} prüfen"
 
 **WICHTIG:** Spawne ALLE Agents eines Batches in EINEM Message-Block, damit sie parallel laufen.
 

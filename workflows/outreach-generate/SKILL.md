@@ -9,6 +9,12 @@ Dieser Skill orchestriert die vollautomatische AI-Variablen-Generierung fuer Lea
 
 > **Hinweis zur Parallelisierung:** Wenn dein Client parallele Subagents unterstuetzt (z.B. Claude Code), spawne pro Lead einen Subagent wie beschrieben. Andernfalls arbeite die Leads **sequentiell** mit exakt denselben Schritten ab — das Ergebnis ist identisch, nur langsamer.
 
+## Phase 0: Sicherer Kontext und Konfiguration
+
+Vor jeder Generierung `get_context()` mit dem Auftrag abgleichen: Konto, Tenant, Basis-URL und konfigurierte Umgebung; bei Unklarheit oder Abweichung stoppen. `get_campaign(campaign_id)` sowie `get_agent(stage="email", campaign_id=…, include_rules=true)` lesen. `validate_campaign(campaign_id)` prüft Tokens und Definitionen ohne Generierung. Für reine Copy-/Prompt-/Konfigurationskorrekturen `update_email_step`, `update_ai_variable` oder `patch_campaign_settings` mit aktueller `expected_revision` nutzen, nie `edit_campaign` als Einzelkorrektur. Promptänderungen erhalten Werte, markieren betroffene aktuelle Werte aber gegebenenfalls `stale`; Neugenerierung ausdrücklich planen. Der Patch kann betroffene Reviewed-Leads nach `processing` zurückstellen (`requeuedLeadCount`). Serverläufe generieren Vorlagenvariablen, über persistierte Instantly-Mappings verbrauchte AI-Variablen und deren explizite transitive Abhängigkeiten für die ausgewählten Leads; unbenutzte Definitionen und historische Werte bleiben erhalten. Bei `revision_conflict` einer synchronen UI-Regeneration wurden inzwischen veraltete Ergebnisse nicht gespeichert; vor erneutem Versuch Konfiguration und Kontaktstatus neu lesen.
+
+Nach dem Speichern ausgewählte vollständige Mails über `preview_campaign(campaign_id, lead_ids=[…])` prüfen (maximal 20), nicht aus einzelnen Variablen auf den fertigen Text schließen. Preview/Validation geben nichts frei und lösen keinen Export/Push aus. Persönliches Du ist kein implementierter Ansprachemodus; Formal/Team sind die derzeitigen Systemmodi. `valid=true` bedeutet keine semantische Copy-Garantie.
+
 ## Workflow-Uebersicht
 
 ```
@@ -82,12 +88,10 @@ Wenn `leads` leer ist: "Keine Leads zur Verarbeitung. Alle Leads haben bereits g
 
 ### Phase 3: Sub-Agents spawnen (parallel)
 
-Fuer JEDEN Lead im Batch einen Agent spawnen. Verwende das Agent-Tool mit:
-- `subagent_type`: nicht gesetzt (general-purpose)
-- `mode`: "bypassPermissions"
-- `run_in_background`: true (fuer echte Parallelitaet)
-- `name`: "gen-{lead.company}" (gekuerzt auf 20 Zeichen)
-- `description`: "Generate variables for {lead.company}"
+Für jeden Lead nur die tatsächlich vom Client unterstützte Agent-Signatur verwenden. Berechtigungsmodus unverändert erben; kein `bypassPermissions`, keine erfundenen `run_in_background`-Parameter. Falls der Client keine Parallelisierung unterstützt, sequentiell arbeiten.
+- `name`: "gen-{lead.company}" (auf 20 Zeichen begrenzen)
+- `description`: "Variablen für {lead.company} generieren"
+- `prompt`: das folgende vollständige Lead-Briefing
 
 **WICHTIG:** Spawne ALLE Agents eines Batches in EINEM Message-Block, damit sie parallel laufen.
 
