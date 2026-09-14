@@ -201,7 +201,7 @@ Status: Freigegebene Leads auf "approved" gesetzt (ready fuer CSV-Export)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-**WICHTIG — "rejected" ist NICHT final:** Ein rejected-Lead zaehlt als generierungsbeduerftig — der naechste E-Mail-Run bzw. Re-Generate erzeugt neue Variablen und setzt ihn zurueck auf pending_review (der `reason` fliesst in die Neu-Generierung ein). Soll ein Lead DAUERHAFT raus: aus der Kampagne entfernen oder `mark_leads_contacted(emails=[...], status="do_not_contact")` setzen — dann wird er global von allen AI-Jobs und Exporten ausgeschlossen.
+**WICHTIG — "rejected" ist NICHT final:** Ein rejected-Lead zaehlt als generierungsbeduerftig — der naechste E-Mail-Run bzw. Re-Generate erzeugt neue Variablen und setzt ihn zurueck auf pending_review (der `reason` fliesst in die Neu-Generierung ein). Soll ein Lead DAUERHAFT raus: aus der Kampagne entfernen oder `mark_leads_contacted(lead_ids=[...], status="do_not_contact")` setzen — dann wird er global von allen AI-Jobs und Exporten ausgeschlossen. Das Tool nimmt wahlweise `lead_ids` ODER `emails` (nie beides); im Verification-Workflow liegen die IDs bereits aus `list_leads` vor, ein Umweg ueber die E-Mail entfaellt.
 
 ## MCP Tool Reference
 

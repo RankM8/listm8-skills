@@ -86,7 +86,9 @@ add_leads_to_campaign(campaign_id=<id>, list_id=<id>)
 ```
 
 `do_not_contact`-Leads werden vom Tool selbst übersprungen und gemeldet. Danach startet
-`start_lead_run` die Qualifizierung — NICHT automatisch, der Nutzer entscheidet.
+`start_lead_run` die Qualifizierung — NICHT automatisch, der Nutzer entscheidet. Vorher
+`get_credit_balance` lesen: `available` ist das Credit-Guthaben, das der Lauf nutzen kann
+(nur Credits, keine Währung); bei 0 den Nutzer um Aufladen oder Tier-Wechsel bitten.
 
 ### 5. Aufräumen nach Test-Läufen
 

@@ -205,7 +205,7 @@ Gibt vollen Generierungs-Context zurueck:
 - `qualification` (fitLevel, category, summary, snapshot)
 - `research` (text, bestEmail, decisionMaker, contactRecommendation)
 - `customAttributes` (key-value Paare)
-- `emailGeneration.systemPrompt` — Der aufgeloeste System-Prompt
+- `emailGeneration.systemPrompt` — Der aufgeloeste System-Prompt (inkl. Kampagnen-Agent-Kontext und, falls vorhanden, Review-Feedback-Beispielen — derselbe Kontext wie die serverseitige Generierung)
 - `emailGeneration.variables[]` — Variablen mit aufgeloesten Prompts
 - `emailGeneration.expectedOutput` — JSON-Schema der erwarteten Ausgabe (Variablen-Namen)
 
@@ -249,7 +249,7 @@ Die folgenden Tools werden im Verification-Workflow verwendet, NICHT in der Gene
 
 - **get_lead_variables** — laedt aktuelle Variablen-Werte (Name, Wert, Status, generatedAt) zur Pruefung
 - **approve_lead_variables** — gibt Variablen frei (`LeadCampaignStatus = approved`, ready fuer CSV-Export)
-- **reject_lead_variables** — lehnt Variablen ab mit `reason` (`LeadCampaignStatus = rejected`; NICHT final: der Lead zaehlt wieder als generierungsbeduerftig und wird beim naechsten Generate/Run neu erzeugt. Dauerhaft raus = aus Kampagne entfernen oder `mark_leads_contacted(emails, status="do_not_contact")`)
+- **reject_lead_variables** — lehnt Variablen ab mit `reason` (`LeadCampaignStatus = rejected`; NICHT final: der Lead zaehlt wieder als generierungsbeduerftig und wird beim naechsten Generate/Run neu erzeugt. Dauerhaft raus = aus Kampagne entfernen oder `mark_leads_contacted(lead_ids=[...], status="do_not_contact")` — das Tool nimmt wahlweise `lead_ids` oder `emails`, nie beides)
 
 Details: siehe `/outreach-verify` Skill.
 

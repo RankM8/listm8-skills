@@ -62,7 +62,7 @@ Erwartete Tool-Fehler sind MCP-Tool-Results mit `isError: true`; ihr Text beginn
 | Code | Aktion |
 |------|--------|
 | `validation_failed` mit inline aufgefuehrten Zeilen | Genannte Zeilen fixen/entfernen, erneut senden |
-| `credits_exhausted` (CREDITS_EXHAUSTED) | Benoetigte und verfuegbare Credits nennen, User um Aufladen oder Tier-Wechsel bitten; kein Auto-Retry |
+| `credits_exhausted` (CREDITS_EXHAUSTED) | Benoetigte und verfuegbare Credits nennen (`get_credit_balance` zeigt Saldo, reserviert, verfuegbar und letzte Gutschrift), User um Nachkauf (in der App: Einstellungen, Credits & Limits) oder Tier-Wechsel bitten; kein Auto-Retry |
 | `limit_reached` | Chunk verkleinern bzw. User informieren (Plan-Limit MAX_LEADS) |
 | `campaign_not_found` / `list_not_found` | IDs pruefen (`list_campaigns` / `list_lists`) |
 | `insufficient_scope` | Token mit Scope `leads:write` verwenden |

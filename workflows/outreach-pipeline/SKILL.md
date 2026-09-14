@@ -8,7 +8,8 @@ description: Use when user says "outreach:pipeline", "mcp:pipeline", "kompletter
 Dieser Skill startet und ueberwacht die komplette Lead-Verarbeitung einer Kampagne als **einen serverseitigen Lauf**: das MCP-Tool `start_lead_run` verkettet Qualifizierung, Research und E-Mail-Variablen pro Lead mit den kampagneneigenen AI-Agents. Die Abrechnung erfolgt mit Plattform-Credits. Der Server reserviert Credits bei der Vorbereitung als Hold und rechnet nach Ist-Kosten ab. Dein Client orchestriert nicht mehr selbst; er startet, pollt und berichtet.
 
 ```
-list_campaigns -> list_lead_runs(active_only=true) -> start_lead_run(stages=[...])
+list_campaigns -> list_lead_runs(active_only=true) -> get_credit_balance
+    -> start_lead_run(stages=[...], budget_percent=...)
     -> get_lead_run_status (poll bis is_terminal) -> Report
 (danach manuell: /outreach-verify. Review & Approve)
 ```
@@ -25,10 +26,10 @@ list_campaigns -> list_lead_runs(active_only=true) -> start_lead_run(stages=[...
 
 ## Ablaufregeln
 
-1. **Vorpruefung (Pflicht)**: `list_lead_runs(campaign_id, active_only=true)`. Ist ein Lauf aktiv: NICHT starten. Parallele Laeufe ueber dieselben Leads blockieren sich und koennen Leads still ueberspringen. Stattdessen den aktiven Lauf verfolgen oder mit `cancel_lead_run` stoppen. Vorbedingungen des Servers: AI-Modell konfiguriert; kein eigener OpenRouter-Key erforderlich; die email-Stufe braucht eine E-Mail-Sequenz an der Kampagne.
+1. **Vorpruefung (Pflicht)**: `list_lead_runs(campaign_id, active_only=true)`. Ist ein Lauf aktiv: NICHT starten. Parallele Laeufe ueber dieselben Leads blockieren sich und koennen Leads still ueberspringen. Stattdessen den aktiven Lauf verfolgen oder mit `cancel_lead_run` stoppen. Danach `get_credit_balance()`: `available` ist das Guthaben, das der Lauf nutzen kann (`reserved` gehoert aktiven Laeufen). Ist `available` 0: nicht starten, dem User Guthaben und letzte Gutschrift (`last_grant`, mit `expires_at`) nennen und um Nachkauf (in der App unter Einstellungen, Credits & Limits) oder Tier-Wechsel bitten; ueber MCP gibt es keinen Kauf. Vorbedingungen des Servers: AI-Modell konfiguriert; kein eigener OpenRouter-Key erforderlich; die email-Stufe braucht eine E-Mail-Sequenz an der Kampagne.
 2. **Lead-Auswahl**: `lead_ids` (1-2000) fuer bekannte Mengen ODER `select_by_filter=true` fuer "alles, was ansteht" (Filter wie `list_leads`). FALLSTRICK: Startet der Lauf bei der Qualifizierung, `fit_level=""` und `research_status=""` setzen. Sonst matchen die Defaults frisch importierte Leads nicht (`no_leads_matched`). Leads mit bereits vorhandenen AI-Variablen fallen bei `campaign_status="processing"` (Default) bzw. `""` aus der Filterauswahl; mit `"rejected"`/`"pending_review"`/`"approved"` greift der Ausschluss nicht. `requested_count` und `selected_count` vergleichen: ist selected_count kleiner, hat knappes Credit-Guthaben die Auswahl gekappt. Die reduzierte Menge und `note` dem User berichten. `matched_total` zeigt weitere Filtertreffer jenseits des Auswahl-Deckels. Nicht ausgewaehlte Leads erst nach Abschluss und mit ausreichenden Credits in einen Folgelauf nehmen.
-3. **Optionen**: `budget_percent` (1-100) begrenzt das Lauf-Budget auf diesen Anteil des verfuegbaren Credit-Guthabens. Credits werden reserviert und nach Ist-Kosten abgerechnet. `budget_usd` bleibt nur als Uebergangsoption erhalten. `agent_key` nur auf explizite User-Nennung. Ein unbekannter Key ueberspringt die Stufen STILL.
-4. **Fehler beim Start**: `run_not_startable` = fehlende Vorbedingung. An den User zurueckgeben, keine Retry-Schleife. HTTP 402 mit Metrik credits wird `CREDITS_EXHAUSTED` (im Tool-Fehlertext `credits_exhausted:`): benoetigte bzw. geschaetzte und verfuegbare Credits nennen, User um Aufladen oder Tier-Wechsel bitten. Es wurde noch kein Lauf angelegt. Andere 402-Metriken bleiben `LIMIT_REACHED` fuer Bestandslimits. Keine automatische Retry-Schleife.
+3. **Optionen**: `budget_percent` (1-100) begrenzt das Lauf-Budget auf diesen Anteil des verfuegbaren Credit-Guthabens; Bezugsgroesse ist `available` aus `get_credit_balance` (Budget in Credits = available x Prozent / 100). Dem User vor dem Start nennen, wie viele Credits der Lauf hoechstens nutzt. Credits werden reserviert und nach Ist-Kosten abgerechnet. Alle Betraege sind Credits; eine Waehrung gibt es fuer den Kunden nicht und darf auch nicht hergeleitet werden. `agent_key` nur auf explizite User-Nennung. Ein unbekannter Key ueberspringt die Stufen STILL.
+4. **Fehler beim Start**: `run_not_startable` = fehlende Vorbedingung. An den User zurueckgeben, keine Retry-Schleife. HTTP 402 mit Metrik credits wird `CREDITS_EXHAUSTED` (im Tool-Fehlertext `credits_exhausted:`): benoetigte bzw. geschaetzte und verfuegbare Credits nennen, User um Nachkauf (Einstellungen, Credits & Limits) oder Tier-Wechsel bitten. Es wurde noch kein Lauf angelegt. Andere 402-Metriken bleiben `LIMIT_REACHED` fuer Bestandslimits. Keine automatische Retry-Schleife.
 5. **Polling**: `get_lead_run_status(lead_run_id)` alle 30-60 s. Fortschritt am completed-Zaehler der LETZTEN Stufe in `stageProgress[]` gegen `leadTotal` messen (Fehler = Summe aller `stageProgress[].failed`). NICHT an den Stufen-Totals, die wachsen waehrend des Laufs. Stoppen bei `is_terminal: true`. CAVEAT: ein `completed` juenger als ~30 Minuten kann der Server wieder auf `running` zurueckholen. Vor dem Abschlussbericht nachpruefen.
 6. **Abbruch**: `cancel_lead_run(lead_run_id)`. Storniert Wartendes und Folgestufen, laufende Jobs laufen aus (leichtes Ueberschiessen moeglich); idempotent. Endzustand via `get_lead_run_status` verifizieren.
 7. **Waehrend des Laufs**: `save_lead_variables`, `approve_lead_variables`, `reject_lead_variables` und `write_lead_details` sind fuer die abgedeckten Stufen mit `lead_run_active` gesperrt (Rennschutz, kein Fehler).
@@ -39,8 +40,8 @@ list_campaigns -> list_lead_runs(active_only=true) -> start_lead_run(stages=[...
 |--------|-----------|-------------------|
 | `completed` | Alle Leads durch | /outreach-verify |
 | `completed_with_failures` | Mind. ein Job endgueltig gescheitert | Fehl-Leads berichten, Folgelauf anbieten |
-| `credits_exhausted` | Credit-Guthaben des Kontos erschoepft (ein erreichtes Lauf-Budget endet dagegen als `budget_exhausted`) | An den User (aufladen oder Tier wechseln), danach `resume_lead_run(lead_run_id)` fuer DENSELBEN Lauf statt `start_lead_run`; anschliessend wieder pollen |
-| `budget_exhausted` | Lauf-Budget erreicht (Credit-Anteil aus `budget_percent` oder Uebergangs-USD-Budget), Rest storniert | Restmenge beziffern, Folgelauf mit passendem Budget anbieten |
+| `credits_exhausted` | Credit-Guthaben des Kontos erschoepft (ein erreichtes Lauf-Budget endet dagegen als `budget_exhausted`) | An den User (Credits nachkaufen unter Einstellungen, Credits & Limits, oder Tier wechseln; der Kaufdialog bietet danach "Lauf fortsetzen" an); mit `get_credit_balance` pruefen, dass `available` wieder groesser 0 ist, danach `resume_lead_run(lead_run_id)` fuer DENSELBEN Lauf statt `start_lead_run`; anschliessend wieder pollen |
+| `budget_exhausted` | Lauf-Budget erreicht (Credit-Anteil aus `budget_percent`), Rest storniert | Restmenge beziffern, Folgelauf mit passendem Budget anbieten |
 | `limit_exhausted` | Plan-Limit, nicht Credit-Guthaben | An den User (Kontogrenzen fuer Kampagnen/Leads), kein Auto-Retry |
 | `provider_exhausted` | Provider-Stoerung oder serverseitiges Key-Problem | An den User bzw. Support, kein Retry; kein eigenes OpenRouter-Guthaben nachladen lassen |
 | `cancelled` | Vom User gestoppt | Stand berichten |
@@ -53,6 +54,7 @@ list_campaigns -> list_lead_runs(active_only=true) -> start_lead_run(stages=[...
 Lead-Lauf abgeschlossen. Kampagne {campaign.name} ({status})
 Stufen: {stages} | Leads: {completed}/{leadTotal} | Fehler: {failed}
 Credits: verbraucht {spent_credits}, reserviert {reserved_credits}, Lauf-Budget {budget_credits}
+Guthaben danach: {available} verfuegbar (get_credit_balance)
 Wiederaufnahmen: {resume_count}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
