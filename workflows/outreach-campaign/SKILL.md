@@ -84,7 +84,7 @@ Struktur (Schema v1 — die vollstaendige Referenz liefert der MCP-Prompt `campa
 **Pflicht-Regeln (Cold-Mailing-SOP):**
 - AI-Variablen `hallo` (Anrede) und `intro` (personalisierter Opener) IMMER anlegen; Namen-Regex `^[a-zA-Z][a-zA-Z0-9_]*$`, Prompt min 10 Zeichen.
 - Sequenz-Bodies nutzen `{{ai.hallo}}`/`{{ai.intro}}` und `{{lead.company}}`; Step 1 `delayDays: 0`. Keine nackten `{{companyName}}`-Tokens, If-Blöcke oder Default-Syntax verwenden.
-- `agentKey` in den Configs WEGLASSEN, ausser der User nennt explizit einen bestehenden Agenten (Referenz + Fallback: ohne Key greifen System-Defaults; unbekannte Keys → VALIDATION_FAILED).
+- `agentKey` in den Configs WEGLASSEN. Seit 17.09.2026 gibt es je Stufe genau einen Agenten (`qualifier`, `researcher`, `email_generator`); ein Schluessel bezeichnet nur noch seine Stufe. Jeder Wert wird akzeptiert und auf die Stufe seiner Config gezogen, auch alte Schluessel aus frueher gespeicherten Blueprints; abgelehnt wird nur ein Nicht-String (VALIDATION_FAILED).
 - Max 25 Variablen, max 25 Steps, Blueprint < 256 KB.
 
 Blueprint dem User zur Bestaetigung zeigen (kompakt: Name, Variablen, Step-Betreffs, Kriterien), DANN erstellen.
