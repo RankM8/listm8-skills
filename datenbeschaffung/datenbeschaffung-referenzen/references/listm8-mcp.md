@@ -178,8 +178,11 @@ Gedächtnis), `city_fanned_out_to_postal` (Ort im Lauf in PLZ-Einheiten aufgetei
 `unit_budget_limited` (Einheit durch Deckel begrenzt, Fortsetzung führt sie erneut aus),
 `foreign_country_hits` (Treffer außerhalb des Landes verworfen), `category_mismatch_share`
 (hoher Anteil Nachbarkategorien), `area_mismatch` (weniger als 70 Prozent der Treffer im Gebiet)
-und `non_geographic` (PLZ ohne Fläche, ohne Kosten übersprungen). Die Werte im Report nennen,
-nicht wegdiskutieren.
+und `non_geographic` (PLZ ohne Fläche, ohne Kosten übersprungen). Für jeden Lauf zusätzlich:
+`lead_limit_reached` (Lead-Kontingent reichte nicht; übernommen wurde, was Platz hatte, der Rest
+ist verworfen und die Abdeckung wird nicht gespeichert, das Gebiet gilt also nicht als erledigt)
+und `budget_exhausted` (Kostendeckel erreicht; bereits bezahlte Treffer gehen noch bis zum Import,
+der Lauf ist unvollständig). Die Werte im Report nennen, nicht wegdiskutieren.
 
 Zeitpunkte verwenden ISO 8601. Nicht verfügbare Werte sind null. `leadListId` ist eine
 ganzzahlige ID oder null, keine UUID. `steps` enthalten `id`, `stepKey`, `sequenceNo`, `status`,
@@ -263,7 +266,10 @@ auf den Wortlaut von `message`. Nur ein fehlender Scope bei den Quellenwerkzeuge
 | 400 | `validation_failed` | andere, samt `detail.field` | Parameter anhand des Katalogs korrigieren, erneut schätzen und Änderung bestätigen lassen |
 | 400/413 | `matrix_input_too_large` | — | Auftragsmatrix verkleinern |
 | 404 | `not_found` | — | Quellenschlüssel beziehungsweise eigene Run- oder Auftrags-ID prüfen; fremde und unbekannte sind nicht unterscheidbar |
-| 409 | `conflict` | z. B. `lead_source.budget_too_small` mit `minimumRequiredMicroUsd` | Deckel mindestens auf das Mindestbudget heben und neu bestätigen lassen |
+| 409 | `conflict` | `lead_source.budget_too_small` mit `minimumRequiredMicroUsd` | Deckel mindestens auf das Mindestbudget heben und neu bestätigen lassen |
+| 409 | `conflict` | `lead_source.verification_retry_conflict` | Nachprüfung nur für einen abgeschlossenen Lauf mit ungeprüften Treffern und Ergebnisliste; nicht wiederholen |
+| 409 | `conflict` | `lead_source.verification_retry_order_active` | Lauf gehört zu einem noch laufenden Auftrag; erst nach dessen Ende nachprüfen |
+| 409 | `conflict` | `lead_source.verification_retry_budget` | Im Auftragsbudget ist für die Nachprüfung nichts mehr frei; Budget mit dem Nutzer klären |
 | 409 | `state_conflict` | — | Auftrag in einem Zustand, der die Aktion nicht erlaubt; Status lesen, nicht blind wiederholen |
 | 409 | `idempotency_conflict` | — | `request_id` wurde schon mit anderen Argumenten benutzt; neue UUID nur bei bewusst neuem Auftrag |
 | 409 | `resume_blocked` | — | Fortsetzen gerade nicht möglich; Zellen und Status lesen |
@@ -331,7 +337,10 @@ importiert. Kosten und offene Reserven verbleiben am alten Lauf und unter dessen
 ursprünglichem Deckel. Keine zusätzliche Roh-CSV, Liste oder manueller Import.
 
 Die Antwort liefert `runId`, `jobId`, `status` und `warnings`. Wieder bis zum
-Endzustand pollen. `conflict` bedeutet laufenden Versuch, fehlende Ziel-Hits oder
-fehlende Ergebnisliste; nicht blind wiederholen. `payment_required` verlangt
-Klärung der Providerverbindung beziehungsweise des Guthabens. Historische Warnungen
+Endzustand pollen. `conflict` nennt in `detail.code` den Grund:
+`lead_source.verification_retry_conflict` (laufender Versuch, keine ungeprüften Treffer oder
+fehlende Ergebnisliste), `lead_source.verification_retry_order_active` (Auftrag läuft noch) oder
+`lead_source.verification_retry_budget` (Auftragsbudget erschöpft); nicht blind wiederholen.
+Ein 402 unterscheidet wie überall `usage_limit_exceeded` (Plan oder volles Lead-Kontingent),
+`apify_not_connected` und `payment_required` (Apify-Guthaben). Historische Warnungen
 können trotz gesunkenem `unverified`-Zähler erhalten bleiben.
