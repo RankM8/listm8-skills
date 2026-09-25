@@ -111,18 +111,21 @@ Promptänderungen erhalten Texte und Historie; aktuelle erfolgreiche Werte der D
 
 Anschließend `validate_campaign(campaign_id=80, lead_ids=[…])` und für ausgewählte Leads `preview_campaign(campaign_id=80, lead_ids=[…])` verwenden (maximal 20 pro Aufruf). Vollständige Betreffe/Bodies prüfen. Validierung ist deterministisch, keine semantische Copy-Garantie. Formal/Team sind implementiert, persönliches Du ist kein eigener Ansprachemodus. Preview/Validation lösen keine Freigabe oder externen Aktionen aus.
 
-**Ausdrücklich gewünschter Vollersatz:** `edit_campaign(campaign_id=<id>, blueprint=<object>, confirm_overwrite=true)` — **Replace-all**: Immer das KOMPLETTE Ziel-Blueprint senden, nie nur die Aenderung. Den Ist-Stand IMMER zuerst mit dem MCP-Tool `export_campaign_blueprint(campaign_id)` holen (nie aus dem Gedaechtnis rekonstruieren — alles, was im gesendeten Blueprint fehlt, wird geloescht), anpassen, komplett zuruecksenden. Ohne `confirm_overwrite` → `CONFIRM_OVERWRITE_REQUIRED` (Schutz).
+**Ausdrücklich gewünschter Vollersatz:** `edit_campaign(campaign_id=<id>, blueprint=<object>, confirm_overwrite=true)` — **Replace-all**: Immer das KOMPLETTE Ziel-Blueprint senden, nie nur die Aenderung. Den Ist-Stand IMMER zuerst mit dem MCP-Tool `export_campaign_blueprint(campaign_id)` holen (nie aus dem Gedaechtnis rekonstruieren — alles, was im gesendeten Blueprint fehlt, wird geloescht), anpassen, komplett zuruecksenden. Ohne `confirm_overwrite` → `confirm_overwrite_required` (Schutz). NUR dieser Code darf mit `confirm_overwrite=true` beantwortet werden.
 
-**WARNUNG Datenverlust:** Ersetzt `edit_campaign` die AI-Variablen, werden kaskadiert ALLE bereits generierten Variablen-Werte saemtlicher Leads der Kampagne geloescht — nach einer Generierung fuer z.B. 500 Leads ist diese Arbeit unwiederbringlich weg. Vor dem Edit pruefen: Sind schon Variablen generiert (`list_leads` mit `campaign_status="pending_review"`/`approved`)? Dann dem User die Konsequenz ausdruecklich nennen und bestaetigen lassen — `confirm_overwrite=true` alleine ist KEINE informierte Zustimmung. Nie bei aktivem Lead-Run editieren (`list_lead_runs(active_only=true)` vorher pruefen).
+**WARNUNG Neugenerierung:** `edit_campaign` gleicht AI-Variablen per Name ab. Gleichnamige Variablen behalten ihre generierten Werte; aendert sich Prompt oder Name, werden die Werte veraltet (`stale`), und freigegebene Leads ohne gueltigen Wert gehen zurueck auf `processing` — die Arbeit muss neu laufen und kostet erneut. Fehlt eine Variable im Blueprint, bleibt sie nur erhalten, wenn sie schon Werte hat. Vor dem Edit pruefen: Sind schon Variablen generiert (`list_leads` mit `campaign_status="pending_review"`/`approved`)? Dann dem User die Konsequenz ausdruecklich nennen und bestaetigen lassen — `confirm_overwrite=true` alleine ist KEINE informierte Zustimmung. Nie bei aktivem Lead-Run editieren (`list_lead_runs(active_only=true)` vorher pruefen).
 
 ## Fehlerbehandlung
 
 | Code | Aktion |
 |------|--------|
-| `VALIDATION_FAILED` | Fehlerliste lesen, Blueprint korrigieren, erneut senden |
-| `LIMIT_REACHED` | User informieren (MAX_CAMPAIGNS bzw. Variablen-/Step-Plan-Limit) |
-| `CONFIRM_OVERWRITE_REQUIRED` | User fragen, ob ueberschreiben, dann confirm_overwrite=true |
-| `CAMPAIGN_NOT_FOUND` | campaign_id pruefen (list_campaigns) |
+| `validation_failed` | Fehlerliste lesen, Blueprint korrigieren, erneut senden |
+| `limit_reached` | User informieren (MAX_CAMPAIGNS bzw. Variablen-/Step-Plan-Limit) |
+| `confirm_overwrite_required` | User fragen, ob ueberschreiben, dann confirm_overwrite=true — nur bei genau diesem Code |
+| `lead_run_active` | Ein Lauf oder eine Generierung ist aktiv. Warten (`get_lead_run_status`) oder abbrechen, NIE mit confirm_overwrite beantworten |
+| `rename_conflict` | Eine umbenannte Variable wird noch in Schritten/Prompts genutzt oder ist in Instantly gemappt: erst die Verweise aendern |
+| `conflict` | Sonstiger Konflikt: Meldung lesen, nicht mit confirm_overwrite beantworten |
+| `campaign_not_found` | campaign_id pruefen (list_campaigns) |
 
 ## Abschluss
 

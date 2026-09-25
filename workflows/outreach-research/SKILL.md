@@ -88,12 +88,17 @@ LEAD: {lead.company} (ID: {lead.id})
 5. Schreibe das Ergebnis:
    write_lead_details(campaign_id={campaign.id}, lead_id={lead.id}, fields={
      "research": "<Markdown-Report: ## Unternehmen, ## Aufhaenger (mit Quellen-URLs), ## Kontakt, ## Besonderheiten>",
-     "bestEmail": "<beste gefundene E-Mail oder die vorhandene Lead-E-Mail>",
+     "bestEmail": "<gewaehlte Versandadresse: beste gefundene E-Mail oder die vorhandene Lead-E-Mail>",
      "decisionMaker": "<Name, Rolle — nur wenn oeffentlich belegt>",
      "contactRecommendation": "<1-2 Saetze: wen wie ansprechen>",
      "status": "researched"
    })
    Felder ohne belegte Erkenntnis WEGLASSEN (nicht mit Vermutungen fuellen).
+   `bestEmail` ist verbindlich: Eine gueltige Adresse wird die Versandadresse, auch wenn
+   zugleich ein `contactProfileJson` andere Adressen nennt. Nur eine echte, gueltige Adresse
+   eintragen, nie Platzhalter wie "null". Steht `bestEmail` danach in `skipped_fields`, hat ein
+   Mensch die Versandadresse gewaehlt; nicht erneut schreiben, im Report vermerken.
+   Ein Platzhalter-Entscheider ("unbekannt", "n/a") landet ebenfalls in `skipped_fields`.
    Wenn Website UND Suche nichts hergeben: minimalen Report schreiben (was geprueft wurde,
    was nicht erreichbar war) und trotzdem status="researched" setzen — der Lead soll die
    Queue verlassen; die Bewertung uebernimmt der Review-Schritt.
@@ -118,10 +123,11 @@ Abschluss-Report + Hinweis: "Naechster Schritt: /outreach-generate — AI-Variab
 | Fehler | Aktion |
 |--------|--------|
 | leads[] leer | "Keine Leads mit ausstehendem Research" -> STOP |
-| write_lead_details error | Fehler notieren, weiter mit naechstem Lead |
+| `validation_failed` bei write_lead_details (z. B. ungueltige E-Mail oder Website) | Feld aus dem Text korrigieren oder weglassen und einmal neu schreiben; klappt es nicht, Lead als Fehler notieren und weiter. Kein Verbindungsfehler, NIE den Batch stoppen |
+| write_lead_details error (sonstiger Code) | Fehler notieren, weiter mit naechstem Lead |
 | `lead_run_active` | Parallel laeuft ein Server-Lauf — Batch pausieren, `get_lead_run_status` bis Terminal-Status, dann fortsetzen (Queue ist idempotent) |
 | Sub-Agent Timeout/Crash | Als Fehler zaehlen, Lead bleibt in der Queue |
-| MCP-Verbindungsfehler | 1x Retry, dann STOP |
+| MCP-Verbindungsfehler (JSON-RPC-Fehler ohne Tool-Ergebnis, Transport weg) | 1x Retry, dann STOP |
 
 ## Verwandt
 

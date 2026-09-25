@@ -73,7 +73,8 @@ einen Suchbegriff in der einen Stadt-Einheit:
 Schätzung lesen: Je Einheit in `cells[].areaUnit` den Typ, den Namen, die erwarteten Orte
 (`expectedPlaces`), die Kostenspanne aus `minCostMicroUsd` und `maxCostMicroUsd` sowie einen
 `fanOutReason` nennen. Bei `overlapping_units` in `warnings` die Ortsliste bereinigen und erneut
-schätzen. Bei `lead_source.area_requires_order` in den Auftragsweg wechseln, siehe unten.
+schätzen. Kommt `validation_failed` mit `detail.code` `lead_source.area_requires_order`, in den
+Auftragsweg wechseln, siehe unten; nicht an den Parametern herumraten und erneut schätzen.
 
 Schätzung, Spanne, Apify-Staffel, Preisstand, `budgetLimited` und Kostendeckel vorlegen.
 Der Beispieldeckel ist keine Preiszusage. Reicht er nicht, Zielmenge oder Budget abstimmen,

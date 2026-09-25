@@ -99,6 +99,11 @@ delete_list(list_id=<id>, delete_leads=true, confirm_delete=true)
 Gelöscht werden nur nie kontaktierte Leads ohne Kampagne und ohne andere Liste — alles andere wird
 entkoppelt und gemeldet. Das gibt auch das `max_leads`-Limit wieder frei.
 
+Hängt an der Liste noch Arbeit, lehnt `delete_list` mit `state_conflict` ab. Mit
+`detail.code` `active_work` nennt `detail.work` die blockierenden Aufträge und Quellenläufe
+(laufend, pausiert, wiederaufnehmbar oder mit offenen Kosten). Erst abwarten, abbrechen oder die
+Kosten abschließen lassen, dann erneut löschen; nie die Liste eines laufenden Laufs erzwingen.
+
 ## CSV-Fallback (kein MCP verbunden)
 
 Die geprüfte Liste als CSV im Format aus `csv-spalten.md` liefern, dazu die Anleitung:

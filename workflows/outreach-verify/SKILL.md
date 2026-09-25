@@ -47,7 +47,7 @@ Wenn KEINE campaign_id als Argument uebergeben wurde:
 2. Zeige dem User die Kampagnen mit `leadCounts.pending_review > 0`
 3. Frage: "Fuer welche Kampagne soll ich Variablen reviewen?"
 4. Merke dir die campaign_id
-5. Vorpruefung: `list_lead_runs(campaign_id, active_only=true)` — solange ein serverseitiger Lauf mit E-Mail-Stufe aktiv ist, lehnen `approve_lead_variables`/`reject_lead_variables` mit `lead_run_active` ab (Rennschutz). Erst nach dem Terminal-Status des Laufs reviewen.
+5. Vorpruefung: `list_lead_runs(campaign_id, active_only=true)` — solange fuer einen Lead ein Job der E-Mail- oder der Research-Stufe wartet oder laeuft, lehnen `approve_lead_variables`/`reject_lead_variables` diesen Lead mit `lead_run_active` ab (Rennschutz). Erst nach dem Terminal-Status des Laufs reviewen. `ai_variable_stale` beim Freigeben heisst: Werte nach einer Konfigurationsaenderung veraltet; neu generieren lassen oder gezielt korrigieren, nicht freigeben.
 
 Wenn campaign_id als Argument uebergeben wurde: Direkt zur Batch-Groesse-Abfrage.
 

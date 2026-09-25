@@ -1,6 +1,6 @@
 # ListM8-MCP: Datenbeschaffung
 
-Vertragsstand: 2026-09-08. Für Quellen im Katalog ist dies der Standardweg.
+Vertragsstand: 2026-09-25. Für Quellen im Katalog ist dies der Standardweg.
 Die manuellen Actor-Referenzen und Skripte gelten nur als Fallback außerhalb des Katalogs.
 Zur Laufzeit ist das von `list_lead_sources` gelieferte Formularschema maßgeblich.
 
@@ -18,9 +18,9 @@ get_lead_source_run(run_id: string)
 cancel_lead_source_run(run_id: string)
 retry_lead_source_verification(run_id: string)
 
-estimate_sourcing_order(request_id, name, target_new_leads, max_total_charge_micro_usd,
+estimate_sourcing_order(name, target_new_leads, max_total_charge_micro_usd,
                         matrix, max_cell_charge_micro_usd?, area_mode?, parallel_cells?)
-create_sourcing_order(gleiche Argumente wie estimate_sourcing_order)
+create_sourcing_order(request_id, dieselben Argumente wie estimate_sourcing_order)
 get_sourcing_order(order_id: string)
 list_sourcing_order_cells(order_id: string, start?: integer, limit?: integer)
 pause_sourcing_order(order_id) / resume_sourcing_order(order_id) / cancel_sourcing_order(order_id)
@@ -246,20 +246,31 @@ zustellbarer Adressen. Bekannte Leads können zusätzlich in der Liste verknüpf
 
 ## Fehler und Kontingente
 
-Erwartete MCP-Fehler kommen als Tool-Ergebnis mit `isError: true` und Text
-`<code>: <message>`, nicht als HTTP-Status oder strukturiertes Fehlerobjekt. Die HTTP-Spalte
-ordnet die REST-Gegenstücke ein.
+Erwartete MCP-Fehler kommen als Tool-Ergebnis mit `isError: true`. Quellen- und
+Auftragswerkzeuge liefern denselben Text: `<code>: {"code": …, "message": …, "detail": …}`.
+Der äußere Code ordnet ein, **`detail.code` nennt den genauen Grund**; darauf reagieren, nicht
+auf den Wortlaut von `message`. Nur ein fehlender Scope bei den Quellenwerkzeugen kommt als
+`insufficient_scope: <message>` ohne JSON. Die HTTP-Spalte ordnet die REST-Gegenstücke ein.
 
-| HTTP-Einordnung | MCP-Code | Vorgehen |
-|---|---|---|
-| 402 | `payment_required` | Apify-Zugang, Guthaben oder gemeldete Kontingentgrenze klären; nicht blind wiederholen |
-| 400 | `validation_failed` | Parameter anhand des Katalogs korrigieren, erneut schätzen und Änderung bestätigen lassen |
-| 400 | `lead_source.area_requires_order` | Bundesland, Kanton oder Land wurde als Einzellauf angefragt; in den Beschaffungsauftrag mit `area_mode` `bundesland` oder `land` wechseln |
-| 400 | `geo.too_many_units` | Mehr als 50 Gebietseinheiten im Einzellauf beziehungsweise 400 im Auftrag; Gebiet verkleinern oder aufteilen |
-| 400 | `geo.invalid_area_unit` | Gebietseinheit unbekannt oder nicht auflösbar; Ort, PLZ, Landkreis oder Bundesland gegen den Katalog prüfen |
-| 404 | `not_found` | Quellenschlüssel beziehungsweise eigene Run-ID prüfen; fremde und unbekannte Läufe sind nicht unterscheidbar |
-| Berechtigung | `insufficient_scope` | ListM8-MCP-Verbindung mit `leads:write` klären |
-| 401 bei REST | Authentifizierung fehlt | Verbindung neu autorisieren, keine Tokens im Chat austauschen |
+| HTTP-Einordnung | MCP-Code | `detail.code` / Zusatzfelder | Vorgehen |
+|---|---|---|---|
+| 402 | `usage_limit_exceeded` | `metric`, `usage`, `limit` | ListM8-Plan oder Lead-Kontingent erschöpft; auf den Plan verweisen, nicht auf Apify-Guthaben |
+| 402 | `apify_not_connected` | `apify.connection_missing` | Apify-Konto in ListM8 verbinden lassen; nicht wiederholen |
+| 402 | `payment_required` | `apify_payment_required` (Quellen) | Apify-Guthaben aufladen lassen; ohne `detail.code` Apify-Verbindung und Guthaben prüfen |
+| 400 | `validation_failed` | `lead_source.area_requires_order` | Bundesland, Kanton oder Land wurde als Einzellauf angefragt; in den Beschaffungsauftrag mit `area_mode` `bundesland` oder `land` wechseln |
+| 400 | `validation_failed` | `geo.too_many_units` | Mehr als 50 Gebietseinheiten im Einzellauf beziehungsweise 400 im Auftrag; Gebiet verkleinern oder aufteilen |
+| 400 | `validation_failed` | `geo.invalid_area_unit` | Gebietseinheit unbekannt oder nicht auflösbar; Ort, PLZ, Landkreis oder Bundesland gegen den Katalog prüfen |
+| 400 | `validation_failed` | andere, samt `detail.field` | Parameter anhand des Katalogs korrigieren, erneut schätzen und Änderung bestätigen lassen |
+| 400/413 | `matrix_input_too_large` | — | Auftragsmatrix verkleinern |
+| 404 | `not_found` | — | Quellenschlüssel beziehungsweise eigene Run- oder Auftrags-ID prüfen; fremde und unbekannte sind nicht unterscheidbar |
+| 409 | `conflict` | z. B. `lead_source.budget_too_small` mit `minimumRequiredMicroUsd` | Deckel mindestens auf das Mindestbudget heben und neu bestätigen lassen |
+| 409 | `state_conflict` | — | Auftrag in einem Zustand, der die Aktion nicht erlaubt; Status lesen, nicht blind wiederholen |
+| 409 | `idempotency_conflict` | — | `request_id` wurde schon mit anderen Argumenten benutzt; neue UUID nur bei bewusst neuem Auftrag |
+| 409 | `resume_blocked` | — | Fortsetzen gerade nicht möglich; Zellen und Status lesen |
+| 429 | `rate_limited` (Quellen) | `geo.quota_exceeded` | Tageskontingent für Freitext-Orte erreicht; bekannte PLZ und Orte nutzen oder morgen weiter |
+| 502 | `provider_unavailable` (Aufträge) / `operation_failed` (Quellen) | — | Anbieter vorübergehend nicht erreichbar; später erneut |
+| Berechtigung | `insufficient_scope` (Quellen) / `forbidden` (Aufträge) | — | ListM8-MCP-Verbindung mit `leads:write` klären |
+| 401 bei REST | Authentifizierung fehlt | — | Verbindung neu autorisieren, keine Tokens im Chat austauschen |
 
 Falsche JSON-Schema-Typen oder Werte außerhalb der Schema-Grenzen können bereits als
 JSON-RPC-Fehler abgelehnt werden. Keine kostenpflichtige Ausführung als Validierungstest verwenden.
@@ -274,8 +285,8 @@ und melden. Kein automatischer neuer Lauf als vermeintliche Reparatur.
 
 Bundesland, Kanton oder ganzes Land sind nie ein Einzellauf, sondern ein Beschaffungsauftrag
 mit Ziel (`target_new_leads`), Gesamtbudget (`max_total_charge_micro_usd`) und Parallelität.
-`estimate_sourcing_order` und `create_sourcing_order` nehmen dieselben Argumente; `request_id`
-ist eine UUID je Auftrag. `area_mode` ist `orte_umkreis`, `bundesland` oder `land`; im Modus
+`estimate_sourcing_order` und `create_sourcing_order` nehmen dieselben Argumente, nur
+`create_sourcing_order` zusätzlich `request_id`, eine UUID je Auftrag. `area_mode` ist `orte_umkreis`, `bundesland` oder `land`; im Modus
 `orte_umkreis` sind `locations` mit optionalem `radiusKm` oder `adminArea2` ohne `locations`
 (Landkreis) erlaubt. `parallel_cells` ist optional (1 bis 5); leer bedeutet 1, sobald der Plan
 Bundeslandeinheiten enthält, sonst 2. Ein Auftrag umfasst höchstens 400 Einheiten.
