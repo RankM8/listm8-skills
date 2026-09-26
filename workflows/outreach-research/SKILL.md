@@ -84,20 +84,31 @@ LEAD: {lead.company} (ID: {lead.id})
    - Qualifizierungs-Kontext (lead.qualification) als Ausgangspunkt nutzen.
 4. Extrahiere gemaess den Research-Zielen, typischerweise:
    - Konkrete, verifizierbare Aufhaenger (Spezialisierung, Bewertungen, Projekte, Besonderheiten) fuer die spaetere Personalisierung.
-   - Entscheider (Name/Rolle, meist im Impressum/Ueber-uns) und beste Kontakt-E-Mail.
+   - Entscheider (Name/Rolle, meist im Impressum/Ueber-uns) und die Adresse, ueber die die Entscheidungsperson am wahrscheinlichsten erreicht wird (Regel in Schritt 5).
 5. Schreibe das Ergebnis:
    write_lead_details(campaign_id={campaign.id}, lead_id={lead.id}, fields={
      "research": "<Markdown-Report: ## Unternehmen, ## Aufhaenger (mit Quellen-URLs), ## Kontakt, ## Besonderheiten>",
-     "bestEmail": "<gewaehlte Versandadresse: beste gefundene E-Mail oder die vorhandene Lead-E-Mail>",
+     "bestEmail": "<gewaehlte Versandadresse nach der Regel unten>",
      "decisionMaker": "<Name, Rolle — nur wenn oeffentlich belegt>",
      "contactRecommendation": "<1-2 Saetze: wen wie ansprechen>",
      "status": "researched"
    })
    Felder ohne belegte Erkenntnis WEGLASSEN (nicht mit Vermutungen fuellen).
    `bestEmail` ist verbindlich: Eine gueltige Adresse wird die Versandadresse, auch wenn
-   zugleich ein `contactProfileJson` andere Adressen nennt. Nur eine echte, gueltige Adresse
-   eintragen, nie Platzhalter wie "null". Steht `bestEmail` danach in `skipped_fields`, hat ein
-   Mensch die Versandadresse gewaehlt; nicht erneut schreiben, im Report vermerken.
+   zugleich ein `contactProfileJson` andere Adressen nennt. Gewaehlt wird die Adresse, ueber
+   die die Entscheidungsperson am wahrscheinlichsten erreicht wird: belegte persoenliche
+   Adresse der Entscheidungsperson vor Funktionsadresse (vertrieb@, geschaeftsfuehrung@) vor
+   allgemeiner Adresse (info@, kontakt@). Nur Adressen mit Fundstelle; nie eine aus Vor- und
+   Nachname geratene, nie eine als unzustellbar bekannte (Bounce, Pruefergebnis `invalid`),
+   nie Platzhalter wie "null". Ohne belegte Adresse `bestEmail` weglassen.
+   Steht `bestEmail` danach in `skipped_fields`, nennt `skipped_reasons.bestEmail` den Grund:
+   - `user_choice`: Ein Mensch hat die Versandadresse gewaehlt. Die Wahl gilt: nicht erneut
+     schreiben, nicht selbst per `switch_primary_email` aendern, im Report vermerken.
+   - `undeliverable`: Die Adresse ist als unzustellbar (`invalid`) geprueft oder nur eine
+     Vermutung ohne gueltige Pruefung; sie wird nicht Versandadresse (Grund in `warnings`).
+     Eine andere belegte, erreichbare Adresse der Entscheidungsperson nach der Rangfolge oben
+     suchen und einmal nur mit `bestEmail` neu schreiben. Gibt es keine, `bestEmail` weglassen
+     und die Wahl der Anreicherung ueberlassen; im Report vermerken.
    Ein Platzhalter-Entscheider ("unbekannt", "n/a") landet ebenfalls in `skipped_fields`.
    Wenn Website UND Suche nichts hergeben: minimalen Report schreiben (was geprueft wurde,
    was nicht erreichbar war) und trotzdem status="researched" setzen — der Lead soll die
@@ -105,7 +116,7 @@ LEAD: {lead.company} (ID: {lead.id})
 
 ## Regeln
 
-- NICHTS ERFINDEN: Jede Aussage im Report braucht eine Quelle (URL). "pattern_inferred"-E-Mails explizit als Vermutung kennzeichnen oder weglassen.
+- NICHTS ERFINDEN: Jede Aussage im Report braucht eine Quelle (URL). "pattern_inferred"-E-Mails explizit als Vermutung kennzeichnen oder weglassen, nie als `bestEmail` schreiben.
 - Keine internen Metriken/Scores in den Report-Text.
 - Allgemeine Website-/Impressums-Werbehinweise ausschließlich als Information mit Quelle dokumentieren. Dadurch allein keinen Score/Fit abwerten, Research unterdrücken oder internen DNC-/Abmeldestatus setzen. Echte gespeicherte Sperren erhalten; Opt-in und Versandentscheidung bleiben beim Kunden.
 - Deutsch, korrekte Umlaute (Ä/Ö/Ü/ß — niemals AE/OE/UE/ss).
@@ -118,6 +129,10 @@ Wie /outreach-generate: Batch-Report, dann erneut `list_leads` bis `remaining ==
 
 Abschluss-Report + Hinweis: "Naechster Schritt: /outreach-generate — AI-Variablen generieren".
 
+## Versandadresse auf Wunsch des Users wechseln
+
+`switch_primary_email(campaign_id, lead_id, email, reason?)` macht eine Adresse, die schon am Lead steht (`get_lead_data`: `lead.email`, `research.bestEmail`, Zweitadressen, `research.contactProfile`), zur Versandadresse und markiert sie als Menschenwahl. Nur auf ausdrueckliche Entscheidung des Users aufrufen, nie aus einem Sub-Agent und nie, um eine gerade recherchierte Adresse "aufzuraeumen". Eine als unzustellbar (`invalid`) gepruefte Adresse lehnt das Tool mit `undeliverable_address` ab (REST: HTTP 422), auch auf Wunsch; dann dem User eine andere erreichbare Adresse der Entscheidungsperson vorschlagen. `unknown_address` nennt die waehlbaren Adressen; bei `address_conflict` versendet schon ein anderer Lead an diese Adresse, die beiden Leads zusammenfuehren statt doppelt zu schreiben.
+
 ## Fehlerbehandlung
 
 | Fehler | Aktion |
@@ -125,6 +140,7 @@ Abschluss-Report + Hinweis: "Naechster Schritt: /outreach-generate — AI-Variab
 | leads[] leer | "Keine Leads mit ausstehendem Research" -> STOP |
 | `validation_failed` bei write_lead_details (z. B. ungueltige E-Mail oder Website) | Feld aus dem Text korrigieren oder weglassen und einmal neu schreiben; klappt es nicht, Lead als Fehler notieren und weiter. Kein Verbindungsfehler, NIE den Batch stoppen |
 | write_lead_details error (sonstiger Code) | Fehler notieren, weiter mit naechstem Lead |
+| `bestEmail` in `skipped_fields` | Kein Fehler: `skipped_reasons.bestEmail` lesen. `user_choice` respektieren; bei `undeliverable` eine andere belegte, erreichbare Adresse schreiben oder weglassen (Schritt 5) |
 | `lead_run_active` | Parallel laeuft ein Server-Lauf — Batch pausieren, `get_lead_run_status` bis Terminal-Status, dann fortsetzen (Queue ist idempotent) |
 | Sub-Agent Timeout/Crash | Als Fehler zaehlen, Lead bleibt in der Queue |
 | MCP-Verbindungsfehler (JSON-RPC-Fehler ohne Tool-Ergebnis, Transport weg) | 1x Retry, dann STOP |

@@ -1,6 +1,6 @@
 # ListM8-MCP: Datenbeschaffung
 
-Vertragsstand: 2026-09-25. Für Quellen im Katalog ist dies der Standardweg.
+Vertragsstand: 2026-09-26. Für Quellen im Katalog ist dies der Standardweg.
 Die manuellen Actor-Referenzen und Skripte gelten nur als Fallback außerhalb des Katalogs.
 Zur Laufzeit ist das von `list_lead_sources` gelieferte Formularschema maßgeblich.
 
@@ -267,8 +267,8 @@ auf den Wortlaut von `message`. Nur ein fehlender Scope bei den Quellenwerkzeuge
 | 400/413 | `matrix_input_too_large` | — | Auftragsmatrix verkleinern |
 | 404 | `not_found` | — | Quellenschlüssel beziehungsweise eigene Run- oder Auftrags-ID prüfen; fremde und unbekannte sind nicht unterscheidbar |
 | 409 | `conflict` | `lead_source.budget_too_small` mit `minimumRequiredMicroUsd` | Deckel mindestens auf das Mindestbudget heben und neu bestätigen lassen |
-| 409 | `conflict` | `lead_source.verification_retry_conflict` | Nachprüfung nur für einen abgeschlossenen Lauf mit ungeprüften Treffern und Ergebnisliste; nicht wiederholen |
-| 409 | `conflict` | `lead_source.verification_retry_order_active` | Lauf gehört zu einem noch laufenden Auftrag; erst nach dessen Ende nachprüfen |
+| 409 | `conflict` | `lead_source.verification_retry_conflict` | Nachprüfung nur für einen abgeschlossenen Lauf mit ungeprüften oder noch nicht übernommenen Treffern und Ergebnisliste, oder ein paralleler Aufruf setzt denselben Versuch gerade fort; Lauf neu lesen, nicht blind wiederholen |
+| 409 | `conflict` | `lead_source.verification_retry_order_active` | Auftrag läuft noch, oder im selben Auftrag läuft schon eine andere Nachprüfung; erst nach deren Ende nachprüfen |
 | 409 | `conflict` | `lead_source.verification_retry_budget` | Im Auftragsbudget ist für die Nachprüfung nichts mehr frei; Budget mit dem Nutzer klären |
 | 409 | `state_conflict` | — | Auftrag in einem Zustand, der die Aktion nicht erlaubt; Status lesen, nicht blind wiederholen |
 | 409 | `idempotency_conflict` | — | `request_id` wurde schon mit anderen Argumenten benutzt; neue UUID nur bei bewusst neuem Auftrag |
@@ -336,11 +336,30 @@ Bounceverify läuft erneut; erfolgreiche Kontakte werden in dieselbe Liste
 importiert. Kosten und offene Reserven verbleiben am alten Lauf und unter dessen
 ursprünglichem Deckel. Keine zusätzliche Roh-CSV, Liste oder manueller Import.
 
+Vorab prüft der Server Paywall und Lead-Kontingent: Frei sein muss ein Platz unter
+`max_leads` für jede neue Adresse, die die Nachprüfung übernehmen könnte. Adressen, die
+schon Leads sind, brauchen keinen Platz; sind alle schon Leads, ist keiner nötig.
+
+Läufe eines Beschaffungsauftrags lassen sich erst nach dem Ende des Auftrags nachprüfen,
+und je Auftrag läuft höchstens eine Nachprüfung. Reserviert wird nur aus dem noch freien
+Auftragsbudget, höchstens bis zum Zelldeckel. Blockiert eine solche Nachprüfung
+(Lead-Kontingent, Apify-Verbindung, Apify-Guthaben oder unbestätigte Kosten), endet der
+Versuch: Der Lauf ist wieder `completed`, der blockierte Schritt nennt den Grund in
+`errorMessage`, bereits bezahlte Prüfurteile bleiben erhalten. Den Grund dem Nutzer melden.
+Nach der Behebung setzt ein erneuter Aufruf mit derselben Run-ID genau diesen Versuch ab
+dem blockierten Schritt fort, auch wenn `unverified` schon 0 ist: Bezahlte Actor-Läufe
+werden nachgelesen statt neu gekauft, auch bei ausgeschöpftem Auftragsbudget; reserviert
+wird nur für neue Actor-Läufe. Fehlt nur noch der Import, braucht der Aufruf weder eine
+Apify-Verbindung noch Budget.
+
 Die Antwort liefert `runId`, `jobId`, `status` und `warnings`. Wieder bis zum
 Endzustand pollen. `conflict` nennt in `detail.code` den Grund:
-`lead_source.verification_retry_conflict` (laufender Versuch, keine ungeprüften Treffer oder
-fehlende Ergebnisliste), `lead_source.verification_retry_order_active` (Auftrag läuft noch) oder
-`lead_source.verification_retry_budget` (Auftragsbudget erschöpft); nicht blind wiederholen.
-Ein 402 unterscheidet wie überall `usage_limit_exceeded` (Plan oder volles Lead-Kontingent),
-`apify_not_connected` und `payment_required` (Apify-Guthaben). Historische Warnungen
-können trotz gesunkenem `unverified`-Zähler erhalten bleiben.
+`lead_source.verification_retry_conflict` (Lauf nicht abgeschlossen, weder ungeprüfte noch
+nachzuholende Treffer, fehlende Ergebnisliste, oder ein paralleler Aufruf setzt denselben
+Versuch gerade fort), `lead_source.verification_retry_order_active` (Auftrag läuft noch,
+oder im selben Auftrag läuft schon eine andere Nachprüfung) oder
+`lead_source.verification_retry_budget` (freies Auftragsbudget reicht nicht); nicht blind
+wiederholen. Ein 402 unterscheidet wie überall `usage_limit_exceeded` (Plan oder zu wenig
+freie Plätze für die möglichen neuen Kontakte), `apify_not_connected` und
+`payment_required` (Apify-Guthaben). Historische Warnungen können trotz gesunkenem
+`unverified`-Zähler erhalten bleiben.

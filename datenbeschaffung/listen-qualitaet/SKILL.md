@@ -34,6 +34,10 @@ mit Freigabe der weiteren Kosten `retry_lead_source_verification(run_id)` aufruf
 Danach dieselbe Run-ID bis terminal verfolgen. Keine neue Liste und kein separater
 Import; Budgetdeckel und Ergebnisliste bleiben erhalten. Ein echtes Unknown-Urteil
 ist keine unbeantwortete Prüfung. Bei `conflict` den aktuellen Lauf erneut lesen.
+Endet die Nachprüfung eines Auftragslaufs blockiert (Lauf wieder `completed`, ein Schritt
+nennt in `errorMessage` Lead-Kontingent, Apify-Verbindung, Guthaben oder unbestätigte
+Kosten), den Grund melden. Nach Behebung und Freigabe setzt derselbe Aufruf den Versuch
+fort, auch bei `unverified = 0`. Bezahlte Prüfungen werden dabei nicht neu gekauft.
 
 **Hier endet der MCP-Katalogpfad.** Die folgenden CSV-, Actor- und Importanweisungen gelten nur
 für manuelle Nicht-Katalog-Quellen oder separat angelieferte Rohdateien.

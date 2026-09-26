@@ -5,7 +5,7 @@ description: Use when user says "outreach:generate", "mcp:generate", "generiere 
 
 # MCP Generate — AI-Variablen-Generierung
 
-Dieser Skill orchestriert die vollautomatische AI-Variablen-Generierung fuer Leads via MCP Business Tools. Claude generiert AI-Variablen basierend auf Research, Qualification und Custom Attributes, und speichert sie via `save_lead_variables`. Email-Body und Subject werden NICHT durch diesen Skill erzeugt — sie sind in der Email-Sequenz hardcoded und werden beim CSV-Export live mit den Variablen gerendert. Dieser Skill ist der **Manuell-Modus**; Standard ist der serverseitige Lauf via `/outreach-pipeline` (Tool `start_lead_run`, Stufe `email`). Vor dem Start `list_lead_runs(campaign_id, active_only=true)` pruefen: bei aktivem email-Lauf blockt `save_lead_variables` mit `lead_run_active`.
+Dieser Skill orchestriert die vollautomatische AI-Variablen-Generierung fuer Leads via MCP Business Tools. Claude generiert AI-Variablen basierend auf Research, Qualification und Custom Attributes, und speichert sie via `save_lead_variables`. Email-Body und Subject werden NICHT durch diesen Skill erzeugt — sie sind in der Email-Sequenz hardcoded und werden beim CSV-Export live mit den Variablen gerendert. Dieser Skill ist der **Manuell-Modus**; Standard ist der serverseitige Lauf via `/outreach-pipeline` (Tool `start_lead_run`, Stufe `email`; dessen Startcodes wie `leads_already_running` und den Zaehler `skipped_running` beschreibt `/outreach-pipeline`, Regel 4). Vor dem Start `list_lead_runs(campaign_id, active_only=true)` pruefen: bei aktivem email-Lauf blockt `save_lead_variables` mit `lead_run_active`.
 
 > **Hinweis zur Parallelisierung:** Wenn dein Client parallele Subagents unterstuetzt (z.B. Claude Code), spawne pro Lead einen Subagent wie beschrieben. Andernfalls arbeite die Leads **sequentiell** mit exakt denselben Schritten ab — das Ergebnis ist identisch, nur langsamer.
 
@@ -245,7 +245,9 @@ validation_failed: Variable(s) missing from submission: 'intro'
 
 Die fehlenden Namen stehen im Fehlertext — alle Variablen aus `emailGeneration.expectedOutput` nachliefern und erneut senden.
 
-Das Tool liefert nur den Text `<lowercase_code>: <message>` und keine strukturierte Fehler-Response. Weitere erwartete Codes sind z.B. `contact_gate`, `variables_not_configured`, `campaign_not_found`, `lead_not_found`, `lead_not_in_campaign` und `insufficient_scope`.
+Das Tool liefert nur den Text `<lowercase_code>: <message>` und keine strukturierte Fehler-Response. Weitere erwartete Codes sind z.B. `contact_gate`, `variables_not_configured`, `campaign_not_found`, `lead_not_found`, `lead_not_in_campaign`, `lead_run_active`, `write_conflict` und `insufficient_scope`.
+
+`write_conflict`: Zwei Speicherungen fuer denselben Lead kamen im selben Moment; diese hier wurde nicht gespeichert. Mit `get_lead_variables` den aktuellen Stand lesen und nur erneut speichern, wenn er noch fehlt oder nicht passt — kein blinder Retry.
 
 ### Verification-Tools (siehe `/outreach-verify`)
 
@@ -264,6 +266,7 @@ Details: siehe `/outreach-verify` Skill.
 | `list_leads` gibt leere leads[] | "Keine Leads in Queue" -> STOP |
 | Sub-Agent save_lead_variables Error | Fehler notieren, weitermachen mit naechstem Lead |
 | `lead_run_active` | Parallel laeuft ein Server-Lauf mit E-Mail-Stufe — Batch pausieren, `get_lead_run_status` bis Terminal-Status, dann fortsetzen (Queue ist idempotent) |
+| `write_conflict` | Gleichzeitige zweite Speicherung desselben Leads — `get_lead_variables` lesen, nur bei Bedarf einmal neu speichern, sonst als erledigt zaehlen |
 | Sub-Agent Timeout/Crash | Als Fehler zaehlen, im Report erwaehnen |
 | Alle Agents eines Batches fehlgeschlagen | Warnung ausgeben, User fragen ob fortfahren |
 | Netzwerk/MCP-Verbindungsfehler | 1x Retry, dann STOP mit Fehlermeldung |

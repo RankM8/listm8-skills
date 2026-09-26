@@ -34,8 +34,11 @@ und braucht noch keine Apify-Verbindung. Alle Beschaffungs-Tools verlangen den S
 - Fehlen die Tools, zuerst ListM8-MCP-Verbindung und Berechtigungen klären. Ist eine
   Katalogquelle nur wegen eines Verbindungsfehlers nicht erreichbar, nicht über direkten
   Apify-Zugriff ausweichen.
-- Bei `payment_required` die Apify-Verbindung, das Guthaben beziehungsweise die gemeldete
-  Kontingentgrenze klären. Keine kostenpflichtige Retry-Schleife starten.
+- Ein 402 am MCP-Code unterscheiden: `usage_limit_exceeded` heißt ListM8-Plan oder
+  Lead-Kontingent erschöpft (auch ein White-Label-Konto ohne aktiven Plan), also auf den Plan
+  verweisen, nicht auf Apify. `apify_not_connected` heißt Apify-Konto in ListM8 verbinden.
+  `payment_required` heißt Apify-Guthaben aufladen; ohne `detail.code` Verbindung und
+  Guthaben prüfen. Keine kostenpflichtige Retry-Schleife starten.
 
 Signaturen, Felder und Fehler stehen in
 `../datenbeschaffung-referenzen/references/listm8-mcp.md`.
