@@ -30,6 +30,11 @@
 }
 ```
 
+`additionalInstructions` (gespeichert als `additional_prompt`) liest auch die Recherche als
+Maßstab mit. Eine Anweisung, die nur das Urteil der Qualifizierung lenken soll, gehört stattdessen
+in `qualificationAgentConfig.additionalPrompt` (Setzen per `patch_campaign_settings`, siehe
+SKILL.md, Abschnitt „Anweisung nur für die Qualifizierung").
+
 ## Woran du eine zu restriktive Konfiguration erkennst
 
 - Disqualifier-Liste länger als die Fit-Beschreibung.

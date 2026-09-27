@@ -77,7 +77,8 @@ LEAD: {lead.company} (ID: {lead.id})
 1. Rufe get_lead_data(campaign_id={campaign.id}, lead_id={lead.id}) auf.
 2. Lies lead.researchGeneration:
    - "config" = Research-Ziele/Prioritaeten der Kampagne (researchGoals, researchPriorities, additionalPrompt). Sie sind MASSGEBLICH dafuer, WONACH du suchst.
-   - "agent.additionalPrompt" = zusaetzliche Anweisungen, falls vorhanden.
+   - "agent.additionalPrompt" = Anweisung des Kontos; sie gilt nur, wenn "config" weder
+     additionalPrompt noch researchGoals/researchPriorities setzt (die Kampagnenvorgaben ersetzen sie).
 3. Recherchiere:
    - Website (lead.website) per WebFetch laden; relevante Unterseiten (Leistungen, Ueber uns, Team, Referenzen, Impressum, Kontakt) gezielt nachladen.
    - WebSearch fuer oeffentliche Signale (Bewertungen, Verzeichniseintraege), wenn die Website wenig hergibt.

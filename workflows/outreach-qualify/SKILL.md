@@ -76,7 +76,9 @@ LEAD: {lead.company} (ID: {lead.id})
 1. Rufe get_lead_data(campaign_id={campaign.id}, lead_id={lead.id}) auf.
 2. Lies lead.qualificationGeneration:
    - "settings" = die Kampagnen-Kriterien (Zielkunde, Fit-Kriterien, Disqualifier). Sie sind MASSGEBLICH.
-   - "agent.additionalPrompt" = zusaetzliche Anweisungen, falls vorhanden.
+   - Anweisung fuer die Qualifizierung, Vorrang wie im Server: "settings.__agentConfig.additionalPrompt"
+     (Anweisung nur fuer die Qualifizierung dieser Kampagne); fehlt sie, "settings.additional_prompt";
+     fehlt auch diese, "agent.additionalPrompt" (Anweisung des Kontos). Es gilt genau eine davon.
    - "writeBack" = erlaubte Werte fuer fitLevel/status und der Score-Bereich.
 3. Analysiere den Lead:
    - Website (lead.website) per WebFetch laden; wichtige Unterseiten (Leistungen, Ueber uns, Impressum) bei Bedarf zusaetzlich.
