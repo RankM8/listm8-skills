@@ -9,7 +9,7 @@
 |---|---|---|
 | Apify-Account | apify.com | Free-Plan: 5 $ Startguthaben (reicht für die ersten Piloten). Starter ~39 $/Monat für laufende Beschaffung |
 | API-Token | **https://console.apify.com/settings/integrations** (genau diese URL — kein anderer Pfad) | — |
-| Outreach-MCP verbunden | Einrichtungs-Seite der App (MCP-Tab) | — (optional, aber empfohlen: Vorab-Abgleich + direkte Übergabe) |
+| Outreach-MCP verbunden | Seite „MCP & Skills“ der App (`/mcp`) | — (optional, aber empfohlen: Vorab-Abgleich + direkte Übergabe) |
 
 ## Die drei Zugriffswege auf Apify
 

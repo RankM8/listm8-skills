@@ -52,6 +52,10 @@ die Datenbeschaffung matcht damit lokal, bevor Anreicherung Geld kostet.
 Bestätigung → `add_leads_to_campaign(campaign_id, list_id)` → Report (added / already / dnc-skipped).
 Bei > 1000 Leads in der Liste: `get_list` paginiert (limit=1000, offset hochzählen), die IDs je
 Seite als `lead_ids`-Chunk verlinken, Reports aufsummieren — `list_id` direkt würde `limit_reached` werfen.
+Ohne diese Grenze geht es in der Oberfläche: „Leads finden“ (`/leads/find`), Reiter Listen,
+Aktion „Zur Kampagne hinzufügen“ ordnet die ganze Liste serverseitig zu (dieselben Regeln:
+`do_not_contact` nie, schon enthaltene nicht doppelt, neue als „processing“). Den Nutzer bei
+großen Listen darauf hinweisen.
 
 ## Grenzen (ehrlich benennen)
 

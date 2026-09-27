@@ -33,13 +33,13 @@ npx skills add RankM8/listm8-skills
 ```
 
 **Ohne Kommandozeile:** Das Datenbeschaffungs-Paket gibt es zusätzlich als ZIP-Download in
-der App (Einrichtung → Skills → „Leads beschaffen"). Die Workflow-Funktionen stehen in
+der App (Seite „MCP & Skills“, `/mcp` → Skills → „Paket herunterladen (ZIP)“). Die Workflow-Funktionen stehen in
 Claude/ChatGPT auch ohne Skills bereit — der MCP-Server liefert sie als eingebaute Prompts.
 
 **Update:** einfach `npx skills add RankM8/listm8-skills` erneut ausführen.
 
-**Voraussetzung für `workflows/`:** verbundener Outreach-MCP (Einrichtungs-Seite der App,
-MCP-Tab). Die Skills nutzen dessen Auth — kein separates Login.
+**Voraussetzung für `workflows/`:** verbundener Outreach-MCP (Seite „MCP & Skills“ der App,
+`/mcp`, Modus MCP). Die Skills nutzen dessen Auth — kein separates Login.
 
 ## Einstiegspunkte für Nutzer
 

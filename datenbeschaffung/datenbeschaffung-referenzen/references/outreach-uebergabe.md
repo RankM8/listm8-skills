@@ -85,7 +85,10 @@ Nur wenn der Nutzer es will — Rohmaterial darf als Liste liegen bleiben (Quara
 add_leads_to_campaign(campaign_id=<id>, list_id=<id>)
 ```
 
-`do_not_contact`-Leads werden vom Tool selbst übersprungen und gemeldet. Danach startet
+`do_not_contact`-Leads werden vom Tool selbst übersprungen und gemeldet. Mit `list_id` nimmt das
+Tool höchstens 1000 Leads je Aufruf (sonst `limit_reached`); größere Listen in `lead_ids`-Chunks
+verlinken (siehe `outreach-lists`) oder in der Oberfläche über „Zur Kampagne hinzufügen“ an der
+Liste ganz zuordnen. Danach startet
 `start_lead_run` die Qualifizierung — NICHT automatisch, der Nutzer entscheidet.
 
 ### 5. Aufräumen nach Test-Läufen
