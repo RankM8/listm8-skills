@@ -118,6 +118,7 @@ Abschluss-Report + Hinweis: "Naechster Schritt: /outreach-research — qualifizi
 |--------|--------|
 | leads[] leer | "Keine unqualifizierten Leads" -> STOP |
 | write_lead_details error | Fehler notieren, weiter mit naechstem Lead |
+| `contact_gate` | Kontaktstatus des Leads ist nicht `not_contacted` (kontaktiert, exportiert, gesperrt …) — Lead ueberspringen, nicht erneut schreiben |
 | `lead_run_active` | Parallel laeuft ein Server-Lauf — Batch pausieren, `get_lead_run_status` bis Terminal-Status, dann fortsetzen (Queue ist idempotent) |
 | Sub-Agent Timeout/Crash | Als Fehler zaehlen, Lead bleibt in der Queue |
 | MCP-Verbindungsfehler | 1x Retry, dann STOP |

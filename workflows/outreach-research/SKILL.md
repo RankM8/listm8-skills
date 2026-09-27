@@ -140,6 +140,7 @@ Abschluss-Report + Hinweis: "Naechster Schritt: /outreach-generate — AI-Variab
 |--------|--------|
 | leads[] leer | "Keine Leads mit ausstehendem Research" -> STOP |
 | `validation_failed` bei write_lead_details (z. B. ungueltige E-Mail oder Website) | Feld aus dem Text korrigieren oder weglassen und einmal neu schreiben; klappt es nicht, Lead als Fehler notieren und weiter. Kein Verbindungsfehler, NIE den Batch stoppen |
+| `contact_gate` | Kontaktstatus des Leads ist nicht `not_contacted` (kontaktiert, exportiert, gesperrt …) — Lead ueberspringen, nicht erneut schreiben |
 | write_lead_details error (sonstiger Code) | Fehler notieren, weiter mit naechstem Lead |
 | `bestEmail` in `skipped_fields` | Kein Fehler: `skipped_reasons.bestEmail` lesen. `user_choice` respektieren; bei `undeliverable` eine andere belegte, erreichbare Adresse schreiben oder weglassen (Schritt 5) |
 | `lead_run_active` | Parallel laeuft ein Server-Lauf — Batch pausieren, `get_lead_run_status` bis Terminal-Status, dann fortsetzen (Queue ist idempotent) |

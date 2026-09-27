@@ -129,6 +129,16 @@ Anschließend `validate_campaign(campaign_id=80, lead_ids=[…])` und für ausge
 | `conflict` | Sonstiger Konflikt: Meldung lesen, nicht mit confirm_overwrite beantworten |
 | `campaign_not_found` | campaign_id pruefen (list_campaigns) |
 
+Die gezielten Schreibwege `update_email_step`, `update_ai_variable` und `patch_campaign_settings` melden HTTP-Klassen als Code: `validation_failed`, `not_found` (Kampagne, Schritt oder Variable), `conflict` und `insufficient_scope`. Bei `conflict` steht die genaue Fehlerart am Anfang der Meldung, etwa `conflict: revision_conflict: …`; darauf reagieren, nicht auf den Wortlaut:
+
+| Fehlerart nach `conflict:` | Aktion |
+|------|--------|
+| `revision_conflict` | `get_campaign` neu lesen, Änderung gegen den aktuellen Stand abgleichen, mit neuer `revision` erneut senden |
+| `lead_run_active` | Lauf oder Generierung aktiv — Terminal-Status abwarten oder nach Rücksprache abbrechen |
+| `rename_referenced_variable` / `rename_linked_variable` | Umbenennen abgelehnt: Die Variable wird in Schritten/Prompts verwendet bzw. ist in Instantly verknüpft — erst die Verweise ändern |
+| `duplicate_variable_name` | Name existiert bereits in der Kampagne |
+| `variable_dependency_order` | `sortOrder` würde eine Variable vor eine von ihr genutzte stellen — Position anpassen (`validate_campaign` zeigt die Abhängigkeiten) |
+
 ## Abschluss
 
 Report: campaign_id, Name, importierte Steps/Variablen/Configs. Hinweis: "Naechster Schritt: /outreach-import — Leads in die Kampagne laden."

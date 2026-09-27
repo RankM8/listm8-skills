@@ -192,8 +192,10 @@ Response-Felder:
 | `research_status` | string | `"researched"` | Research-Status-Filter |
 | `campaign_status` | string | `"processing"` | Campaign-Status-Filter |
 | `qualification_status` | string | `''` | Qualification-Status-Filter: '' (alle), 'pending' (inkl. nie qualifiziert), 'processing', 'completed', 'failed' |
+| `contact_status` | string | `''` | Leer: bereits kontaktierte Leads ausgeblendet; `"all"` zeigt alle, ein Status-Slug filtert darauf |
+| `offset` | int | `0` | Paginierung zusammen mit `limit` und den Antwortfeldern `total`/`remaining` |
 
-Gibt nur Basisdaten zurueck: id, email, company, website, city, phoneNumber, score, qualification (fitLevel, category, summary).
+Gibt nur Basisdaten zurueck: id, email, company, website, city, phoneNumber, score, contactStatus (mit contactedAt, contactSource), qualification (fitLevel, category, summary).
 
 **WICHTIG:** Der Default `campaign_status="processing"` ist korrekt fuer den Generierungs-Workflow (= Leads mit Status "Ausstehend").
 
