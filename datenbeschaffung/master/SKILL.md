@@ -21,15 +21,20 @@ Anreicherungen für diese Läufe aufbauen.
 4. **Kontaktstatus respektieren.** `do_not_contact` niemals überschreiben oder umgehen. Auch andere
    kontaktierte Bestandsleads nicht ungeprüft erneut anschreiben. Ein Listenmitglied ist keine Versandfreigabe.
 5. **Deutsch mit korrekten Umlauten.** Keine Gedankenstriche in Kunden-Copy verwenden.
+6. **Begriffe der Oberfläche.** Gegenüber dem Nutzer wie in „Leads finden“ sprechen: Suche,
+   Vorschau, Auftrag, Gebiet; „Lauf“ nur für den KI-Lauf der Kampagne. Zuordnung zu den
+   Werkzeugen in `../datenbeschaffung-referenzen/references/listm8-mcp.md`.
 
 ## Phase 0: MCP und Katalog prüfen
 
 `list_lead_sources()` aufrufen und die vollständige Antwort auswerten. Der Aufruf startet nichts
-und braucht noch keine Apify-Verbindung. Alle Beschaffungs-Tools verlangen den Scope `leads:write`.
+und braucht noch keine Apify-Verbindung. Schätzen, Starten und Steuern verlangen den Scope
+`leads:write`; zum reinen Lesen von Katalog, Aufträgen und Fortschritt genügt `leads:read`.
 
 - `sources` nach passenden Quellen durchsuchen. `formFields`, Defaults, Grenzen, Optionen,
   `chain`, `pricing` und `regionRules` lesen. Übersetzungsschlüssel verständlich wiedergeben.
-- Für den Start muss der eigene Apify-Token in der Integration von ListM8 hinterlegt sein.
+- Für den Start muss der eigene Apify-Token in der Integration von ListM8 hinterlegt sein
+  (Seite „Apify“, `/apify`).
   Den Token nicht im Chat abfragen, ausgeben oder an einen anderen Dienst senden.
 - Fehlen die Tools, zuerst ListM8-MCP-Verbindung und Berechtigungen klären. Ist eine
   Katalogquelle nur wegen eines Verbindungsfehlers nicht erreichbar, nicht über direkten
@@ -60,6 +65,18 @@ Den aktuellen Katalog als Autorität behandeln, nicht diese Momentaufnahme:
 |---|---|---|
 | Lokale Betriebe, Handwerk, Praxen, Gastro | `google_maps_local` | `weg-c-local-maps` |
 | Firmen über Websites, etwa B2B-Dienstleister, Agenturen, Kanzleien, Shops oder Coaches | `google_serp_companies` | `weg-a-b2b-google` |
+| Firmen, in denen Personen mit bestimmter Rolle in einer Branche arbeiten (DACH) | `linkedin_company_contacts` | kein eigener Weg; Formular aus dem Katalog (`jobTitle`, `industryId`, `location`, `country`, `maxItems` 1 bis 500 Profile) |
+
+Die LinkedIn-Quelle liefert Firmenpostfächer der zugeordneten Firmen, keine persönlichen
+Adressen der gefundenen Personen; der Ort ist der Profilstandort, nicht der Firmensitz.
+Zwei Wege gibt es nur in der Oberfläche unter `/leads/find`, nicht über den MCP: die kostenlose
+**Suche** in der Firmen-Datenbank (Reiter Firmen, liefert Firmen ohne E-Mail) und die bezahlte
+**Vorschau** von höchstens zehn lokalen Betrieben (Reiter Lokale Betriebe). Passt eine davon,
+den Nutzer darauf hinweisen, statt einen bezahlten Auftrag vorzuschlagen.
+
+Optional schlägt `prefill_lead_source_run(description)` aus einer Zielgruppenbeschreibung Quelle
+und Formularwerte vor. Das kostet KI über den OpenRouter-Key des Nutzers und ersetzt weder den
+bestätigten ICP noch die Prüfung der Werte; nur nach Zustimmung verwenden.
 
 Suchbegriffe, Gebiet, Filter und gegebenenfalls eine Treffergrenze aus dem ICP ableiten.
 Für Maps gilt: Orte, Stadtteile, PLZ oder ein Landkreis sind ein Einzellauf; Bundesland, Kanton
@@ -88,7 +105,7 @@ verwenden und beim Start ausdrücklich mitsenden. Die Schätzung ist keine Preis
 `budgetLimited=true` bedeutet, dass der Deckel die Planung begrenzt. Keine vollständige
 Treffermenge zusagen und den Deckel niemals still erhöhen. Weniger Treffer oder mehr Budget
 erneut schätzen und bestätigen lassen. Der Deckel je Lauf ist höchstens 1000 USD. Bei SERP sind
-1 bis 5000 Treffer je Lauf zulässig; bei Maps ist `maxItems` optional, gilt je Suchbegriff und
+1 bis 5000 Treffer je Lauf zulässig, bei LinkedIn 1 bis 500 Profile; bei Maps ist `maxItems` optional, gilt je Suchbegriff und
 Gebietseinheit und bleibt in der Regel leer, ein Einzellauf umfasst höchstens 50 Einheiten.
 Bei mehreren Läufen auch das Gesamtbudget bestätigen lassen.
 
@@ -105,7 +122,8 @@ eine fertige Liste.
 4. Bis `completed`, `failed` oder `cancelled` weiter abfragen. Bei langer Laufzeit nicht neu
    starten. Nach einer Unterbrechung dieselbe gespeicherte Run-ID verwenden.
 5. Bei unklarer Startantwort keine neue kostenpflichtige Ausführung blind wiederholen.
-   Den Verlauf in ListM8 prüfen und die bereits angelegte Run-ID klären.
+   Den Reiter „Aufträge“ in ListM8 (`/leads/find?view=orders`) prüfen, bei Beschaffungsaufträgen
+   auch `list_sourcing_orders`, und die bereits angelegte Run-ID klären.
 6. Auf Abbruchwunsch `cancel_lead_source_run(run_id)` aufrufen und weiterhin bis terminal pollen.
    `cancelRequestedAt` bestätigt nur die Anforderung. Bereits entstandene Kosten bleiben bestehen.
 

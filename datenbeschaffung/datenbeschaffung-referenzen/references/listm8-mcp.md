@@ -1,15 +1,38 @@
 # ListM8-MCP: Datenbeschaffung
 
-Vertragsstand: 2026-09-26. Für Quellen im Katalog ist dies der Standardweg.
+Vertragsstand: 2026-09-27. Für Quellen im Katalog ist dies der Standardweg.
 Die manuellen Actor-Referenzen und Skripte gelten nur als Fallback außerhalb des Katalogs.
 Zur Laufzeit ist das von `list_lead_sources` gelieferte Formularschema maßgeblich.
+Die vollständige Werkzeugliste liefert die Tool-Discovery des MCP-Servers; jede
+Werkzeugbeschreibung dort ist der aktuelle Vertrag und geht dieser Referenz im Zweifel vor.
+
+## Begriffe gegenüber dem Nutzer
+
+Die Oberfläche („Leads finden“ unter `/leads/find`) verwendet vier Begriffe; im Gespräch mit dem
+Nutzer diese verwenden, die Werkzeugnamen bleiben unverändert. „Lauf“ bezeichnet dort nur den
+KI-Lauf der Kampagne (`start_lead_run`).
+
+| Begriff | Bedeutung | MCP |
+|---|---|---|
+| **Suche** | Kostenlose Suche in der Firmen-Datenbank, legt keine Leads an | kein Werkzeug, nur Oberfläche (Reiter Firmen) |
+| **Vorschau** | Bezahlte Stichprobe von höchstens zehn lokalen Betrieben, legt keine Leads an | kein Werkzeug, nur Oberfläche (Reiter Lokale Betriebe) |
+| **Auftrag** | Alles, was gegen Geld Leads in eine Liste holt: klein ein Durchgang einer Quelle, groß über viele Gebiete mit Zielzahl und Deckel | klein `*_lead_source_run`, groß `*_sourcing_order` |
+| **Gebiet** | Bundesland, Landkreis, Ort, Umkreis oder PLZ als Einheit der Planung | `areaUnit`, im großen Auftrag die Zelle |
+
+In dieser Referenz heißt der kleine Auftrag weiter Einzellauf oder Quellenlauf und der große
+Beschaffungsauftrag, weil die Werkzeuge sich darin unterscheiden. Beide stehen in der Oberfläche
+im Reiter „Aufträge“ (`/leads/find?view=orders`), dort mit Detail und „Prüfung nachholen“.
 
 ## Tool-Signaturen
 
-Alle hier beschriebenen Werkzeuge verlangen `leads:write`, auch die Leseoperationen.
+Starten, Schätzen, Vorbelegen, Nachprüfen, Pausieren, Fortsetzen und Abbrechen verlangen
+`leads:write`. Die Lesewerkzeuge `list_lead_sources`, `get_lead_source_run`, `get_sourcing_order`,
+`list_sourcing_orders` und `list_sourcing_order_cells` genügen mit `leads:read` (`leads:write`
+schließt es ein).
 
 ```text
-list_lead_sources()
+list_lead_sources(country?: string = "DE")
+prefill_lead_source_run(description: string, preferred_source_key?: string)
 estimate_lead_source_run(source_key: string, params: object,
                         max_items?: integer, max_total_charge_micro_usd?: integer)
 start_lead_source_run(source_key: string, params: object,
@@ -22,6 +45,7 @@ estimate_sourcing_order(name, target_new_leads, max_total_charge_micro_usd,
                         matrix, max_cell_charge_micro_usd?, area_mode?, parallel_cells?)
 create_sourcing_order(request_id, dieselben Argumente wie estimate_sourcing_order)
 get_sourcing_order(order_id: string)
+list_sourcing_orders(start?: integer, limit?: integer = 20, status?: string)
 list_sourcing_order_cells(order_id: string, start?: integer, limit?: integer)
 pause_sourcing_order(order_id) / resume_sourcing_order(order_id) / cancel_sourcing_order(order_id)
 ```
@@ -54,14 +78,22 @@ Pflichtfelder dürfen nicht leer sein. Aktueller Katalog:
 | Maps | `minimumStars` | select | `""` | `""`, `"3"`, `"3.5"`, `"4"`, `"4.5"` |
 | Maps | `minimumReviews` | number | 0 | Ganze Zahl, 0 bis 1000000 |
 | Maps | `onlyWithWebsite` | boolean | false | `true` oder `false`, kein String |
-| Maps | `maxItems` | number, optional | keiner | Ganze Zahl, 1 bis 5000, gilt je Suchbegriff und Gebietseinheit; leer bedeutet alle Orte des Gebiets |
+| Maps | `maxItems` | number, optional | keiner | Ganze Zahl ab 1, gilt je Suchbegriff und Gebietseinheit; leer bedeutet alle Orte des Gebiets. Das äußere `max_items` erlaubt 1 bis 5000 |
 | SERP | `maxItems` | number, Pflicht | 500 | Ganze Zahl, 1 bis 5000 |
-| beide | `country` | country, Pflicht | DE | ISO-3166-1 alpha-2 in Großbuchstaben |
+| Maps, SERP | `country` | country, Pflicht | DE | ISO-3166-1 alpha-2 in Großbuchstaben |
 | SERP | `language` | select, Pflicht | de | `de`, `en` |
+| LinkedIn | `jobTitle` | text, Pflicht | keiner | 1 bis 200 Zeichen, aktuelle Berufsbezeichnung |
+| LinkedIn | `industryId` | select, Pflicht | keiner | Branchen-ID als String aus den Katalogoptionen, etwa `"48"` |
+| LinkedIn | `location` | text, Pflicht | keiner | 1 bis 200 Zeichen, Profilstandort (nicht der Firmensitz) |
+| LinkedIn | `country` | country, Pflicht | DE | `DE`, `AT`, `CH` |
+| LinkedIn | `maxItems` | number, Pflicht | 25 | 1 bis 500 Profile, keine garantierte Leadzahl |
 
-Maps bedeutet `google_maps_local`, SERP bedeutet `google_serp_companies`. Weitere optionale
+Maps bedeutet `google_maps_local`, SERP bedeutet `google_serp_companies`, LinkedIn bedeutet
+`linkedin_company_contacts`: Profile mit passender Berufsbezeichnung dienen als Zugang zu ihren
+Firmen; importiert werden Firmenpostfächer über Website, Impressum und Prüfung, keine
+persönlichen Adressen, und nur mit bestätigtem Firmenland. Weitere optionale
 Maps-Felder wie `exactCategory`, `excludeClosed`, `package`, `rescrapeCovered` und `coverageDays`
-stehen mit Default und Bedeutung im Katalog. Die LinkedIn-Quelle nimmt 1 bis 500 Profile.
+stehen mit Default und Bedeutung im Katalog.
 Maps nimmt `categories` und `locations` als Listen (Ort, Stadtteil oder PLZ), optional `radiusKm`
 je Ort (1 bis 100 km im Auftrag, bis 2000 im Einzellauf), `adminArea1` (nur zur Eingrenzung eines
 Orts; ohne Orte nur im Beschaffungsauftrag) und `adminArea2` (Landkreis, wird in PLZ-Einheiten
@@ -154,7 +186,23 @@ Apify rechnet über das eigene Kundenkonto ab, ListM8 zeigt und erfasst die exte
 
 `run_id` ist die Beschaffungs-UUID. `job_id` gehört zum initialen Job, nicht zur ganzen Kette.
 Nicht mit `leadListId` oder der späteren `lead_run_id` aus der Qualifizierung verwechseln.
-Bei unklarer Startantwort zuerst den Verlauf in ListM8 prüfen, statt einen zweiten Lauf zu starten.
+Bei unklarer Startantwort zuerst den Reiter „Aufträge“ in ListM8 (`/leads/find?view=orders`)
+prüfen, für Beschaffungsaufträge auch `list_sourcing_orders`, statt einen zweiten Lauf zu starten.
+
+### Vorbelegung aus einer Beschreibung
+
+`prefill_lead_source_run(description, preferred_source_key?)` schlägt Quelle und Formularwerte
+aus einer Zielgruppenbeschreibung vor (10 bis 10000 Zeichen). Der Aufruf startet nichts und
+braucht keine Apify-Verbindung, kostet aber KI über den OpenRouter-Key des Nutzers
+(`costMicroUsd` in der Antwort; 0 heißt nur „keine Nutzungsdaten“). Die Antwort enthält
+`sourceKey`, `params`, `confidence`, `rationale` und `adjustedFields` (auf Defaults gesetzte oder
+entfernte Felder). Pflichtfelder ohne ableitbaren Wert bleiben `null`; ohne genannte Menge setzt
+die Vorbelegung `maxItems=200`. Den Vorschlag deshalb gegen den Katalog prüfen, Lücken ergänzen
+und bestätigen lassen, bevor geschätzt wird. Fehler: `payment_required` (kein Key oder
+Providerkonto blockiert), `validation_failed` (Beschreibung, Quelle, fehlendes Modell,
+unverwertbare Antwort), `operation_failed` (Anbieterfehler, abgeschnittene Antwort),
+`rate_limited` (Standard 60 Aufrufe je Stunde). Der ICP bleibt die Grundlage: Die Vorbelegung
+ersetzt weder Phase 1 des Masters noch die Kostenfreigabe.
 
 ### Lauf lesen und abbrechen
 
@@ -212,6 +260,10 @@ bleiben bestehen; bereits importierte Leads nicht löschen.
 | 3 | `imprint` | E-Mail-Lücken neuer Kandidaten über Impressum ergänzen, nur DACH |
 | 4 | `verify` | Neue E-Mails prüfen; ungültige verwerfen, Catch-all und unbekannte markieren |
 | 5 | `import` | Neue Liste anlegen, neue Leads importieren und bekannte verknüpfen |
+
+Bei `linkedin_company_contacts` liegt zwischen `source` und `dedupe` der Schritt `resolve_site`:
+Er ordnet die Profile Firmen zu und ermittelt deren Website; erst danach gibt es Domains für den
+Bestandsabgleich. Die Profilquelle hat keinen Ersatz-Actor.
 
 Bekannte Treffer überspringen kostenpflichtige Anreicherung und Verifizierung. Dedupe findet
 **nach** der Quellensuche statt, nicht vor deren Kosten. Kein kostenloses Aussortieren aller
@@ -275,7 +327,7 @@ auf den Wortlaut von `message`. Nur ein fehlender Scope bei den Quellenwerkzeuge
 | 409 | `resume_blocked` | — | Fortsetzen gerade nicht möglich; Zellen und Status lesen |
 | 429 | `rate_limited` (Quellen) | `geo.quota_exceeded` | Tageskontingent für Freitext-Orte erreicht; bekannte PLZ und Orte nutzen oder morgen weiter |
 | 502 | `provider_unavailable` (Aufträge) / `operation_failed` (Quellen) | — | Anbieter vorübergehend nicht erreichbar; später erneut |
-| Berechtigung | `insufficient_scope` (Quellen) / `forbidden` (Aufträge) | — | ListM8-MCP-Verbindung mit `leads:write` klären |
+| Berechtigung | `insufficient_scope` (Quellen) / `forbidden` (Aufträge) | — | ListM8-MCP-Verbindung klären: `leads:write` für Schreiben, `leads:read` genügt zum Lesen |
 | 401 bei REST | Authentifizierung fehlt | — | Verbindung neu autorisieren, keine Tokens im Chat austauschen |
 
 Falsche JSON-Schema-Typen oder Werte außerhalb der Schema-Grenzen können bereits als

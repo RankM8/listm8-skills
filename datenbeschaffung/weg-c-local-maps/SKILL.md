@@ -25,7 +25,7 @@ Nur Formularfelder des aktuellen Katalogs an `params` übergeben. Keine Actor-In
 | Mindestbewertung | `minimumStars` | String: `""`, `"3"`, `"3.5"`, `"4"`, `"4.5"`; Default `""` |
 | Mindestzahl Bewertungen | `minimumReviews` | Ganze Zahl, 0 bis 1000000; Default 0 |
 | Nur Firmen mit Website | `onlyWithWebsite` | JSON-Bool, Default `false` |
-| Maximale Treffer | `maxItems` | Optional, ganze Zahl 1 bis 5000, je Suchbegriff und Gebietseinheit; leer bedeutet alle Orte |
+| Maximale Treffer | `maxItems` | Optional, ganze Zahl ab 1, je Suchbegriff und Gebietseinheit; leer bedeutet alle Orte. Das äußere `max_items` erlaubt 1 bis 5000 |
 
 Ein Land je Lauf verwenden. Ein Umkreis ist über `radiusKm` je Ort möglich; kein Sprachfeld
 ergänzen, die Maps-Sprache wird serverseitig aus dem Land abgeleitet. Gebietswahl: Orte,
@@ -48,6 +48,10 @@ Für Personalisierung `onlyWithWebsite=true` vorschlagen. Bei Website-losen Ziel
 verwenden und erklären: Das bedeutet **kein Website-Filter**, nicht „nur ohne Website“.
 
 ## Pilot schätzen und bestätigen
+
+Will der Nutzer vorab nur sehen, welche Betriebe ein Gebiet liefert, gibt es in der Oberfläche
+die **Vorschau** (`/leads/find`, Reiter Lokale Betriebe): höchstens zehn Betriebe, legt keine
+Leads an, über MCP nicht verfügbar. Für den Pilot über den MCP gilt:
 
 Mit einer Stadt beginnen. Beispielargumente für `estimate_lead_source_run` mit einem
 ausdrücklich gewählten Pilotdeckel von 0,50 USD; `maxItems` ist hier bewusst als
