@@ -154,7 +154,7 @@ Pruefe JEDE Variable gegen ALLE folgenden Kriterien:
   - Anrede-Mix oder andere Style-Bruch
   - Falsche HTTPS/SSL-Behauptungen
 
-`reason` muss konkret sein (nennt die problematische Variable + den Defekt), damit beim Re-Generate via `/outreach-generate` oder `save_lead_variables` der Fehler vermieden werden kann.
+`reason` muss konkret sein (nennt die problematische Variable + den Defekt). Er steht nur im Audit-Log: Beim manuellen Re-Generate via `/outreach-generate` oder `save_lead_variables` den Grund selbst mitgeben; der Server-Lauf liest ihn nicht.
 
 Gib am Ende eine kurze Zusammenfassung zurueck:
 - Entscheidung: approved / rejected
@@ -198,7 +198,7 @@ Status: Freigegebene Leads auf "approved" gesetzt (ready fuer CSV-Export)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-**WICHTIG — "rejected" ist NICHT final:** Ein rejected-Lead zaehlt als generierungsbeduerftig — der naechste E-Mail-Run bzw. Re-Generate erzeugt neue Variablen und setzt ihn zurueck auf pending_review (der `reason` fliesst in die Neu-Generierung ein). Soll ein Lead DAUERHAFT raus: aus der Kampagne entfernen oder `mark_leads_contacted(emails=[...], status="do_not_contact")` setzen — dann wird er global von allen AI-Jobs und Exporten ausgeschlossen.
+**WICHTIG — "rejected" ist NICHT final:** Ein rejected-Lead zaehlt als generierungsbeduerftig — der naechste E-Mail-Run bzw. Re-Generate erzeugt neue Variablen und setzt ihn zurueck auf pending_review. Der `reason` landet nur im Audit-Log; die Neu-Generierung des Servers sieht ihn nicht. Soll die Begruendung kuenftige Mails beeinflussen, zusaetzlich `set_lead_email_feedback(campaign_id, lead_id, liked=false, comment="<Grund>")` setzen: Die jeweils drei juengsten Urteile je Richtung fliessen als Beispiele in den E-Mail-Prompt der Kampagne (Uebersicht mit `list_lead_email_feedback`, Ruecknahme mit `delete_lead_email_feedback`). Das Urteil ist unabhaengig von approve/reject und verlangt erzeugte Variablenwerte sowie einen E-Mail-Schritt. Soll ein Lead DAUERHAFT raus: aus der Kampagne entfernen oder `mark_leads_contacted(emails=[...], status="do_not_contact")` setzen — dann wird er global von allen AI-Jobs und Exporten ausgeschlossen.
 
 ## MCP Tool Reference
 
@@ -248,7 +248,7 @@ Gibt zurueck:
 | `campaign_id` | int | **required** | Kampagnen-ID |
 | `lead_id` | int | **required** | Lead-ID |
 
-Setzt `LeadCampaignStatus.status = approved`. Voraussetzung: mindestens eine `LeadAIVariableValue` muss existieren — sonst `error`.
+Setzt `LeadCampaignStatus.status = approved`. Voraussetzung: mindestens eine `LeadAIVariableValue` muss existieren — sonst `variables_not_found`. Veraltete (`stale`) Werte einer benoetigten Variable lehnt das Tool mit `ai_variable_stale` ab; waehrend fuer den Lead ein Job der Research- oder E-Mail-Stufe wartet oder laeuft, mit `lead_run_active` (die Meldung nennt die gesperrten Lead-IDs, die uebrigen Leads bleiben entscheidbar).
 
 Success-Response:
 ```json
@@ -289,6 +289,8 @@ Success-Response:
 |--------|--------|
 | `list_leads` gibt leere leads[] | "Keine Leads zur Review" -> STOP |
 | Sub-Agent approve/reject Error | Fehler notieren, weitermachen mit naechstem Lead |
+| `variables_not_found` | Keine erzeugten Werte — Lead gehoert in die Generierung, nicht ins Review |
+| `ai_variable_stale` | Werte nach Konfigurationsaenderung veraltet — neu generieren lassen oder gezielt korrigieren, nicht freigeben |
 | `lead_run_active` | Parallel laeuft ein Server-Lauf mit E-Mail-Stufe — Review pausieren, `get_lead_run_status` bis Terminal-Status, dann fortsetzen |
 | Sub-Agent Timeout/Crash | Als Fehler zaehlen, im Report erwaehnen |
 | Alle Agents eines Batches fehlgeschlagen | Warnung ausgeben, User fragen ob fortfahren |
