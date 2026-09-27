@@ -319,8 +319,9 @@ der Schrittbelege. Nicht durch selbst erfundene Provenienz ersetzen.
 Auf bestätigten Folgeauftrag die ausgewählten Listenleads einer Kampagne zuordnen und den
 bestehenden Outreach-Workflow für `start_lead_run` nutzen. Vorher aktive Lead-Läufe prüfen.
 Die Stufen heißen `qualification`, `research`, `email`. Auswahl und Budget separat abstimmen;
-`start_lead_run` nimmt keine direkte `list_id` entgegen. Seine OpenRouter-Budgetgrenze ist
-nicht der Apify-Deckel des Beschaffungslaufs.
+`start_lead_run` nimmt keine direkte `list_id` entgegen. Sein `budget_usd` ist nicht der
+Apify-Deckel des Beschaffungslaufs: Es begrenzt KI-Kosten plus die im KI-Lauf selbst gebuchten
+externen Kosten, `spentUsd` in `get_lead_run_status` meldet dieselbe Summe.
 
 ## Unbeantwortete Prüfungen nachholen
 
