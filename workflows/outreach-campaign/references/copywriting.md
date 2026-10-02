@@ -26,8 +26,11 @@ Fakten. Max. 2 Sätze, beginnt klein (folgt auf die Anrede), über den EMPFÄNGE
 
 ## Betreffzeilen
 
-2–5 Wörter, mit Firmen- oder Vornamen. Bewährt: „Idee für {{lead.company}}", „kurze Frage
-zu {{lead.company}}", „kurze Frage, {{custom.vorname}}". Der Server kennt nur `{{lead.*}}`
+2–5 Wörter, mit Firmen- oder Vornamen. Bewährt: „Idee für {{ai.firma}}", „kurze Frage
+zu {{ai.firma}}", „kurze Frage, {{custom.vorname}}". Den Firmennamen in Betreff und Text über die
+AI-Variable `firma` (Kurzname, siehe SKILL.md) einsetzen, nicht roh als `{{lead.company}}`: Maps
+und Impressum liefern den Registernamen, und „Idee für Walter Melcher Bedachungen GmbH + Co. KG"
+oder „Idee für Dachdecker & Blechnerei - Dirk Pesec" liest sich wie ein Serienbrief. Der Server kennt nur `{{lead.*}}`
 (`company`, `city`, `website` …), `{{ai.*}}` und `{{custom.*}}`; `{{firstName}}` oder
 `{{companyName}}` lässt `validate_campaign` als `invalid_token` durchfallen. Einen Vornamen
 gibt es nur als Custom-Attribut aus dem Import; den Schlüssel liefert `get_campaign` bzw. der

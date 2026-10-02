@@ -82,15 +82,19 @@ Struktur (Schema v1 — die vollstaendige Referenz liefert der MCP-Prompt `campa
   },
   "aiVariables": [
     {"name": "hallo", "prompt": "<Anrede-Anweisung, min 10 Zeichen>", "sortOrder": 1},
-    {"name": "intro", "prompt": "<Lob-Opener-Anweisung mit Research-Prioritaeten>", "sortOrder": 2}
+    {"name": "firma", "prompt": "<Kurzname ohne Rechtsform, mit Beispielen>", "sortOrder": 2},
+    {"name": "intro", "prompt": "<Lob-Opener-Anweisung mit Research-Prioritaeten>", "sortOrder": 3}
   ],
-  "sequence": { "steps": [ {"stepNumber": 1, "subject": "...", "body": "{{ai.hallo}}\n\n{{ai.intro}}\n\n...", "delayDays": 0, "delayUnit": "days"} ] }
+  "sequence": { "steps": [ {"stepNumber": 1, "subject": "Idee für {{ai.firma}}", "body": "{{ai.hallo}}\n\n{{ai.intro}}\n\n...", "delayDays": 0, "delayUnit": "days"} ] }
 }
 ```
 
 **Pflicht-Regeln (Cold-Mailing-SOP):**
-- AI-Variablen `hallo` (Anrede) und `intro` (personalisierter Opener) IMMER anlegen; Namen-Regex `^[a-zA-Z][a-zA-Z0-9_]*$`, Prompt min 10 Zeichen.
-- Sequenz-Bodies nutzen `{{ai.hallo}}`/`{{ai.intro}}` und `{{lead.company}}`; Step 1 `delayDays: 0`. Keine nackten `{{companyName}}`-Tokens, If-Blöcke oder Default-Syntax verwenden.
+- AI-Variablen `hallo` (Anrede), `firma` (Kurzname) und `intro` (personalisierter Opener) IMMER anlegen, in dieser Reihenfolge; Namen-Regex `^[a-zA-Z][a-zA-Z0-9_]*$`, Prompt min 10 Zeichen.
+  - `firma`: Firmenname, wie ein Kollege ihn sagt, ohne Rechtsform, „Meisterbetrieb", „Inh. …" oder Leistungsaufzählung; mit zwei, drei Vorher-nachher-Beispielen im Prompt. Betreff und Text nutzen `{{ai.firma}}` statt `{{lead.company}}`.
+  - `intro`: Der Prompt sagt ausdrücklich, dass nur der ERSTE Buchstabe klein ist und jeder weitere Satz groß beginnt. Ohne den Satz schrieb das Modell „… selten sieht. das finde ich stark."
+  - Du-Anrede: `preview_campaign` meldet dafür `salutation_mode_unrecognized` (der Server kennt nur `formal` und `team`). Das ist erwartet, solange `hallo` die Anrede selbst erzeugt; kein Fehler.
+- Sequenz-Bodies nutzen `{{ai.hallo}}`/`{{ai.intro}}` und `{{ai.firma}}`; Step 1 `delayDays: 0`. Keine nackten `{{companyName}}`-Tokens, If-Blöcke oder Default-Syntax verwenden.
 - `agentKey` in den Configs WEGLASSEN. Seit 17.09.2026 gibt es je Stufe genau einen Agenten (`qualifier`, `researcher`, `email_generator`); ein Schluessel bezeichnet nur noch seine Stufe. Jeder Wert wird akzeptiert und auf die Stufe seiner Config gezogen, auch alte Schluessel aus frueher gespeicherten Blueprints; abgelehnt wird nur ein Nicht-String (VALIDATION_FAILED).
 - Max 25 Variablen, max 25 Steps, Blueprint < 256 KB.
 - `qualificationSettings` IMMER mit den kanonischen snake_case-Schlüsseln aus der Vorlage füllen, alle fünf Pflichtfelder (`target_customer_profile`, `offer_summary`, `fit_criteria`, `disqualifiers`, `additional_prompt`). Die camelCase-Aliasse (`idealCustomer`, `offerSummary`, `fitCriteria`, `additionalInstructions`, `taxonomyInstructions`) wertet die Laufzeit zwar aus, die Oberfläche zeigt die Felder dann aber als „Noch nicht ausgefüllt", und wer sie dort bearbeitet, überschreibt den Alias still. Alias und kanonischen Schlüssel nie im selben Patch mischen (`validation_failed: Conflicting qualification aliases`).
