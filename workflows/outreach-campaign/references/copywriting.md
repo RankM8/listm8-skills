@@ -26,8 +26,12 @@ Fakten. Max. 2 Sätze, beginnt klein (folgt auf die Anrede), über den EMPFÄNGE
 
 ## Betreffzeilen
 
-2–5 Wörter, mit {{firstName}}. Bewährt: „kurze Frage, {{firstName}}", „Anfrage für
-{{firstName}}", „Idee für {{companyName}}". Verboten im Betreff: Spam-Trigger („gratis",
+2–5 Wörter, mit Firmen- oder Vornamen. Bewährt: „Idee für {{lead.company}}", „kurze Frage
+zu {{lead.company}}", „kurze Frage, {{custom.vorname}}". Der Server kennt nur `{{lead.*}}`
+(`company`, `city`, `website` …), `{{ai.*}}` und `{{custom.*}}`; `{{firstName}}` oder
+`{{companyName}}` lässt `validate_campaign` als `invalid_token` durchfallen. Einen Vornamen
+gibt es nur als Custom-Attribut aus dem Import; den Schlüssel liefert `get_campaign` bzw. der
+Import. Ohne ihn den Firmennamen nehmen. Verboten im Betreff: Spam-Trigger („gratis",
 „kostenlos", „100 %", „garantiert", „jetzt zugreifen", „Rabatt", „dringend", „unverbindlich",
 „exklusives Angebot"), Ausrufezeichen, VOLLGROSS, Fake-„Re:".
 
