@@ -69,8 +69,15 @@ Struktur (Schema v1 — die vollstaendige Referenz liefert der MCP-Prompt `campa
         "cta": {"value": "...", "source": "answer", "status": "confirmed"}
       }
     },
-    "qualificationSettings": { "idealCustomer": "...", "disqualifiers": "..." },
-    "researchAgentConfig": { "researchGoals": "...", "researchPriorities": "..." },
+    "qualificationSettings": {
+      "target_customer_profile": "<Wunschkunde>",
+      "offer_summary": "<Angebot in 1-2 Sätzen>",
+      "fit_criteria": "<Passt-Kriterien, inklusiv>",
+      "disqualifiers": "<nur harte No-Gos>",
+      "additional_prompt": "<Zusätzliche Hinweise>",
+      "taxonomy_instructions": "<Kategorien und Tags, optional>"
+    },
+    "researchAgentConfig": { "additionalPrompt": "<kampagneneigener Recherche-Auftrag, 3-5 Anker>" },
     "emailAgentConfig": { "additionalPrompt": "Auf Deutsch für DACH schreiben; Ton und Ansprache konsistent mit dem bestätigten Briefing halten." }
   },
   "aiVariables": [
@@ -86,6 +93,8 @@ Struktur (Schema v1 — die vollstaendige Referenz liefert der MCP-Prompt `campa
 - Sequenz-Bodies nutzen `{{ai.hallo}}`/`{{ai.intro}}` und `{{lead.company}}`; Step 1 `delayDays: 0`. Keine nackten `{{companyName}}`-Tokens, If-Blöcke oder Default-Syntax verwenden.
 - `agentKey` in den Configs WEGLASSEN. Seit 17.09.2026 gibt es je Stufe genau einen Agenten (`qualifier`, `researcher`, `email_generator`); ein Schluessel bezeichnet nur noch seine Stufe. Jeder Wert wird akzeptiert und auf die Stufe seiner Config gezogen, auch alte Schluessel aus frueher gespeicherten Blueprints; abgelehnt wird nur ein Nicht-String (VALIDATION_FAILED).
 - Max 25 Variablen, max 25 Steps, Blueprint < 256 KB.
+- `qualificationSettings` IMMER mit den kanonischen snake_case-Schlüsseln aus der Vorlage füllen, alle fünf Pflichtfelder (`target_customer_profile`, `offer_summary`, `fit_criteria`, `disqualifiers`, `additional_prompt`). Die camelCase-Aliasse (`idealCustomer`, `offerSummary`, `fitCriteria`, `additionalInstructions`, `taxonomyInstructions`) wertet die Laufzeit zwar aus, die Oberfläche zeigt die Felder dann aber als „Noch nicht ausgefüllt", und wer sie dort bearbeitet, überschreibt den Alias still. Alias und kanonischen Schlüssel nie im selben Patch mischen (`validation_failed: Conflicting qualification aliases`).
+- Recherche-Auftrag als `researchAgentConfig.additionalPrompt` setzen, nicht als `researchGoals`/`researchPriorities`: sonst zeigt die Oberfläche „Standard-Prompt aktiv". E-Mail-Ton und Sprache gehören in `emailAgentConfig.additionalPrompt`.
 
 Blueprint dem User zur Bestaetigung zeigen (kompakt: Name, Variablen, Step-Betreffs, Kriterien), DANN erstellen.
 
@@ -117,6 +126,21 @@ Anschließend `validate_campaign(campaign_id=80, lead_ids=[…])` und für ausge
 
 **WARNUNG Neugenerierung:** `edit_campaign` gleicht AI-Variablen per Name ab. Gleichnamige Variablen behalten ihre generierten Werte; aendert sich Prompt oder Name, werden die Werte veraltet (`stale`), und freigegebene Leads ohne gueltigen Wert gehen zurueck auf `processing` — die Arbeit muss neu laufen und kostet erneut. Fehlt eine Variable im Blueprint, bleibt sie nur erhalten, wenn sie schon Werte hat. Vor dem Edit pruefen: Sind schon Variablen generiert (`list_leads` mit `campaign_status="pending_review"`/`approved`)? Dann dem User die Konsequenz ausdruecklich nennen und bestaetigen lassen — `confirm_overwrite=true` alleine ist KEINE informierte Zustimmung. Nie bei aktivem Lead-Run editieren (`list_lead_runs(active_only=true)` vorher pruefen).
 
+## Phase 4: Agenten-Setup prüfen (Pflicht vor Leads)
+
+Keine Leads in die Kampagne (`add_leads_to_campaign`, `import_leads` mit Kampagne) und kein `start_lead_run`, bevor dieser Check bestanden ist. Er gilt nach `create_campaign`, nach jedem `edit_campaign` und für jede bestehende Kampagne, die Leads bekommen soll.
+
+1. `get_campaign(campaign_id, include=["settings"])` lesen und prüfen:
+   - `qualificationSettings` enthält alle fünf Pflichtfelder unter den kanonischen Schlüsseln, jeweils nicht leer und auf diese Zielgruppe und dieses Angebot geschrieben. Stehen dort noch camelCase-Aliasse, per `patch_campaign_settings` auf die kanonischen Schlüssel umziehen.
+   - `researchAgentConfig.additionalPrompt` ist kampagneneigen (nicht leer, nicht nur `researchGoals`/`researchPriorities`).
+   - `emailAgentConfig.additionalPrompt` legt Sprache, Ansprache (Du/Sie) und Ton fest.
+   - `qualificationAgentConfig.additionalPrompt` ist eine bewusste Entscheidung: Sie ERSETZT die Qualifizierer-Anweisung des Kontos. Vor dem Setzen `get_agent(stage="qualifier", campaign_id=…)` lesen und den Nutzer fragen.
+2. `get_agent(stage=…, campaign_id=…, include_rules=false)` für `qualifier`, `researcher` und `email`: Die Laufzeit muss die Werte aus Schritt 1 zeigen (`qualificationSettings`, `additionalPrompt`).
+3. `validate_campaign(campaign_id)` muss `valid: true` melden.
+4. Dem Nutzer das Ergebnis als kurze Tabelle nennen (Feld, gesetzt ja/nein, erste Worte). Fehlt etwas: ergänzen oder nachfragen, NICHT mit Leads weitermachen.
+
+Gemessen am 02.10.2026: Eine nach der alten Vorlage angelegte Kampagne zeigte in der Oberfläche Wunschkunde, Hinweise und Recherche als leer bzw. Standard, Angebot und Passt-Kriterien fehlten wirklich, und ein Probelauf startete trotzdem.
+
 ## Fehlerbehandlung
 
 | Code | Aktion |
@@ -141,7 +165,7 @@ Die gezielten Schreibwege `update_email_step`, `update_ai_variable` und `patch_c
 
 ## Abschluss
 
-Report: campaign_id, Name, importierte Steps/Variablen/Configs. Hinweis: "Naechster Schritt: /outreach-import — Leads in die Kampagne laden."
+Report: campaign_id, Name, importierte Steps/Variablen/Configs und das Ergebnis des Agenten-Checks aus Phase 4. Erst wenn er bestanden ist: "Naechster Schritt: /outreach-import — Leads in die Kampagne laden."
 
 ## Verwandt
 

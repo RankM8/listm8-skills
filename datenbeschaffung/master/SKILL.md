@@ -159,7 +159,10 @@ Bekannte Leads können zusätzlich mit der Liste verknüpft sein.
 
 Danach auf ausdrücklichen Verarbeitungsauftrag die vorhandene Liste einer bestätigten Kampagne
 zuordnen und über den Outreach-Workflow `start_lead_run` für `qualification`, `research` und
-`email` verwenden. Das ist ein separater Lauf mit eigenem Budget und Voraussetzungen.
+`email` verwenden. Vor dem Zuordnen ist der Agenten-Check aus `outreach-campaign`, Phase 4,
+Pflicht: Wunschkunde, Angebot, Passt-Kriterien, Ausschlusskriterien und Hinweise sowie die
+Recherche- und E-Mail-Anweisung müssen für diese Zielgruppe gesetzt sein. Ist die Kampagne neu,
+gehört das schon in ihr Setup, bevor gescrapt wird. Das ist ein separater Lauf mit eigenem Budget und Voraussetzungen.
 Keine erfundene `list_id` an `start_lead_run` übergeben und nicht automatisch alle Kampagnenleads
 auswählen. Der Beschaffungslauf allein startet keine Qualifizierung und versendet keine E-Mails.
 

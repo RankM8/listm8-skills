@@ -6,7 +6,7 @@
 
 ## So formulierst du `qualificationSettings`
 
-- **idealCustomer / fit_criteria: INKLUSIV.** „Passt, wenn …" statt „raus, wenn nicht …".
+- **target_customer_profile / fit_criteria: INKLUSIV.** „Passt, wenn …" statt „raus, wenn nicht …".
   Positive Merkmale beschreiben (Branche des KUNDEN, Größenkorridor, Region, erkennbarer Bedarf) —
   nicht eine Checkliste, die jeder Lead vollständig erfüllen muss.
 - **disqualifiers: NUR harte No-Gos.** Falsche Branche, Wettbewerber, Konzern > 500 MA,
@@ -24,13 +24,20 @@
 
 ```json
 {
-  "idealCustomer": "Inhabergeführte Handwerksbetriebe (SHK, Elektro, Dach, Bau) in DACH mit 1-50 Mitarbeitern. Passt, wenn ein aktiver Geschäftsbetrieb erkennbar ist - auch mit veralteter oder minimaler Website (das ist unser Ansatzpunkt, kein Ausschluss).",
-  "disqualifiers": "Ketten und Konzerne über 500 MA, Franchise-Zentralen, reine Baumärkte/Handel, Webdesign-/Marketing-Agenturen (Wettbewerber), Betriebe in Abwicklung.",
-  "additionalInstructions": "Im Zweifel mid_qualified mit ehrlicher Begründung - Research und Review filtern weiter. Ablehnung nur mit konkret benanntem Disqualifier."
+  "target_customer_profile": "Inhabergeführte Handwerksbetriebe (SHK, Elektro, Dach, Bau) in DACH mit 1-50 Mitarbeitern. Passt, wenn ein aktiver Geschäftsbetrieb erkennbar ist - auch mit veralteter oder minimaler Website (das ist unser Ansatzpunkt, kein Ausschluss).",
+  "offer_summary": "Kostenlose Vorschau einer neuen, mobilfreundlichen Startseite; danach die komplette Handwerker-Website.",
+  "fit_criteria": "Passt, wenn der Betrieb selbst Handwerksleistungen vor Ort erbringt. Starke Signale: Website veraltet oder nicht mobilfreundlich, nur Branchenbuch- oder Google-Profil, gute Bewertungen ohne Sichtbarkeit. Keines davon ist Pflicht.",
+  "disqualifiers": "Ketten und Konzerne über 500 MA, Franchise-Zentralen, reine Baumärkte/Handel, Webdesign-/Marketing-Agenturen (Wettbewerber), Innungen, Kammern, Verbände, Bildungsträger, Zeitarbeit, Branchenverzeichnisse, Betriebe in Abwicklung.",
+  "additional_prompt": "Im Zweifel mid_qualified mit ehrlicher Begründung - Research und Review filtern weiter. Ablehnung nur mit konkret benanntem Disqualifier."
 }
 ```
 
-`additionalInstructions` (gespeichert als `additional_prompt`) liest auch die Recherche als
+Immer diese kanonischen Schlüssel verwenden. Die camelCase-Aliasse (`idealCustomer`,
+`additionalInstructions` …) wertet nur die Laufzeit aus; die Oberfläche zeigt die Felder dann leer.
+Bei Maps-Listen gehören die typischen Nachbartreffer (Innungen, Verbände, Zeitarbeit, Händler,
+Verzeichnisse) in die Disqualifier: Google Maps liefert zu einem Gewerk regelmäßig 30-40 % davon.
+
+`additional_prompt` liest auch die Recherche als
 Maßstab mit. Eine Anweisung, die nur das Urteil der Qualifizierung lenken soll, gehört stattdessen
 in `qualificationAgentConfig.additionalPrompt` (Setzen per `patch_campaign_settings`, siehe
 SKILL.md, Abschnitt „Anweisung nur für die Qualifizierung").

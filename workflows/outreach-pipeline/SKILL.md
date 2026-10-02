@@ -8,7 +8,7 @@ description: Use when user says "outreach:pipeline", "mcp:pipeline", "kompletter
 Dieser Skill startet und ueberwacht die komplette Lead-Verarbeitung einer Kampagne als **einen serverseitigen Lauf**: das MCP-Tool `start_lead_run` verkettet Qualifizierung, Research und E-Mail-Variablen pro Lead mit den kampagneneigenen AI-Agents — abgerechnet ueber den OpenRouter-Account des Users (der Lauf kostet echtes Geld). Dein Client orchestriert nicht mehr selbst; er startet, pollt und berichtet.
 
 ```
-list_campaigns -> list_lead_runs(active_only=true) -> start_lead_run(stages=[...])
+list_campaigns -> Agenten-Check (get_campaign + get_agent) -> list_lead_runs(active_only=true) -> start_lead_run(stages=[...])
     -> get_lead_run_status (poll bis is_terminal) -> Report
 (danach manuell: /outreach-verify — Review & Approve)
 ```
@@ -25,6 +25,7 @@ list_campaigns -> list_lead_runs(active_only=true) -> start_lead_run(stages=[...
 
 ## Ablaufregeln
 
+0. **Agenten-Setup (Pflicht)**: Vor jedem Start den Check aus `/outreach-campaign`, Phase 4 „Agenten-Setup prüfen", ausführen (`get_campaign` mit `settings`, `get_agent` je Stufe, `validate_campaign`). Fehlt ein Pflichtfeld oder läuft eine Stufe mit Standard-Prompt, NICHT starten, sondern erst ergänzen. Ein Lauf auf unvollständigem Setup kostet Geld, und ListM8 kann ein einmal gesetztes Kampagnen-Urteil nicht neu erzeugen lassen.
 1. **Vorpruefung (Pflicht)**: `list_lead_runs(campaign_id, active_only=true)`. Ist ein Lauf aktiv: NICHT starten — parallele Laeufe ueber dieselben Leads blockieren sich; der Server zieht Leads, die schon in einem aktiven Lauf stecken, aus dem neuen Lauf ab (`skipped_running`, siehe Regel 4). Stattdessen den aktiven Lauf verfolgen oder mit `cancel_lead_run` stoppen. Vorbedingungen des Servers: OpenRouter-Key + AI-Modell konfiguriert; die email-Stufe braucht eine E-Mail-Sequenz an der Kampagne.
 2. **Lead-Auswahl**: `lead_ids` (1-2000) fuer bekannte Mengen ODER `select_by_filter=true` fuer "alles, was ansteht" (Filter wie `list_leads`). FALLSTRICK: Startet der Lauf bei der Qualifizierung, `fit_level=""` und `research_status=""` setzen — sonst matchen die Defaults frisch importierte Leads nicht (`no_leads_matched`). Leads mit bereits vorhandenen AI-Variablen fallen bei `campaign_status="processing"` (Default) bzw. `""` aus der Filterauswahl; mit `"rejected"`/`"pending_review"`/`"approved"` greift der Ausschluss nicht. Bei `matched_total > selected` sind nur die Top-2000 nach Score im Lauf — Folgelauf fuer den Rest.
 3. **Optionen**: `budget_usd` (0.01-10000; erreicht => Lauf endet als `budget_exhausted`, laufende Jobs laufen aus). Das Budget zaehlt KI-Kosten plus die im Lauf gebuchten externen Kosten (Apify), nicht nur OpenRouter. `agent_key` nur auf explizite User-Nennung. Es gibt je Stufe genau einen Agenten; jeder Wert, auch ein unbekannter oder alter Schluessel, laeuft mit dem Stufenagenten, keine Stufe wird uebersprungen.
