@@ -77,3 +77,4 @@ Soll der Client selbst denken (eigenes Modell/eigene Quellen, kein OpenRouter-Ke
 
 - Review: `/outreach-verify` · Manuell-Modus: `/outreach-qualify`, `/outreach-research`, `/outreach-generate`
 - Vorbereitung: `/outreach-campaign`, `/outreach-import`, `/outreach-lists`
+- Copy-Fragen (Sequenz, Betreffzeilen, Offer, Prompts von `hallo`/`intro`, Prüfung der Mails) laufen über den Skill `outreach-copy`.

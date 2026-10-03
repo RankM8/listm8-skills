@@ -49,7 +49,9 @@ Wenn KEINE campaign_id als Argument übergeben wurde:
 4. Merke dir die campaign_id
 5. Vorprüfung: `list_lead_runs(campaign_id, active_only=true)` — solange für einen Lead ein Job der E-Mail- oder der Research-Stufe wartet oder läuft, lehnen `approve_lead_variables`/`reject_lead_variables` diesen Lead mit `lead_run_active` ab (Rennschutz). Erst nach dem Terminal-Status des Laufs reviewen. Nach einer Änderung der Kampagnenkonfiguration (Variablen, Schritte) vorhandene Werte nicht blind freigeben, sondern gegen die aktuelle Konfiguration prüfen (`export_campaign_blueprint`) und bei Abweichung neu generieren.
 
-Wenn campaign_id als Argument übergeben wurde: Direkt zur Batch-Größe-Abfrage.
+Wenn campaign_id als Argument übergeben wurde: Direkt zur Copy-Prüfung.
+
+**Copy-Prüfung der Kampagne (Pflicht, einmal pro Kampagne):** Den Skill `outreach-copy` laden und die Sequenz aus `export_campaign_blueprint(campaign_id)` gegen dessen Selbstprüfung (14 Punkte) und Prüfliste halten: Wortlimits je Step (Anrede und ein Bezug von bis zu 2 Sätzen eingerechnet), EIN CTA, kein Pitch, Offer und `{{ai.intro}}` nur in Step 1, Feinheiten-Satz bei Karte A/C, kein Link in Step 1, Spam-Wörter, nur erlaubte Platzhalter, Betreffzeilen, Umlaute, `salutation` passend zu Text und `hallo`-Prompt. Funde dem User vor dem Review nennen: Fehler im festen Text oder in den Prompts behebt kein Approve, sie gehören über `/outreach-campaign` korrigiert. Ob trotzdem reviewt wird, entscheidet der User.
 
 **Batch-Größe abfragen:**
 
@@ -119,7 +121,7 @@ LEAD WEBSITE: {lead.website}
 
 ## Verification-Checkliste (pro Variable)
 
-Prüfe JEDE Variable gegen ALLE folgenden Kriterien:
+Grundlage sind die Abschnitte „Anrede und Ansprache“ und „Intro-Regeln“ des Skills outreach-copy (laden). Prüfe JEDE Variable gegen ALLE folgenden Kriterien:
 
 ### Personalisierung
 - [ ] Bezug zu Research/Website erkennbar? (nicht generisch)
@@ -132,6 +134,15 @@ Prüfe JEDE Variable gegen ALLE folgenden Kriterien:
 - [ ] Länge angemessen? (nicht zu kurz, nicht zu lang)
 - [ ] Keine Leerzeilen am Anfang oder Ende?
 - [ ] Keine M-dashes? (nur normale Bindestriche -)
+
+### Copy-Regeln (outreach-copy)
+- [ ] hallo: nur die Begrüßungszeile mit Komma, Format passend zur Ansprache (Du: „Hallo Vorname,“, Team: „Hallo <Firma> Team,“, Fallback „Hallo zusammen,“; Sie: „Hallo Frau/Herr Nachname,“ bzw. „Guten Tag,“)? Nie „Hallo Herr/Frau …“ bei Du-Form, kein erfundener Name oder Titel?
+- [ ] intro: max. 2 Sätze, erster Buchstabe klein, weitere Sätze groß?
+- [ ] intro: ausschließlich positiv (Lob/anerkennende Beobachtung), über den Empfänger, kein Problem benannt?
+- [ ] intro: keine verbotenen Wörter/Formen („Lücke", „Hürde", „Problem", „leider", „schade", „noch nicht", „fehlt", „begrenzt", „veraltet", „ausbaufähig", „verschenkt Potenzial", Konjunktiv-Wunsch, Ratschlag, Selbstvorstellung/Pitch, Floskel wie „bin auf eure Webseite gestoßen")?
+- [ ] intro: konkreter Bezug, der nicht auf 100 andere Firmen passt — oder wörtlich der Fallback-Satz aus dem Prompt?
+- [ ] Keine Frage, kein Ausrufezeichen, kein Link, keine sichtbaren Platzhalter ([…], {{…}}) in hallo/intro?
+- [ ] Schließt der feste Folgesatz der Entry-Mail („Genau deshalb …" / „Deswegen war ich so frei …") flüssig an, und bleibt die Entry-Mail mit diesem intro unter 120 Wörtern?
 
 ### Inhaltliche Korrektheit
 - [ ] Keine internen Metriken erwähnt? (SEO-Score, Overall-Score, Fit-Level, Need-Flags, Dimension-Scores, Opportunity Score, ranked Keywords)
@@ -152,6 +163,7 @@ Prüfe JEDE Variable gegen ALLE folgenden Kriterien:
   - Interne Metriken im Text (Score-Werte, Fit-Level etc.)
   - Erfundene Findings, die nicht in der Research stehen
   - Anrede-Mix oder andere Style-Bruch
+  - Verstoß gegen die Copy-Regeln aus outreach-copy (Kritik-Opener, mehr als 2 Sätze, Großbuchstabe am Anfang, „Hallo Herr/Frau …" bei Du-Form)
   - Falsche HTTPS/SSL-Behauptungen
 
 `reason` muss konkret sein (nennt die problematische Variable + den Defekt). Er steht nur im Audit-Log: Beim manuellen Re-Generate via `/outreach-generate` oder `save_lead_variables` den Grund selbst mitgeben; der Server-Lauf liest ihn nicht.

@@ -1,6 +1,6 @@
 ---
 name: outreach-campaign
-description: 'Use when user says "outreach:campaign", "mcp:campaign", "erstelle kampagne via mcp", "kampagne per mcp anlegen", "campaign blueprint erstellen", "bearbeite kampagne via mcp", "Kampagne mit guter Copy bauen", "Qualifizierungskriterien formulieren", or triggers /mcp:campaign. Guided campaign builder (create_campaign, export_campaign_blueprint, edit_campaign) that enforces the cold-mailing SOP (copywriting, open qualification, research anchors) via the bundled references.'
+description: 'Use when user says "outreach:campaign", "mcp:campaign", "erstelle kampagne via mcp", "kampagne per mcp anlegen", "campaign blueprint erstellen", "bearbeite kampagne via mcp", "Kampagne mit guter Copy bauen", "Qualifizierungskriterien formulieren", or triggers /mcp:campaign. Guided campaign builder (create_campaign, export_campaign_blueprint, edit_campaign) that enforces the cold-mailing SOP: copy via the outreach-copy skill (loaded before any sequence or variable prompt is written), open qualification and research anchors via the bundled references.'
 ---
 
 # MCP Campaign — Kampagnen erstellen & bearbeiten via Blueprint
@@ -28,22 +28,30 @@ Mindestens klären (fehlendes nachfragen, AskUserQuestion):
 3. **CTA/Offer**: Was ist der konkrete nächste Schritt (z.B. "Website-Vorschau schicken")?
 4. **Qualifizierung**: Wer ist ideal, was disqualifiziert?
 5. **Research-Fokus**: Wonach soll die Recherche suchen (Aufhänger-Prioritäten — steuert die Recherche-Agenten der Kampagne)?
-6. **Sequenz**: Wie viele Steps (Empfehlung: 3), Abstaende (z.B. 0/3/4 Tage)?
+6. **Sequenz**: Standard sind 5 Steps mit `delayDays` 0/3/5/7/7 (Rollen und Wortlimits: Skill `outreach-copy`). Nur auf ausdrücklichen Wunsch entfällt Step 5.
+7. **Absender und Belege**: Name, Rolle und Firma für die Signatur; ein echter Beleg für Step 3 (Case, Zahl, Ergebnis) und ein echter Kapazitäts- oder Zeitgrund für Step 4. Nichts davon erfinden.
 
 ## Phase 1b: Qualität nach SOP (Pflicht, bevor eine Zeile Blueprint entsteht)
 
-Drei Referenzen in diesem Skill-Ordner sind beim Bauen VERBINDLICH — lesen, anwenden, nicht paraphrasieren:
+**Den Skill `outreach-copy` VERBINDLICH laden, bevor eine Zeile Sequenz oder Variablen-Prompt
+entsteht.** Er ist die einzige Copy-Doktrin: Offer-Karte A-E, Anatomie der Entry-Mail mit
+Feinheiten-Satz, 5er-Sequenz, Wortlimits, Betreffzeilen, Anrede je `salutation`, Pflichtinhalt
+der Prompts von `hallo` und `intro`, Verbote, Selbstprüfung und Prüfliste. Ist er nicht
+installiert, nicht aus dem Gedächtnis schreiben, sondern den Nutzer bitten, die Skills zu
+aktualisieren (`npx skills add RankM8/listm8-skills`).
 
-| Referenz | Steuert |
+| Quelle | Steuert |
 |---|---|
-| `references/copywriting.md` | Sequenz + Betreff + AI-Variablen-Prompts: Goldene Formel, EIN CTA, kein Pitch, Wortlimits, FUP-Dramaturgie, Spam-Schutz, Prüfdurchlauf |
+| Skill `outreach-copy` (dazu `references/copy-lehre.md`, `references/marketing-offer.md`, `references/beispiel-blueprint.md` dort) | Sequenz, Betreffzeilen, Signatur, `emailAgentConfig.salutation`, Prompts der AI-Variablen |
+| `references/copywriting.md` (hier) | nur Verweis auf `outreach-copy` |
 | `references/qualifizierung.md` | `qualificationSettings`: inklusiv formulieren, Disqualifier nur harte No-Gos — die Qualifizierung ist ein OFFENER Vorfilter |
 | `references/research.md` | `researchAgentConfig`: Anker-Hierarchie (Bewertungen zuerst), Anker positiv, Schmerzpunkte getrennt |
 
 Dazu die Offer-Regel: Ohne konkretes Deliverable keine Copy — heißt das Angebot "Analyse",
 "Audit", "Erstgespräch" o.ä., erst das Offer mit dem Nutzer schärfen (Werttest: spart Zeit,
-spart Geld oder bringt Geld?). Vor dem Erstellen die fertige Sequenz gegen den Prüfdurchlauf
-aus `references/copywriting.md` halten.
+spart Geld oder bringt Geld?). Vor dem Erstellen die fertige Sequenz und die Variablen-Prompts
+gegen die Selbstprüfung und die Prüfliste aus `outreach-copy` halten; bei jedem Fund
+korrigieren und von vorne prüfen.
 
 ## Phase 2: Blueprint bauen
 
@@ -80,16 +88,15 @@ Struktur (Schema v1 — die vollständige Referenz liefert der MCP-Prompt `campa
   },
   "aiVariables": [
     {"name": "hallo", "prompt": "<Anrede-Anweisung, min 10 Zeichen>", "sortOrder": 1},
-    {"name": "firma", "prompt": "<Kurzname ohne Rechtsform, mit Beispielen>", "sortOrder": 2},
-    {"name": "intro", "prompt": "<Lob-Opener-Anweisung mit Research-Prioritäten>", "sortOrder": 3}
+    {"name": "intro", "prompt": "<Lob-Opener-Anweisung mit Research-Prioritäten>", "sortOrder": 2}
   ],
-  "sequence": { "steps": [ {"stepNumber": 1, "subject": "Idee für {{ai.firma}}", "body": "{{ai.hallo}}\n\n{{ai.intro}}\n\n...", "delayDays": 0, "delayUnit": "days"} ] }
+  "sequence": { "steps": [ {"stepNumber": 1, "subject": "kurze Frage", "body": "{{ai.hallo}}\n\n{{ai.intro}}\n\n...", "delayDays": 0, "delayUnit": "days"} ] }
 }
 ```
 
 **Pflicht-Regeln (Cold-Mailing-SOP):**
-- AI-Variablen `hallo` (Anrede) und `intro` (personalisierter Opener) IMMER anlegen (der Server verlangt sie im Blueprint-Guide); nach der SOP kommt `firma` (Kurzname) als dritte hinzu. Reihenfolge `hallo`, `firma`, `intro`; Namen-Regex `^[a-zA-Z][a-zA-Z0-9_]*$`, Prompt min. 10 Zeichen, Namen eindeutig.
-  - `firma`: Firmenname, wie ein Kollege ihn sagt, ohne Rechtsform, „Meisterbetrieb", „Inh. …" oder Leistungsaufzählung; mit zwei, drei Vorher-nachher-Beispielen im Prompt. Betreff und Text nutzen `{{ai.firma}}` statt `{{lead.company}}`.
+- AI-Variablen `hallo` (Anrede) und `intro` (personalisierter Opener) IMMER anlegen (der Server verlangt sie im Blueprint-Guide). `firma` (Kurzname) ist optional: nur anlegen, wenn die Firmennamen der Liste lang sind oder Rechtsformen tragen; sonst `{{lead.company}}` wie in `outreach-copy`. Reihenfolge `hallo`, (`firma`), `intro`; Namen-Regex `^[a-zA-Z][a-zA-Z0-9_]*$`, Prompt min. 10 Zeichen, Namen eindeutig.
+  - `firma` (optional): Firmenname, wie ein Kollege ihn sagt, ohne Rechtsform, „Meisterbetrieb", „Inh. …" oder Leistungsaufzählung; mit zwei, drei Vorher-nachher-Beispielen im Prompt. Wenn angelegt, nutzen Betreff und Text `{{ai.firma}}` statt `{{lead.company}}`.
   - `intro`: Der Prompt sagt ausdrücklich, dass nur der ERSTE Buchstabe klein ist und jeder weitere Satz groß beginnt. Ohne den Satz schrieb das Modell „… selten sieht. das finde ich stark."
 - Ansprache (Du, Sie, Team) in `emailAgentConfig.salutation` festlegen: `"du"`, `"sie"` oder `"team"`. Sie gilt für alle generierten Variablen einer Mail. Fehlt der Wert, leitet der Server sie aus Ton und Sprache ab; `salutation` setzen ist sicherer. Zusätzlich `emailLanguage` (z. B. „Deutsch (DACH)") und `emailTone` angeben.
 - Platzhalter in Betreff und Body: nur `{{ai.<variable>}}`, `{{lead.<feld>}}` (`email`, `company`, `website`, `phoneNumber`, `city`) und `{{custom.<schlüssel>}}`. Alles andere (`{{firstName}}`, `{{companyName}}`, If-Blöcke, Default-Syntax) wird nicht aufgelöst und bleibt als Text in der Mail stehen. Sequenz-Bodies nutzen `{{ai.hallo}}`, `{{ai.intro}}` und `{{ai.firma}}`; Step 1 hat `delayDays: 0`.
@@ -123,7 +130,7 @@ Keine Leads in die Kampagne (`add_leads_to_campaign`, `import_leads` mit Kampagn
    - `qualificationSettings` enthält die fünf Pflichtfelder unter den kanonischen Schlüsseln, jeweils nicht leer und auf diese Zielgruppe und dieses Angebot geschrieben. Stehen dort camelCase-Aliasse, per `edit_campaign` (Vollersatz, Ablauf aus Phase 3) auf die kanonischen Schlüssel umziehen.
    - `researchAgentConfig.additionalPrompt` ist kampagneneigen (nicht leer, nicht nur `researchGoals`/`researchPriorities`).
    - `emailAgentConfig` legt Sprache, Ansprache (`salutation`) und Ton fest.
-   - Variablen `hallo`, `firma`, `intro` sind vorhanden; Schritte nutzen nur erlaubte Platzhalter.
+   - Variablen `hallo` und `intro` sind vorhanden (`firma` optional); Schritte nutzen nur erlaubte Platzhalter.
 2. Dem Nutzer das Ergebnis als kurze Tabelle nennen (Feld, gesetzt ja/nein, erste Worte). Fehlt etwas: ergänzen oder nachfragen, NICHT mit Leads weitermachen.
 
 Gemessen am 02.10.2026: Eine nach der alten Vorlage angelegte Kampagne zeigte in der Oberfläche Wunschkunde, Hinweise und Recherche als leer bzw. Standard, und Angebot und Passt-Kriterien fehlten wirklich.

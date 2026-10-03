@@ -15,6 +15,8 @@ Vor jeder Generierung `ping` und `list_campaigns` mit dem Auftrag abgleichen (ri
 
 Ansprache und Kampagnenkontext kommen pro Lead aus `get_lead_data` (`emailGeneration.salutation`, `salutationRule`, `campaignContext`); die Ansprache gilt durchgängig für alle Variablen eines Leads. Den fertigen Text einzelner Leads prüfst du nicht über ein Vorschau-Tool, sondern über `get_lead_variables` nach dem Speichern.
 
+**Copy-Regeln (Pflicht):** Bevor `hallo` oder `intro` für einen Lead geschrieben wird, den Skill `outreach-copy` laden und dessen Abschnitte „Anrede und Ansprache“ und „Intro-Regeln“ einhalten; jeder Subagent bekommt diese Pflicht im Prompt mit. Der Variablen-Prompt der Kampagne geht vor, solange er diesen Regeln nicht widerspricht; widerspricht er ihnen (z. B. Kritik-Opener, „Hallo Herr …“ bei Du-Form), vor dem Start den Nutzer darauf hinweisen und die Prompts über `/outreach-campaign` korrigieren lassen, statt gegen die Regeln zu generieren.
+
 ## Workflow-Übersicht
 
 ```
@@ -108,7 +110,7 @@ LEAD: {lead.company} (ID: {lead.id})
 ## Schritte
 
 1. Rufe get_lead_data(campaign_id={campaign.id}, lead_id={lead.id}) auf
-2. Lies den emailGeneration.systemPrompt sorgfältig — er definiert Ton, Stil und Kontext; dazu emailGeneration.salutation/salutationRule (Ansprache) und campaignContext
+2. Lies den emailGeneration.systemPrompt sorgfältig — er definiert Ton, Stil und Kontext; dazu emailGeneration.salutation/salutationRule (Ansprache) und campaignContext. Lade den Skill outreach-copy und halte dessen Abschnitte „Anrede und Ansprache“ und „Intro-Regeln“ ein
 3. Analysiere Research, Qualification und Custom Attributes
 4. Optional: Besuche die Lead-Website (lead.website), falls dein Client Websites laden kann — get_lead_data liefert KEINE Screenshots
 5. Generiere für JEDE Variable in emailGeneration.variables[] den Text gemäß ihrem Prompt
@@ -118,6 +120,10 @@ LEAD: {lead.company} (ID: {lead.id})
    - Keine HTTPS/SSL-Behauptungen? ("ohne HTTPS", "kein SSL" etc.)
    - Kein harscher Deficit-Sprech? (ausbaufähig, nicht erreichbar, fehlerhaft, unzureichend, kaum nutzbar, schwach, schlecht)
    - Anrede gemäß emailGeneration.salutationRule und konsistent über alle Variablen? (nie gemischt)
+   - hallo: nur die Begrüßungszeile mit Komma? Du-Form „Hallo Vorname,“ bzw. Team „Hallo <Firma> Team,“, Fallback „Hallo zusammen,“; Sie-Form „Hallo Frau/Herr Nachname,“ bzw. „Guten Tag,“; nie „Hallo Herr/Frau …“ bei Du-Form, kein erfundener Name oder Titel?
+   - intro: max. 2 Sätze, erster Buchstabe klein, weitere Sätze groß, ausschließlich positiv, über den Empfänger, konkreter belegter Bezug nach Angle-Reihenfolge (Bewertungen > Website-Feature > Stellenanzeige > Branche/Region), sonst der Fallback-Satz aus dem Prompt?
+   - intro ohne Verbotenes? (Kritik, „Lücke“, „Problem“, „noch nicht“, „fehlt“, „veraltet“, Konjunktiv-Wunsch, Ratschlag, Selbstvorstellung/Pitch, Floskel, erfundene Zahl, Frage, Link, Platzhalter in Klammern, Gedankenstrich als Trenner)
+   - Schließt der feste Folgesatz der Entry-Mail flüssig an das intro an?
    - Kein "vorallem"? (korrekt: "vor allem")
    - Keine Leerzeilen am Anfang oder Ende einer Variable?
    - Jede Variable unter 10.000 Zeichen?

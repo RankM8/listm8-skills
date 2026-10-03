@@ -15,6 +15,8 @@ workflows/          Produkt-Workflows (brauchen den verbundenen Outreach-MCP)
   outreach-campaign   Kampagne bauen und ändern (create_campaign, export_campaign_blueprint,
                       edit_campaign) — geführt nach der Cold-Mailing-SOP (Copy, offene
                       Qualifizierung, Research-Anker: references/ im Skill-Ordner)
+  outreach-copy       Die Cold-Mail-Copy-Regeln: Offer-Karten, Entry-Mail-Anatomie, 5er-Sequenz,
+                      Intro/Anrede, Verbote, Selbstprüfung — verbindlich für campaign, generate, verify
   outreach-import     Leads importieren (CSV/Apify-/Outscraper-Export, Attribute-Mapping, Vorab-Dedup)
   outreach-lists      Listen verwalten: Bestand prüfen, Abgleichsindex, Liste→Kampagne, Löschregeln
   outreach-qualify    Leads qualifizieren        outreach-research   Leads recherchieren
@@ -55,6 +57,8 @@ Claude/ChatGPT auch ohne Skills bereit — der MCP-Server liefert sie als eingeb
 - Leads **beschaffen**: `datenbeschaffung` (der Master) — nie einen `weg-*`-Skill direkt starten.
   Gescrapt wird extern (Apify/Outscraper); danach Abgleich mit `check_leads_exist` bzw. dem
   Abgleichsindex (`export_leads`) und Import mit `import_leads`.
+- Copy **schreiben oder prüfen**: `/outreach-copy` (wird von `/outreach-campaign`, `/outreach-generate`
+  und `/outreach-verify` automatisch geladen).
 - Leads **verarbeiten**: `/outreach-pipeline` — oder einzeln `/outreach-campaign`,
   `/outreach-import`, `/outreach-qualify`, `/outreach-research`, `/outreach-generate`,
   `/outreach-verify`, `/outreach-lists`.
