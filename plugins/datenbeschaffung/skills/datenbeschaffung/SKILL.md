@@ -28,6 +28,9 @@ hoch (Oberfläche oder MCP-Tool `import_leads`). Kosten fallen beim Anbieter an,
 
 ## Phase 0: Voraussetzungen prüfen
 
+Erstes Mal oder Zweifel am Zugang? Zuerst `datenbeschaffung-setup` ausführen (prüft
+Outreach-Verbindung, Apify-Zugang und optional Outscraper, ohne Kosten). Sonst kurz:
+
 - **ListM8-MCP verbunden?** `ping` aufrufen. Mit MCP sind Bestandsabgleich und direkter Import
   möglich; ohne MCP am Ende CSV-Übergabe über die Oberfläche und den fehlenden Bestandsabgleich
   ausdrücklich melden. Fehlen die Tools, zuerst Verbindung und Berechtigungen klären.

@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-04 – datenbeschaffung 0.1.1, outreach 0.1.2
+
+**datenbeschaffung**
+- Neu: `datenbeschaffung-setup` (Outreach-Verbindung, Apify-Zugang mit kostenlosem Selbsttest, optional Outscraper, alte Kopien aufräumen) und `datenbeschaffung-update`.
+
+**outreach**
+- `outreach-setup` verweist nach der Installation der Datenbeschaffung auf `datenbeschaffung-setup`.
+
 ## 0.1.1 – 2026-10-04
 
 **outreach**

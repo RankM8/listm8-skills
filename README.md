@@ -37,8 +37,8 @@ danach unter `/plugins` installieren und neue Session starten.
 **Cursor & andere Agenten (nur Skills):** `npx skills add RankM8/outreach-plugins`, die
 MCP-Verbindung separat über die App-Seite „MCP & Skills“.
 
-Nach der Installation: Skill **`outreach-setup`** aufrufen. Er prüft die Verbindung, räumt alte
-Skill-Kopien auf und zeigt die ersten Schritte.
+Nach der Installation: Skill **`outreach-setup`** aufrufen (bzw. **`datenbeschaffung-setup`** für das
+Plugin datenbeschaffung). Er prüft die Verbindung, räumt alte Skill-Kopien auf und zeigt die ersten Schritte.
 
 **Kunden einer anderen Outreach-App als Akquise:** Die mitgelieferte Verbindung `akquise`
 unverbunden lassen und den MCP der eigenen App über deren Seite „MCP & Skills“ hinzufügen.
@@ -77,6 +77,8 @@ plugins/
     .claude-plugin/plugin.json  plugin.json
     skills/
       datenbeschaffung    Einstieg: Setup → ICP → Weg A–E → Weg → Qualität
+      datenbeschaffung-setup   Einrichtung: Outreach-Verbindung, Apify, Outscraper prüfen
+      datenbeschaffung-update  Aktualisieren
       weg-*               die Beschaffungswege (Google, Apollo, Maps, Instagram, Plattformen …)
       outscraper-bulk     sehr große Volumina
       impressum-enrichment  kontaktseiten-fallback  enrichment-waterfall
