@@ -300,7 +300,6 @@ Die Regeln:
 - **Erledigte Arbeit statt Absicht:** „war so frei und habe ... erstellt", nicht „würde gerne erstellen". Reziprozität wirkt erst, wenn das Geschenk schon existiert.
 - **Genau EIN On-Top-Detail** („vor allem ..."), aus den Angaben des Nutzers, und es muss wirklich lieferbar sein. Nichts erfinden.
 - **Kein zweiter CTA, kein zweites Offer.** Der Satz beschreibt dasselbe Deliverable, nur eine Schicht tiefer.
-- **„unverbindlich" bleibt tabu** (Spam-Wort). Die Unverbindlichkeit steckt im Frage-CTA („Wäre es in Ordnung, wenn ...?"), nicht in einem Wort.
 
 ## Der CTA
 
@@ -677,7 +676,7 @@ Open- und Link-Tracking sind Standard und ausdrücklich erlaubt - die KPI-Steuer
 
 Diese Wörter erhöhen die Spam-Wahrscheinlichkeit messbar. Im **Betreff sind sie komplett verboten**, im Body werden sie vermieden:
 
-„gratis", „100 %", „garantiert", „Garantie", „jetzt zugreifen", „jetzt handeln", „begrenztes Angebot", „nur heute", „exklusives Angebot", „hier klicken", „Rabatt", „Sonderpreis", „Gewinner", „Sie haben gewonnen", „dringend", „risikofrei", „ohne Risiko", „Geld verdienen", „unverbindlich"
+„gratis", „100 %", „garantiert", „Garantie", „jetzt zugreifen", „jetzt handeln", „begrenztes Angebot", „nur heute", „exklusives Angebot", „hier klicken", „Rabatt", „Sonderpreis", „Gewinner", „Sie haben gewonnen", „dringend", „risikofrei", „ohne Risiko", „Geld verdienen"
 
 ## Wenn die abgenommene Copy und das Zustellrisiko kollidieren
 

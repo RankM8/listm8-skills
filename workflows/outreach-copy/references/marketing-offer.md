@@ -193,7 +193,7 @@ Stattdessen immer ein konkretes Deliverable: „Kostenloses Google Ads Setup", �
 
 Der Unterschied: Bei einer Analyse bekommt der Empfänger ein Gespräch. Bei einem Deliverable bekommt er ein Ding. Nur das Zweite ist ein Geschenk.
 
-„unverbindlich" ist zusätzlich ein Spam-Wort: Die Unverbindlichkeit steckt im Frage-CTA, nicht in einem Wort. „kostenlos" steht im Body höchstens einmal, direkt am Deliverable, nie im Betreff.
+„kostenlos" steht im Body höchstens einmal, direkt am Deliverable, nie im Betreff.
 
 ## Wenn das Offer nicht trägt
 

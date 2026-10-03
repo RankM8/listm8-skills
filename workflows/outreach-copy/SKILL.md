@@ -113,8 +113,6 @@ Regeln:
 - In Mail 1 steht GENAU EIN Marketing-Offer mit GENAU EINEM CTA, der die Antwort auslöst.
 - Bei Karte A und C als bereits erledigte Arbeit formulieren („war so frei und habe … erstellt“),
   nicht als Absicht. Reziprozität wirkt erst, wenn das Geschenk schon existiert.
-- „unverbindlich“ bleibt verboten (Spam-Wort): Die Unverbindlichkeit steckt im Frage-CTA, nicht
-  in einem Wort.
 - Kein „Lass uns mal sprechen“ ohne vorbereiteten Mehrwert.
 - Die Überleitung verbindet das Lob mit dem Offer („Genau deshalb …“, „Deswegen war ich so
   frei …“).
@@ -307,7 +305,9 @@ Im Body jeder Mail:
 **Spam-Wörter** — im Betreff komplett verboten, im Body vermeiden: „gratis“, „100 %“,
 „garantiert“, „Garantie“, „jetzt zugreifen“, „jetzt handeln“, „begrenztes Angebot“, „nur heute“,
 „exklusives Angebot“, „hier klicken“, „Rabatt“, „Sonderpreis“, „Gewinner“, „Sie haben gewonnen“,
-„dringend“, „risikofrei“, „ohne Risiko“, „Geld verdienen“, „unverbindlich“.
+„dringend“, „risikofrei“, „ohne Risiko“, „Geld verdienen“.
+„unverbindlich“ ist kein Spam-Wort (abweichend von akquise-ai) – trotzdem trägt die Frage-Form
+des CTA die Unverbindlichkeit, das Wort ist also selten nötig.
 
 **Verbotene Offer-Begriffe:** „kostenlose Analyse“, „kostenlose Beratung“, „kostenloses
 Erstgespräch“, „unverbindliches Audit“, „Potenzial-Check“, „Strategiegespräch“ (und allgemein
