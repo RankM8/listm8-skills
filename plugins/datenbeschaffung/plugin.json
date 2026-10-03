@@ -1,0 +1,20 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "datenbeschaffung",
+  "version": "0.1.0",
+  "description": "Leads beschaffen mit Apify oder Outscraper im eigenen Konto, Liste prüfen und als CSV importieren.",
+  "author": { "name": "RankM8" },
+  "repository": "https://github.com/RankM8/outreach-plugins",
+  "keywords": ["leads", "apify", "outscraper", "datenbeschaffung"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Datenbeschaffung",
+        "shortDescription": "Leads mit Apify oder Outscraper beschaffen und importieren",
+        "developerName": "RankM8",
+        "category": "Productivity",
+        "capabilities": ["Read"]
+      }
+    }
+  }
+}

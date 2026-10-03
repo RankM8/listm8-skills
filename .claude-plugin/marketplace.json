@@ -1,0 +1,19 @@
+{
+  "name": "outreach-plugins",
+  "owner": { "name": "RankM8" },
+  "metadata": { "description": "Plugins für Outreach: Kampagnen bauen, Leads verarbeiten, Leads beschaffen." },
+  "plugins": [
+    {
+      "name": "outreach",
+      "source": "./plugins/outreach",
+      "description": "Kampagnen anlegen, Cold-Mail-Copy nach SOP, Leads qualifizieren, recherchieren und Mails generieren, Launch vorbereiten – mit MCP-Verbindung und Live-Ansicht in Claude Code.",
+      "category": "productivity"
+    },
+    {
+      "name": "datenbeschaffung",
+      "source": "./plugins/datenbeschaffung",
+      "description": "Leads beschaffen mit Apify oder Outscraper im eigenen Konto, Liste prüfen und als CSV importieren.",
+      "category": "productivity"
+    }
+  ]
+}

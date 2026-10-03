@@ -1,0 +1,20 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "outreach",
+  "version": "0.1.0",
+  "description": "Kampagnen anlegen, Cold-Mail-Copy nach SOP, Leads qualifizieren, recherchieren und Mails generieren, Launch vorbereiten.",
+  "author": { "name": "RankM8" },
+  "repository": "https://github.com/RankM8/outreach-plugins",
+  "keywords": ["outreach", "cold-mail", "leads", "kampagne"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Outreach",
+        "shortDescription": "Kampagnen bauen, Leads qualifizieren und Mails generieren",
+        "developerName": "RankM8",
+        "category": "Productivity",
+        "capabilities": ["Read", "Write"]
+      }
+    }
+  }
+}

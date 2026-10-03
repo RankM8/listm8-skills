@@ -38,7 +38,7 @@ entsteht.** Er ist die einzige Copy-Doktrin: Offer-Karte A-E, Anatomie der Entry
 Feinheiten-Satz, 5er-Sequenz, Wortlimits, Betreffzeilen, Anrede je `salutation`, Pflichtinhalt
 der Prompts von `hallo` und `intro`, Verbote, Selbstprüfung und Prüfliste. Ist er nicht
 installiert, nicht aus dem Gedächtnis schreiben, sondern den Nutzer bitten, die Skills zu
-aktualisieren (`npx skills add RankM8/listm8-skills`).
+aktualisieren (Skill `outreach-update`).
 
 | Quelle | Steuert |
 |---|---|

@@ -1,78 +1,97 @@
-# ListM8 Skills — Outreach-Workflows + Datenbeschaffung
+# Outreach Plugins
 
-Das eine Skills-Repo für Kunden der Outreach-Plattform (ListM8 / Akquise-Whitelabel).
+Ein Marketplace mit zwei Plugins für Kunden der Outreach-Plattform – für Claude (App, claude.ai,
+Cowork, Claude Code) und für ChatGPT Desktop und Codex.
 
-Die Skills passen zum MCP-Server mit **32 Tools** und **7 Prompts** (`campaign_blueprint_guide`,
-`qualify_leads`, `research_leads`, `generate_variables`, `verify_variables`, `run_leads`,
-`run_full_pipeline`). Der MCP verarbeitet Leads und verwaltet Kampagnen und Listen; er scrapt
-selbst nicht. Leads kommen über CSV-/Oberflächen-Import oder `import_leads` — beschafft werden sie
-extern (Apify, Outscraper), siehe `datenbeschaffung/`.
+| Plugin | Inhalt | Für wen |
+|---|---|---|
+| **outreach** | Kampagnen anlegen und ändern, Cold-Mail-Copy nach SOP, Leads importieren, qualifizieren, recherchieren, Mails generieren und prüfen, Launch vorbereiten. Bringt die MCP-Verbindung `akquise` (`outreach.akquise.de`) und in Claude Code die Live-Ansicht (Lead-Vorschau, Fortschritt der Läufe) mit. | alle |
+| **datenbeschaffung** | Leads beschaffen mit Apify oder Outscraper im eigenen Konto, Liste prüfen, als CSV bzw. per `import_leads` übernehmen. | wer Leads selbst beschafft |
 
-Öffentlich — Installation und Updates laufen für jeden Kunden über `npx skills add`.
-
-```
-workflows/          Produkt-Workflows (brauchen den verbundenen Outreach-MCP)
-  outreach-campaign   Kampagne bauen und ändern (create_campaign, export_campaign_blueprint,
-                      edit_campaign) — geführt nach der Cold-Mailing-SOP (Copy, offene
-                      Qualifizierung, Research-Anker: references/ im Skill-Ordner)
-  outreach-copy       Die Cold-Mail-Copy-Regeln: Offer-Karten, Entry-Mail-Anatomie, 5er-Sequenz,
-                      Intro/Anrede, Verbote, Selbstprüfung — verbindlich für campaign, generate, verify
-  outreach-import     Leads importieren (CSV/Apify-/Outscraper-Export, Attribute-Mapping, Vorab-Dedup)
-  outreach-lists      Listen verwalten: Bestand prüfen, Abgleichsindex, Liste→Kampagne, Löschregeln
-  outreach-qualify    Leads qualifizieren        outreach-research   Leads recherchieren
-  outreach-generate   E-Mail-Variablen erzeugen  outreach-verify     Review (approve/reject)
-  outreach-pipeline   Der Master fürs Verarbeiten — voller Durchlauf
-  outreach-launch     Nach dem Export: Domains, Postfächer, Warm-up, Instantly-Setup, Hochfahren,
-                      KPIs, Optimierung (Versand läuft beim Kunden, nicht in ListM8)
-
-datenbeschaffung/   Leads beschaffen — externer Weg über Apify/Outscraper (läuft beim Kunden,
-                    nicht im MCP); der Bestandsabgleich und der Import laufen über den MCP
-  master              DER Einstieg: Setup → ICP → Decision Tree (Weg A-E) → Weg → Qualität
-  weg-a-b2b-google    weg-a-apollo        weg-b-ecom-google   weg-b-storeleads
-  weg-c-local-maps    weg-d-coaches-google / -linkedin / -instagram-google / -instagram-hashtag
-  weg-e-plattform     impressum-enrichment  kontaktseiten-fallback  enrichment-waterfall
-  outscraper-bulk     Stufe 2 für sehr große Volumina (12-24h-Jobs)
-  listen-qualitaet    Pflicht-Endstation: Dedup → Verifizierung → 20er-Sample → Übergabe
-  datenbeschaffung-referenzen   Geteilte Referenzen + Skripte (wird mitinstalliert;
-                                die Skills lesen via ../datenbeschaffung-referenzen/)
-```
+Die Skills passen zum Outreach-MCP mit **32 Tools** und **7 Prompts**. Der MCP verarbeitet
+Leads und verwaltet Kampagnen und Listen; er scrapt nicht. Versand läuft beim Kunden
+(Instantly o. Ä.), nicht in der Plattform.
 
 ## Installation
 
-**Ein Befehl, alle Skills** (Claude Code, Cursor, Codex):
+**Claude Code**
 
 ```
-npx skills add RankM8/listm8-skills
+/plugin marketplace add RankM8/outreach-plugins
+/plugin install outreach@outreach-plugins
+/plugin install datenbeschaffung@outreach-plugins     (optional)
 ```
 
-**Ohne Kommandozeile:** Das Datenbeschaffungs-Paket gibt es zusätzlich als ZIP-Download in
-der App (Seite „MCP & Skills“, `/mcp` → Skills → „Paket herunterladen (ZIP)“). Die Workflow-Funktionen stehen in
-Claude/ChatGPT auch ohne Skills bereit — der MCP-Server liefert sie als eingebaute Prompts.
+**Claude App / claude.ai / Cowork:** Customize → Plugins → Add marketplace →
+`RankM8/outreach-plugins` → `outreach` (und optional `datenbeschaffung`) installieren →
+im Plugin unter „Connectors“ die Verbindung `akquise` verbinden.
 
-**Update:** einfach `npx skills add RankM8/listm8-skills` erneut ausführen.
+**ChatGPT Desktop / Codex**
 
-**Voraussetzung für `workflows/`:** verbundener Outreach-MCP (Seite „MCP & Skills“ der App,
-`/mcp`, Modus MCP). Die Skills nutzen dessen Auth — kein separates Login.
+```
+codex plugin marketplace add RankM8/outreach-plugins
+```
 
-## Einstiegspunkte für Nutzer
+danach unter `/plugins` installieren und neue Session starten.
 
-- Leads **beschaffen**: `datenbeschaffung` (der Master) — nie einen `weg-*`-Skill direkt starten.
-  Gescrapt wird extern (Apify/Outscraper); danach Abgleich mit `check_leads_exist` bzw. dem
-  Abgleichsindex (`export_leads`) und Import mit `import_leads`.
-- Copy **schreiben oder prüfen**: `/outreach-copy` (wird von `/outreach-campaign`, `/outreach-generate`
-  und `/outreach-verify` automatisch geladen).
-- Leads **verarbeiten**: `/outreach-pipeline` — oder einzeln `/outreach-campaign`,
-  `/outreach-import`, `/outreach-qualify`, `/outreach-research`, `/outreach-generate`,
-  `/outreach-verify`, `/outreach-lists`.
-- Kampagne **launchen und optimieren**: `/outreach-launch` (Setup und Versand in Instantly,
-  Auswertung, was ändern).
+**Cursor & andere Agenten (nur Skills):** `npx skills add RankM8/outreach-plugins`, die
+MCP-Verbindung separat über die App-Seite „MCP & Skills“.
+
+Nach der Installation: Skill **`outreach-setup`** aufrufen. Er prüft die Verbindung, räumt alte
+Skill-Kopien auf und zeigt die ersten Schritte.
+
+**Kunden einer anderen Outreach-App als Akquise:** Die mitgelieferte Verbindung `akquise`
+unverbunden lassen und den MCP der eigenen App über deren Seite „MCP & Skills“ hinzufügen.
+Skills und Live-Ansicht erkennen ihn an seinen Tools.
+
+**Updates:** Skill `outreach-update`. In Claude Code am besten Auto-Update einschalten
+(`/plugin` → Marketplaces → `outreach-plugins`).
+
+## Aufbau
+
+```
+.claude-plugin/marketplace.json     Marketplace für Claude (liest Codex mit)
+.agents/plugins/marketplace.json    Marketplace für ChatGPT/Codex
+plugins/
+  outreach/
+    .claude-plugin/plugin.json      Manifest Claude
+    plugin.json                     Manifest portabel (OpenAI)
+    .mcp.json / mcp.json            MCP-Verbindung akquise (Claude / OpenAI)
+    hooks/                          Live-Ansicht für Claude Code (register.tsx, model.ts)
+    types/  tests/                  Typen und Tests der Live-Ansicht
+    skills/
+      outreach            Einstieg, leitet weiter
+      outreach-setup      Einrichtung und Prüfung
+      outreach-update     Aktualisieren
+      outreach-campaign   Kampagne bauen und ändern nach der Cold-Mailing-SOP
+      outreach-copy       Cold-Mail-Copy-Regeln (verbindlich für campaign, generate, verify)
+      outreach-import     Leads importieren
+      outreach-lists      Listen verwalten
+      outreach-qualify    Leads qualifizieren
+      outreach-research   Leads recherchieren
+      outreach-generate   Mail-Variablen erzeugen
+      outreach-verify     Review (approve/reject)
+      outreach-pipeline   voller serverseitiger Durchlauf
+      outreach-launch     Domains, Postfächer, Warm-up, Instantly, Auswertung, Optimierung
+  datenbeschaffung/
+    .claude-plugin/plugin.json  plugin.json
+    skills/
+      datenbeschaffung    Einstieg: Setup → ICP → Weg A–E → Weg → Qualität
+      weg-*               die Beschaffungswege (Google, Apollo, Maps, Instagram, Plattformen …)
+      outscraper-bulk     sehr große Volumina
+      impressum-enrichment  kontaktseiten-fallback  enrichment-waterfall
+      listen-qualitaet    Pflicht-Endstation: Dedup → Verifizierung → Stichprobe → Übergabe
+      datenbeschaffung-referenzen   geteilte Referenzen und Skripte
+                                    (die Skills lesen über ../datenbeschaffung-referenzen/)
+```
 
 ## Pflege
 
+- Jede Änderung, die Kunden erreichen soll: `version` in **beiden** Manifesten des betroffenen
+  Plugins erhöhen (`.claude-plugin/plugin.json` und `plugin.json`) und `CHANGELOG.md` ergänzen.
+  Ohne neue Version bekommen installierte Plugins nichts Neues.
+- MCP-Tool-Änderungen im Produkt → betroffene Skills im selben Zug nachziehen.
+- Live-Ansicht: `claude plugin test plugins/outreach`; Manifeste: `claude plugin validate .`
+- Kein `bin/`-Ordner in einem Plugin (claude.ai lehnt das ganze Plugin sonst ab), keine Symlinks.
 - Actor-Empfehlungen/Preise (`datenbeschaffung-referenzen/references/apify-actors.md`,
-  `kosten.md`) pflegt der monatliche Prüfstand aus dem ListM8-Repo — jede Zahl trägt
-  ein „zuletzt geprüft"-Datum.
-- MCP-Tool-Änderungen im Produkt → betroffene `workflows/`-Skills im selben Zug nachziehen
-  (Tool-/Prompt-Zahlen oben mitpflegen).
-- Neue Portale/Noise → `references/noise-domains.md`; neue belegte Trefferquoten →
-  `references/erfahrungswerte.md`.
+  `kosten.md`) tragen ein „zuletzt geprüft“-Datum.

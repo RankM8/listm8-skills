@@ -1,0 +1,9 @@
+{
+  "name": "datenbeschaffung",
+  "version": "0.1.0",
+  "description": "Leads beschaffen mit Apify oder Outscraper im eigenen Konto, Liste prüfen und als CSV importieren.",
+  "author": { "name": "RankM8" },
+  "repository": "https://github.com/RankM8/outreach-plugins",
+  "license": "UNLICENSED",
+  "keywords": ["leads", "apify", "outscraper", "datenbeschaffung"]
+}

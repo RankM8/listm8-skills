@@ -1,7 +1,7 @@
 # Copywriting — siehe Skill `outreach-copy`
 
 Die Copy-Regeln für Kampagnen stehen ausschließlich im Skill `outreach-copy`
-(`workflows/outreach-copy/SKILL.md`). Er ist vor jeder Zeile Sequenz oder Variablen-Prompt
+(Skill `outreach-copy`). Er ist vor jeder Zeile Sequenz oder Variablen-Prompt
 VERBINDLICH zu laden. Hier steht bewusst keine zweite Fassung.
 
 Dort zu finden:
