@@ -5,6 +5,8 @@ description: Use when user says "outreach:generate", "mcp:generate", "generiere 
 
 # MCP Generate — AI-Variablen-Generierung
 
+> **Live-Ansicht (Claude Code mit Plugin `outreach`):** Ergebnisse von `list_leads`, `import_leads`/`get_job_status` und Lead-Runs erscheinen dort als Karte bzw. im Band über dem Prompt. Dann die Liste **nicht noch einmal als Tabelle** wiederholen – nur kurz zusammenfassen, was der Nutzer wissen oder entscheiden muss. In anderen Umgebungen (Claude-Chat, ChatGPT, Codex) wie gewohnt als kurze Liste ausgeben.
+
 Dieser Skill orchestriert die vollautomatische AI-Variablen-Generierung für Leads via MCP Business Tools. Claude generiert AI-Variablen basierend auf Research, Qualification und Custom Attributes, und speichert sie via `save_lead_variables`. Email-Body und Subject werden NICHT durch diesen Skill erzeugt — sie sind in der Email-Sequenz hardcoded und werden beim CSV-Export live mit den Variablen gerendert. Dieser Skill ist der **Manuell-Modus**; Standard ist der serverseitige Lauf via `/outreach-pipeline` (Tool `start_lead_run`, Stufe `email`). Vor dem Start `list_lead_runs(campaign_id, active_only=true)` prüfen: bei aktivem Lauf mit E-Mail-Stufe blockt `save_lead_variables` mit `lead_run_active`.
 
 > **Hinweis zur Parallelisierung:** Wenn dein Client parallele Subagents unterstützt (z.B. Claude Code), spawne pro Lead einen Subagent wie beschrieben. Andernfalls arbeite die Leads **sequentiell** mit exakt denselben Schritten ab — das Ergebnis ist identisch, nur langsamer.

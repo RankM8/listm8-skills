@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1 – 2026-10-04
+
+**outreach**
+- Skills wiederholen Lead-Listen nicht mehr als Tabelle, wenn die Live-Ansicht in Claude Code sie schon als Karte zeigt.
+
 ## 0.1.0 – 2026-10-03
 
 Erste Fassung als Marketplace `outreach-plugins` (vorher Skills-Repo `listm8-skills`).

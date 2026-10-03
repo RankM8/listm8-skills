@@ -5,6 +5,8 @@ description: Use when user says "outreach:lists", "Listen anzeigen", "Liste anle
 
 # Outreach Lists — Listen verwalten über den MCP
 
+> **Live-Ansicht (Claude Code mit Plugin `outreach`):** Ergebnisse von `list_leads`, `import_leads`/`get_job_status` und Lead-Runs erscheinen dort als Karte bzw. im Band über dem Prompt. Dann die Liste **nicht noch einmal als Tabelle** wiederholen – nur kurz zusammenfassen, was der Nutzer wissen oder entscheiden muss. In anderen Umgebungen (Claude-Chat, ChatGPT, Codex) wie gewohnt als kurze Liste ausgeben.
+
 Verwaltet Lead-Listen: die benannten Gruppierungen zwischen Datenbeschaffung (extern, z. B. Apify/Outscraper) und Kampagne.
 Leads bleiben dabei immer normale Leads im globalen Bestand — eine Liste ist eine Klammer mit
 Herkunft, kein zweiter Datentopf.

@@ -1,10 +1,17 @@
 {
   "name": "outreach",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Kampagnen anlegen, Cold-Mail-Copy nach SOP, Leads qualifizieren, recherchieren und Mails generieren, Launch vorbereiten – mit MCP-Verbindung und Live-Ansicht in Claude Code.",
-  "author": { "name": "RankM8" },
+  "author": {
+    "name": "RankM8"
+  },
   "repository": "https://github.com/RankM8/outreach-plugins",
   "license": "UNLICENSED",
-  "keywords": ["outreach", "cold-mail", "leads", "kampagne"],
+  "keywords": [
+    "outreach",
+    "cold-mail",
+    "leads",
+    "kampagne"
+  ],
   "types": "./types/index.d.ts"
 }

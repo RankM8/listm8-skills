@@ -5,6 +5,8 @@ description: 'Use when user says "Kampagne launchen", "Kampagne live schalten", 
 
 # Outreach Launch — vom Export zur laufenden Kampagne
 
+> **Live-Ansicht (Claude Code mit Plugin `outreach`):** Ergebnisse von `list_leads`, `import_leads`/`get_job_status` und Lead-Runs erscheinen dort als Karte bzw. im Band über dem Prompt. Dann die Liste **nicht noch einmal als Tabelle** wiederholen – nur kurz zusammenfassen, was der Nutzer wissen oder entscheiden muss. In anderen Umgebungen (Claude-Chat, ChatGPT, Codex) wie gewohnt als kurze Liste ausgeben.
+
 ListM8 versendet keine Mails. Es qualifiziert, recherchiert, erzeugt die AI-Variablen und übergibt
 die freigegebenen Leads per CSV-Export oder Push an Instantly. Domains, Postfächer, Warm-up,
 Versand, Antworten und Telefonate laufen beim Kunden in Instantly (oder einem vergleichbaren

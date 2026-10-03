@@ -5,6 +5,8 @@ description: Use when user says "outreach:pipeline", "mcp:pipeline", "kompletter
 
 # MCP Pipeline — serverseitiger Lead-Lauf (start_lead_run)
 
+> **Live-Ansicht (Claude Code mit Plugin `outreach`):** Ergebnisse von `list_leads`, `import_leads`/`get_job_status` und Lead-Runs erscheinen dort als Karte bzw. im Band über dem Prompt. Dann die Liste **nicht noch einmal als Tabelle** wiederholen – nur kurz zusammenfassen, was der Nutzer wissen oder entscheiden muss. In anderen Umgebungen (Claude-Chat, ChatGPT, Codex) wie gewohnt als kurze Liste ausgeben.
+
 Dieser Skill startet und überwacht die komplette Lead-Verarbeitung einer Kampagne als **einen serverseitigen Lauf**: das MCP-Tool `start_lead_run` verkettet Qualifizierung, Research und E-Mail-Variablen pro Lead mit den kampagneneigenen AI-Agents — abgerechnet über den OpenRouter-Account des Users (der Lauf kostet echtes Geld). Dein Client orchestriert nicht mehr selbst; er startet, pollt und berichtet.
 
 ```

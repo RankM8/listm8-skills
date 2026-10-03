@@ -5,6 +5,8 @@ description: 'Use when user says "outreach:campaign", "mcp:campaign", "erstelle 
 
 # MCP Campaign — Kampagnen erstellen & bearbeiten via Blueprint
 
+> **Live-Ansicht (Claude Code mit Plugin `outreach`):** Ergebnisse von `list_leads`, `import_leads`/`get_job_status` und Lead-Runs erscheinen dort als Karte bzw. im Band über dem Prompt. Dann die Liste **nicht noch einmal als Tabelle** wiederholen – nur kurz zusammenfassen, was der Nutzer wissen oder entscheiden muss. In anderen Umgebungen (Claude-Chat, ChatGPT, Codex) wie gewohnt als kurze Liste ausgeben.
+
 Dieser Skill erstellt vollständige Kampagnen über `create_campaign` und ändert vorhandene über den Dreischritt `export_campaign_blueprint` → Blueprint anpassen → `edit_campaign` (Scope `campaigns:write`, Lesen: `campaigns:read`). Grundlage ist das CampaignBlueprint-Schema v1; die vollständige Referenz liefert der MCP-Prompt `campaign_blueprint_guide`.
 
 ## Aufruf
