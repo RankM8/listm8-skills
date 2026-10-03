@@ -47,7 +47,9 @@ bestätigen lassen, bevor gescrapt wird:
 
 > „[Rolle] in [Branche] mit [Größe] in [Region], erkennbar an [Trigger]. Nicht: [Anti-ICP].“
 
-Bei unklarer Zielgruppe die 10-Wunschkunden-Frage aus der Referenz verwenden.
+Bei unklarer Zielgruppe die 10-Wunschkunden-Frage aus der Referenz verwenden. Was die Liste über
+den ICP hinaus versandfähig macht (Quellen außerhalb der Weg-Skills, Datenqualität, Sperrliste,
+Volumenplanung), steht in `../datenbeschaffung-referenzen/references/listen-und-icp.md`.
 
 ## Phase 2: Weg auswählen
 

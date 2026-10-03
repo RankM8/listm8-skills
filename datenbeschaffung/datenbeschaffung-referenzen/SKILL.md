@@ -25,6 +25,7 @@ Preis beim Anbieter prüfen und freigeben lassen.
 | `references/noise-domains.md` | DIE Ausschlussliste (SERP-Filter, domainBlacklist, -site:) |
 | `references/csv-spalten.md` | DAS CSV-Format (deckungsgleich mit dem App-Import) |
 | `references/icp.md` | ICP-Satz, Anti-ICP, Filter-Dimensionen, Trichter-Prinzip |
+| `references/listen-und-icp.md` | Von der Zielgruppe zur versandfähigen Liste: Quellen außerhalb der Weg-Skills, Qualitäts-Check, Datenqualität vor dem Import, Sperrliste, Volumenplanung |
 | `references/erfahrungswerte.md` | Belegte Query-Trefferquoten (wächst mit jedem Lauf) |
 | `references/outreach-uebergabe.md` | Übergabe in ListM8: Bestandsabgleich, Liste, Import, CSV-Weg |
 | `scripts/build_queries.py` | Suchbegriffe × Städte + -site:-Ausschlüsse |

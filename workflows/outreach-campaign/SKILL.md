@@ -155,4 +155,5 @@ Report: `campaign_id`, Name, importierte Steps/Variablen/Configs, `warnings` und
 ## Verwandt
 
 - `/outreach-import` (Leads laden), `/outreach-pipeline` (Qualify→Research→Generate)
+- `/outreach-launch` (Versand nach dem Export: Domains, Warm-up, Instantly, Auswertung und Optimierung)
 - die Tool-Beschreibungen des MCP-Servers

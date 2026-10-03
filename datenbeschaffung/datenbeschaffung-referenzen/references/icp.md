@@ -1,6 +1,6 @@
 # ICP — vom Wunschkunden zum Filter
 
-> Destilliert aus der Heartbeat cold-mailing-SOP (Listen und ICP). Die Liste entscheidet über die
+> Aus der Cold-Mailing-SOP (Listen und ICP). Die Liste entscheidet über die
 > Obergrenze der Kampagne, die Copy nur über die Ausschöpfung. Falsche Liste = tote Kampagne.
 
 ## Die Kontrollfrage vor jedem Filter
@@ -31,6 +31,18 @@ Der Master-Skill erhebt beides, bevor Geld ausgegeben wird:
 | Trigger | Offene Stellen, neue Führung, Standort-Eröffnung, Wachstum | **Filtern, nie in der Mail erwähnen** (Ausnahme: Recruiting-Offer) |
 | Ausschlüsse | Wettbewerber, Bestandskunden, bereits Kontaktierte, Abmeldungen | Bestand-Abgleich vor dem Scrape mit `export_leads(format="index")` (`outreach-uebergabe.md`) |
 
+### Trigger filtern, nicht erwähnen
+
+Offene Stellen oder ein neuer Geschäftsführer sind starke Kaufsignale - sie zeigen Budget und
+aktiven Handlungsdruck. Aber sie gehören in den Filter, nicht in den Mailtext. Wer schreibt „ich
+habe gesehen, dass Sie gerade drei Stellen ausgeschrieben haben und vermutlich wachsen", klingt
+beobachtet statt interessiert. Ausnahme: Bei ausdrücklichen Recruiting-Offers ist die
+Stellenanzeige der natürliche Bezug.
+
+Was die Liste über den ICP hinaus versandfähig macht (Quellen außerhalb der Weg-Skills,
+Qualitäts-Check, Datenqualität vor dem Import, zentrale Sperrliste, Volumenplanung):
+`listen-und-icp.md`.
+
 ## Trichter-Prinzip (wichtig für die Erwartung)
 
 Die Liste muss NICHT perfekt sein. Jede Stufe filtert für die nächste: Der Scrape darf Beifang
@@ -41,6 +53,6 @@ werden auf keiner Stufe angefasst.
 
 ## Wenn gar keine Zielgruppe klar ist
 
-Die Kurs-Regel: 10 idealtypische Wunschkunden aufschreiben und fragen: **„Wo treffe ich diese 10 am
+Die Grundregel: 10 idealtypische Wunschkunden aufschreiben und fragen: **„Wo treffe ich diese 10 am
 wahrscheinlichsten?"** Die Antwort ist die Quelle (Maps? LinkedIn? Shops? Plattform?) — und damit
 der Weg im Decision Tree.

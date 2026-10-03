@@ -380,3 +380,5 @@ Hinweis, der begründet werden muss.
   Reziprozität, was kein Offer ist.
 - `references/beispiel-blueprint.md` — vollständiger Blueprint (Karte C, Du-Form, 5 Steps,
   `hallo`- und `intro`-Prompt) zum Anlegen mit `create_campaign`.
+- Skill `outreach-launch` — Versand nach dem Export (Domains, Warm-up, Instantly, KPIs) und wann
+  bei schwachen Zahlen Copy, Offer oder Liste geändert werden.

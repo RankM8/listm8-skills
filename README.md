@@ -22,6 +22,8 @@ workflows/          Produkt-Workflows (brauchen den verbundenen Outreach-MCP)
   outreach-qualify    Leads qualifizieren        outreach-research   Leads recherchieren
   outreach-generate   E-Mail-Variablen erzeugen  outreach-verify     Review (approve/reject)
   outreach-pipeline   Der Master fürs Verarbeiten — voller Durchlauf
+  outreach-launch     Nach dem Export: Domains, Postfächer, Warm-up, Instantly-Setup, Hochfahren,
+                      KPIs, Optimierung (Versand läuft beim Kunden, nicht in ListM8)
 
 datenbeschaffung/   Leads beschaffen — externer Weg über Apify/Outscraper (läuft beim Kunden,
                     nicht im MCP); der Bestandsabgleich und der Import laufen über den MCP
@@ -62,6 +64,8 @@ Claude/ChatGPT auch ohne Skills bereit — der MCP-Server liefert sie als eingeb
 - Leads **verarbeiten**: `/outreach-pipeline` — oder einzeln `/outreach-campaign`,
   `/outreach-import`, `/outreach-qualify`, `/outreach-research`, `/outreach-generate`,
   `/outreach-verify`, `/outreach-lists`.
+- Kampagne **launchen und optimieren**: `/outreach-launch` (Setup und Versand in Instantly,
+  Auswertung, was ändern).
 
 ## Pflege
 
