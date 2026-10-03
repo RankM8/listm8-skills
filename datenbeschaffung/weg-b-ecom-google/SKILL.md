@@ -10,7 +10,7 @@ Vergleichsportale. Der Filter ist hier die eigentliche Arbeit: die Nischen-Queri
 zuverlässig, aber die ersten Seiten gehören strukturell Amazon, Otto und Idealo.
 
 Voraussetzungen vom Master: bestätigter ICP-Satz, Zugriffsweg steht (`../datenbeschaffung-referenzen/references/zugriff.md`),
-Vorab-Abgleich gelaufen (falls MCP verbunden).
+Vorab-Abgleich gelaufen (`check_leads_exist` bzw. `export_leads(format="index")` + `dedup.py`, falls MCP verbunden). Der Lauf beim Anbieter (Apify o. ä.) geschieht im eigenen Konto des Kunden außerhalb von ListM8; Kosten fallen dort an, kostenpflichtige Läufe nur nach ausdrücklicher Freigabe genau dieses Umfangs.
 
 Will der Nutzer nach Shop-Technologie, Umsatzklasse oder Traffic filtern statt nach Nische:
 `weg-b-storeleads` erwähnen — das ist Beratung ohne Scrape. Sonst hier weiter.

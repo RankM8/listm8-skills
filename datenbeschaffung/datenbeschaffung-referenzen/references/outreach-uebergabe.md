@@ -1,8 +1,10 @@
 # Outreach-Übergabe — vom Scrape in die App
 
 > Der EINE Übergabe-Ablauf. `listen-qualitaet` führt ihn aus; kein Weg-Skill implementiert ihn selbst.
-> Voraussetzung: Outreach-MCP verbunden (Tools `check_leads_exist`, `create_list`, `import_leads`,
-> `get_job_status`, `add_leads_to_campaign`, `export_leads`). Ohne MCP: CSV-Fallback am Ende.
+> Voraussetzung: ListM8-MCP verbunden (Tools `check_leads_exist`, `create_list`, `import_leads`,
+> `get_job_status`, `add_leads_to_campaign`, `export_leads`; Signaturen in `listm8-mcp.md`).
+> Ohne MCP: CSV-Weg über die Oberfläche am Ende. Gescrapt wird beim Kunden mit eigenem Apify- oder
+> Outscraper-Konto; ListM8 importiert nur das fertige Ergebnis.
 
 ## Der Ablauf (E2E-verifiziert am 19.08.2026)
 
@@ -29,7 +31,7 @@ Geld. Der Import würde ihn später ohnehin deduplizieren — aber dann ist das 
 Der Index kann Minuten alt sein — die Übergabe prüft gegen die Wahrheit:
 
 ```
-check_leads_exist(emails=[...], domains=[...])     # bis 1.000 je Call, case-insensitiv
+check_leads_exist(emails=[...], domains=[...])     # bis 1.000 Einträge je Call (E-Mails und Domains zusammen)
 ```
 
 Ergebnis dem Nutzer zeigen: „X neu, Y schon im Bestand (werden nur verlinkt), Z do_not_contact
@@ -68,14 +70,15 @@ import_leads(leads=[...], list_id=<id>, attribute_mappings={
   "hinweis":      {"action":"create_new","name":"Hinweis","fieldType":"text"}
   // ... plus jede weitere Zusatzspalte (bewertung, linkedin_url, ...)
 })
-→ get_job_status(job_id) pollen bis completed
+→ get_job_status(job_id) pollen bis completed (höchstens 10.000 Zeilen je Call, größere Dateien in Blöcke teilen)
 ```
 
 Existiert ein Attribut aus einem früheren Lauf bereits, statt `create_new` auf das
 vorhandene Attribut mappen: `{"action":"map_existing","fieldKey":"<bestehender_key>"}`.
 
-Der Job-Report liefert `imported`, `duplicates` (nur verlinkt, nie doppelt), `linked_to_list`
-und `do_not_contact_hits` — die Zahlen 1:1 an den Nutzer berichten.
+Der Job-Report (`result` aus `get_job_status`) liefert `imported`, `consolidated`, `duplicates`
+(nur verlinkt, nie doppelt), `internalDuplicates`, `linked_to_list` und `do_not_contact_hits` —
+die Zahlen 1:1 an den Nutzer berichten. Importieren startet keine KI-Verarbeitung.
 
 ### 4. Optional: direkt in eine Kampagne
 
@@ -102,14 +105,9 @@ delete_list(list_id=<id>, delete_leads=true, confirm_delete=true)
 Gelöscht werden nur nie kontaktierte Leads ohne Kampagne und ohne andere Liste — alles andere wird
 entkoppelt und gemeldet. Das gibt auch das `max_leads`-Limit wieder frei.
 
-Hängt an der Liste noch Arbeit, lehnt `delete_list` mit `state_conflict` ab. Mit
-`detail.code` `active_work` nennt `detail.work` die blockierenden Aufträge und Quellenläufe
-(laufend, pausiert, wiederaufnehmbar oder mit offenen Kosten). Erst abwarten, abbrechen oder die
-Kosten abschließen lassen, dann erneut löschen; nie die Liste eines laufenden Laufs erzwingen.
-
 ## CSV-Fallback (kein MCP verbunden)
 
 Die geprüfte Liste als CSV im Format aus `csv-spalten.md` liefern, dazu die Anleitung:
-„In der App: Leads → Import → CSV hochladen; die Zusatzspalten werden als Attribute angeboten."
+„In der App: Leads → CSV-Import, Datei hochladen und Spalten zuordnen; die Zusatzspalten werden als Attribute angeboten."
 Der Vorab-Abgleich entfällt dann — im Bericht ausdrücklich sagen, dass Duplikate erst der
 App-Import abfängt und `do_not_contact` NICHT vorab geprüft werden konnte.

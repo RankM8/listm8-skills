@@ -30,11 +30,11 @@ Fakten. Max. 2 Sätze, beginnt klein (folgt auf die Anrede), über den EMPFÄNGE
 zu {{ai.firma}}", „kurze Frage, {{custom.vorname}}". Den Firmennamen in Betreff und Text über die
 AI-Variable `firma` (Kurzname, siehe SKILL.md) einsetzen, nicht roh als `{{lead.company}}`: Maps
 und Impressum liefern den Registernamen, und „Idee für Walter Melcher Bedachungen GmbH + Co. KG"
-oder „Idee für Dachdecker & Blechnerei - Dirk Pesec" liest sich wie ein Serienbrief. Der Server kennt nur `{{lead.*}}`
-(`company`, `city`, `website` …), `{{ai.*}}` und `{{custom.*}}`; `{{firstName}}` oder
-`{{companyName}}` lässt `validate_campaign` als `invalid_token` durchfallen. Einen Vornamen
-gibt es nur als Custom-Attribut aus dem Import; den Schlüssel liefert `get_campaign` bzw. der
-Import. Ohne ihn den Firmennamen nehmen. Verboten im Betreff: Spam-Trigger („gratis",
+oder „Idee für Dachdecker & Blechnerei - Dirk Pesec" liest sich wie ein Serienbrief. Aufgelöst werden nur `{{lead.*}}`
+(`email`, `company`, `website`, `phoneNumber`, `city`), `{{ai.*}}` und `{{custom.*}}`; `{{firstName}}` oder
+`{{companyName}}` bleiben als Rohtext in der Mail stehen. Einen Vornamen
+gibt es nur als Custom-Attribut aus dem Import; den Schlüssel zeigt `get_lead_data` unter
+`customAttributes`. Ohne ihn den Firmennamen nehmen. Verboten im Betreff: Spam-Trigger („gratis",
 „kostenlos", „100 %", „garantiert", „jetzt zugreifen", „Rabatt", „dringend", „unverbindlich",
 „exklusives Angebot"), Ausrufezeichen, VOLLGROSS, Fake-„Re:".
 

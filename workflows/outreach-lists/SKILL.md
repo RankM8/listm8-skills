@@ -5,7 +5,7 @@ description: Use when user says "outreach:lists", "Listen anzeigen", "Liste anle
 
 # Outreach Lists — Listen verwalten über den MCP
 
-Verwaltet Lead-Listen: die benannten Gruppierungen zwischen Datenbeschaffung und Kampagne.
+Verwaltet Lead-Listen: die benannten Gruppierungen zwischen Datenbeschaffung (extern, z. B. Apify/Outscraper) und Kampagne.
 Leads bleiben dabei immer normale Leads im globalen Bestand — eine Liste ist eine Klammer mit
 Herkunft, kein zweiter Datentopf.
 
@@ -15,13 +15,13 @@ Scope: `leads:read` fürs Lesen/Exportieren, `leads:write` für Anlegen/Löschen
 
 | Aufgabe | Tool | Hinweise |
 |---|---|---|
-| „Was habe ich schon (gescrapt)?" | `list_lists` | Zähler je Liste: total, in Kampagnen, kontaktiert; Herkunft (`source`) zeigt Actor/Query/Datum/Kosten |
-| Liste durchsehen | `get_list(list_id, limit, offset)` | Neutraler Browse mit Kampagnen-Mitgliedschaften — OHNE die Pipeline-Filterlogik von `list_leads` |
-| Liste anlegen | `create_list(name, description, source)` | `source` IMMER füllen ({tool, actor, query, runAt, costUsd}) — sie ersetzt jedes manuelle Scrape-Log |
-| Leads hineinbekommen | `import_leads(leads, list_id, attribute_mappings)` | Dedupliziert selbst: Bestands-Leads werden nur verlinkt; Report nennt `linked_to_list` + `do_not_contact_hits` |
-| Bestand prüfen (Bulk) | `check_leads_exist(emails, domains)` | Bis 1.000 kombiniert je Call; E-Mail-Match inkl. Zweitadressen; Domain-Treffer = „Firma bekannt" (Warnung, kein Ausschluss) |
-| Bestand exportieren | `export_leads(format, list_id, contact_status, limit, offset)` | `json`/`csv` für Menschen und Tools; **`index`** ist der kompakte Abgleichsindex für den Vorab-Dedup vor Scrape-Läufen |
-| Liste → Kampagne | `add_leads_to_campaign(campaign_id, list_id \| lead_ids)` | Überspringt `do_not_contact` IMMER und meldet es; verlinkte Leads starten als „processing" — KI-Läufe startet erst `start_lead_run`. HARTES LIMIT 1000: Bei Listen > 1000 Leads wirft `list_id` `limit_reached` — dann IDs via `get_list` (limit/offset) paginiert holen und in 1000er-Chunks über `lead_ids` verlinken |
+| „Was habe ich schon (gescrapt)?" | `list_lists` | Zähler je Liste: total, in Kampagnen, kontaktiert; Herkunft (`source`) zeigt, was der Nutzer dort hinterlegt hat (z. B. Tool/Actor/Query/Datum/Kosten) |
+| Liste durchsehen | `get_list(list_id, limit, offset)` | Neutraler Browse (`limit` 1–200, Standard 25) mit Kampagnen-Mitgliedschaften — OHNE die Pipeline-Filterlogik von `list_leads` |
+| Liste anlegen | `create_list(name, description, source)` | `source` IMMER füllen (frei, z. B. {tool, actor, query, runAt, costUsd}) — sie ersetzt jedes manuelle Scrape-Log |
+| Leads hineinbekommen | `import_leads(leads, list_id, attribute_mappings)` | Dedupliziert selbst: Bestands-Leads werden nur verlinkt; läuft async (`job_id`, per `get_job_status` abwarten), das Job-Result nennt `linked_to_list` + `do_not_contact_hits` |
+| Bestand prüfen (Bulk) | `check_leads_exist(emails, domains)` | Bis 1.000 kombiniert je Call; E-Mail-Match inkl. Zweitadressen; Domain-Treffer = „Firma bekannt" (Warnung, kein Ausschluss); Treffer je Eingabe auf 10 gekappt (`summary.truncated`) |
+| Bestand exportieren | `export_leads(format, list_id, contact_status, limit, offset)` | `json`/`csv` für Menschen und Tools (Seiten bis 10.000 Zeilen, `limit`/`offset`); **`index`** ist der kompakte Abgleichsindex ({e, d, s} je Lead) für den Vorab-Dedup vor externen Scrape-Läufen |
+| Liste → Kampagne | `add_leads_to_campaign(campaign_id, list_id \| lead_ids)` | Überspringt `do_not_contact` IMMER und meldet es; verlinkte Leads starten als „processing" — KI-Läufe startet erst `start_lead_run`. HARTES LIMIT 1000: Bei Listen > 1000 Leads wirft `list_id` `limit_reached` — dann IDs via `get_list` (limit max. 200, offset) paginiert holen oder per `export_leads(list_id=…, limit/offset)` und in Chunks bis 1000 über `lead_ids` verlinken |
 | Batch taggen | `bulk_set_lead_attributes(lead_ids, attributes, create_missing)` | Gleiche Attributwerte auf bis zu 1.000 Leads in EINEM Call; für je-Lead-verschiedene Werte `write_lead_details` |
 | Global suchen/filtern | `search_leads(query, attribute_key/attribute_value, in_campaign)` | Strukturfilter erlauben leere Text-Query; `in_campaign="none"` = noch unverplantes Rohmaterial |
 | Liste löschen | `delete_list(list_id, delete_leads, confirm_delete)` | s. Löschregeln |
@@ -46,16 +46,13 @@ Herkunft, Datum).
 werden NIE importiert oder angeschrieben).
 
 **„Gib mir den Abgleichsindex"** → `export_leads(format="index")` → als Datei speichern —
-die Datenbeschaffung matcht damit lokal, bevor Anreicherung Geld kostet.
+damit gleicht der Nutzer die extern gescrapten Ergebnisse lokal ab, bevor Anreicherung oder Verifizierung Geld kostet.
 
 **„Schieb Liste X in Kampagne Y"** → erst `get_list` (Zahlen + kontaktiert-Anteil zeigen) →
 Bestätigung → `add_leads_to_campaign(campaign_id, list_id)` → Report (added / already / dnc-skipped).
-Bei > 1000 Leads in der Liste: `get_list` paginiert (limit=1000, offset hochzählen), die IDs je
-Seite als `lead_ids`-Chunk verlinken, Reports aufsummieren — `list_id` direkt würde `limit_reached` werfen.
-Ohne diese Grenze geht es in der Oberfläche: „Leads finden“ (`/leads/find`), Reiter Listen,
-Aktion „Zur Kampagne hinzufügen“ ordnet die ganze Liste serverseitig zu (dieselben Regeln:
-`do_not_contact` nie, schon enthaltene nicht doppelt, neue als „processing“). Den Nutzer bei
-großen Listen darauf hinweisen.
+Bei > 1000 Leads in der Liste: IDs paginiert holen (`get_list` mit limit max. 200 oder `export_leads(format="json", list_id=…, limit=1000, offset hochzählen)`), je 1000 als
+`lead_ids`-Chunk verlinken, Reports aufsummieren — `list_id` direkt würde `limit_reached` werfen.
+Danach startet `start_lead_run` die Verarbeitung (vorher `list_lead_runs(active_only=true)` prüfen).
 
 ## Grenzen (ehrlich benennen)
 

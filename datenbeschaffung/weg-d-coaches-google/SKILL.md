@@ -10,7 +10,7 @@ sitzen Ausbildungsakademien, Verbände, Verzeichnisse und Kursplattformen, die f
 Begriffe ranken. Die Trefferquote entscheidet sich an der Query, nicht am Volumen.
 
 Voraussetzungen vom Master: bestätigter ICP-Satz, Zugriffsweg steht (`../datenbeschaffung-referenzen/references/zugriff.md`),
-Vorab-Abgleich gelaufen (falls MCP verbunden). Positioniert sich die Zielgruppe stärker über einen
+Vorab-Abgleich gelaufen (`check_leads_exist` bzw. `export_leads(format="index")` + `dedup.py`, falls MCP verbunden). Der Lauf beim Anbieter (Apify o. ä.) geschieht im eigenen Konto des Kunden außerhalb von ListM8; Kosten fallen dort an, kostenpflichtige Läufe nur nach ausdrücklicher Freigabe genau dieses Umfangs. Positioniert sich die Zielgruppe stärker über einen
 Kanal als über die eigene Website, sind `weg-d-coaches-linkedin` (B2B) oder `weg-d-instagram-*`
 (B2C) die besseren Wege — einmal gegenprüfen, dann hier weiter.
 

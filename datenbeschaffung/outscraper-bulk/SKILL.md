@@ -1,22 +1,20 @@
 ---
 name: outscraper-bulk
-description: Stufe 2 des Datenbeschaffungs-Pakets — bulk Google Maps harvesting via Outscraper for very large volumes (>10.000 leads, whole countries) where a 12-24 hour job turnaround is acceptable. Never the first option; the Apify routes deliver in minutes. Invoked by the datenbeschaffung master; never triggered directly by the user.
+description: Stufe 2 des Datenbeschaffungs-Pakets — Google-Maps-Massenabruf über Outscraper (eigenes Konto, manueller Weg mit CSV und Import) für sehr große Volumina (>10.000 Leads, ganze Länder), bei denen 12–24 Stunden Laufzeit akzeptabel sind. Nie die erste Wahl; die Apify-Wege liefern in Minuten. Wird vom Datenbeschaffungs-Master geladen, nie direkt vom Nutzer ausgelöst.
 ---
 
 # Outscraper-Bulk — die zweite Stufe für sehr große Volumina
 
 > ## ⚠️ Laufzeit: 12–24 Stunden je Job
 > Das ist keine Ausnahme, das ist der Normalfall. Deshalb ist dieser Weg **nie die erste Wahl**:
-> `weg-c-local-maps` liefert dieselbe Datenart über Apify in Minuten, und ein Beschaffungsauftrag
-> (`create_sourcing_order` mit `area_mode` `bundesland` oder `land`) deckt seit E23 ganze
-> Bundesländer, Kantone und Länder mit Ziel, Budget und Gedächtnis ab. Outscraper lohnt erst, wenn
-> ein Nutzer sehr große Flächen wiederkehrend als Rohexport braucht und die Wartezeit ausdrücklich
-> akzeptiert. Diese Warnung gehört ungefragt in den ersten Satz, bevor irgendein Job startet.
+> `weg-c-local-maps` liefert dieselbe Datenart über Apify in Minuten. Outscraper lohnt erst, wenn
+> ein Lauf mehrere Bundesländer oder Kantone in einem Rutsch abräumen soll und der Nutzer die
+> Wartezeit ausdrücklich akzeptiert. Diese Warnung gehört ungefragt in den ersten Satz, bevor irgendein Job startet.
 
 Sinnvoll ab: **>10.000 Leads**, ganze Länder, wiederkehrende Flächen-Scrapes. Darunter ist der
 Apify-Weg schneller, billiger zu steuern und iterativ korrigierbar.
 
-## Pilot-Pflicht (Leitsatz 3 des Masters — gilt HIER erst recht)
+## Pilot-Pflicht (Pilot-Regel des Masters — gilt HIER erst recht)
 
 Kein Flächenjob ohne Pilot: Bei 12–24 h Laufzeit merkt der Nutzer eine falsche Kategorie
 oder Region erst einen Tag und viel Geld später. Deshalb VOR dem großen Job:
@@ -86,15 +84,16 @@ machen:
 - `ignoreWithoutEmails: false` lassen: aussortiert wird später mechanisch, nicht beim Scrape
   (Trichter-Prinzip).
 
-Kosten je Lauf vorab beim Anbieter kalkulieren und dem Nutzer nennen — Leitsatz 2 des Masters gilt
-auch hier, obwohl `kosten.md` nur Apify-Preise belegt.
+Kosten je Lauf vorab beim Anbieter kalkulieren und dem Nutzer nennen — die Kostenfreigabe des
+Masters gilt auch hier, obwohl `kosten.md` nur Apify-Preise belegt. Der Job läuft im eigenen
+Outscraper-Konto des Kunden; gestartet wird nur nach ausdrücklicher Freigabe genau dieses Umfangs.
 
 ## Schritt 3 — Ergebnis holen
 
 Nach Abschluss die Datei aus dem Dashboard laden (XLSX oder CSV). **Keine Ablage-Struktur im Repo, kein
 Scrape-Log, keine Tracking-Datei pflegen** — die Herkunft und der Bestand leben in der App
 (`../datenbeschaffung-referenzen/references/outreach-uebergabe.md`, `create_list` mit `source`). Wer wissen will, was schon
-gescrapt wurde, fragt die Listen der App ab, nicht eine Markdown-Datei.
+gescrapt wurde, fragt die Listen der App ab (`list_lists`, `get_list`, `export_leads(format="index")`), nicht eine Markdown-Datei.
 
 ## Schritt 4 — SMTP-Status filtern (der eine harte Filter)
 
@@ -132,8 +131,9 @@ Hand, und nicht über eine eigene Konsolidierungs-Datei.
 
 ## Schritt 6 — Übergabe
 
-An `listen-qualitaet` — immer, ohne Ausnahme. Diesem Skill gehört kein Qualitäts-Urteil und keine
-Übergabe.
+An `listen-qualitaet` — immer, ohne Ausnahme: Qualitätsstufe und Import (Oberfläche oder
+`import_leads` mit `create_list`/`list_id`, höchstens 10.000 Leads je Aufruf, bei Flächen-Läufen
+also in mehreren Blöcken). Diesem Skill gehört kein Qualitäts-Urteil und keine Übergabe.
 
 ## Bekannte Fallen
 

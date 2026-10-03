@@ -1,8 +1,9 @@
 # Kosten — belegte Größenordnungen
 
 > zuletzt geprüft: **2026-08-19** · GOLD-Tier · Quelle: echte Läufe (SHK Köln/Düsseldorf).
+> Die Kosten fallen beim Anbieter (Apify/Outscraper) auf dem Konto des Kunden an, nicht in ListM8.
 > Regel: Vor JEDEM kostenpflichtigen Lauf die erwarteten Kosten aus dieser Tabelle kalkulieren
-> und dem Nutzer nennen. Jeder Lauf bekommt einen harten Deckel (`maxTotalChargeUsd`).
+> und dem Nutzer nennen. Jeder Lauf bekommt einen harten Deckel (`maxTotalChargeUsd`) und die ausdrückliche Freigabe des Nutzers.
 >
 > **Was „GOLD-Tier" heißt:** Apify staffelt die Pay-per-Event-Preise nach Konto-Tier
 > (FREE/BRONZE/SILVER/GOLD — abhängig vom Monatsumsatz). Diese Tabelle nennt GOLD-Preise;

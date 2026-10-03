@@ -1,17 +1,17 @@
 ---
 name: outreach-verify
-description: Use when user says "outreach:verify", "mcp:verify", "verify emails", "email verification", "pruefe emails", "email review", "emails pruefen", or triggers /mcp:verify.
+description: Use when user says "outreach:verify", "mcp:verify", "verify emails", "email verification", "prüfe emails", "email review", "emails prüfen", or triggers /mcp:verify.
 ---
 
 # MCP Verify — AI-Variablen-Review
 
 Dieser Skill orchestriert den automatischen Review von AI-generierten Variablen via MCP Business Tools. Claude reviewt jede Variable, gibt qualifizierte Variablen frei (`approve_lead_variables`) oder lehnt unbrauchbare ab (`reject_lead_variables`).
 
-> **Hinweis zur Parallelisierung:** Wenn dein Client parallele Subagents unterstuetzt (z.B. Claude Code), spawne pro Lead einen Subagent wie beschrieben. Andernfalls arbeite die Leads **sequentiell** mit exakt denselben Schritten ab — das Ergebnis ist identisch, nur langsamer.
+> **Hinweis zur Parallelisierung:** Wenn dein Client parallele Subagents unterstützt (z.B. Claude Code), spawne pro Lead einen Subagent wie beschrieben. Andernfalls arbeite die Leads **sequentiell** mit exakt denselben Schritten ab — das Ergebnis ist identisch, nur langsamer.
 
-> **Wichtig:** Vor dem Review `get_context()` und `get_campaign(campaign_id)` prüfen. Konto, Tenant und Umgebung müssen zum Auftrag passen. Über `preview_campaign(campaign_id, lead_ids=[…])` vollständige Betreffe und Bodies für maximal 20 explizite Leads rendern und über `validate_campaign` fehlende, leere, fehlgeschlagene oder `stale`-Werte prüfen. Diese beiden Tools verändern keine Freigaben und lösen keinen Push aus. `approve_lead_variables` dagegen kann bei aktivem Instantly-Auto-Push extern übertragen: `get_campaign` → `instantly.autoPushEnabled` prüfen und die Freigabe entsprechend ausdrücklich bestätigen lassen. Eine reine Vorschau ist niemals eine Freigabe. Eine Freigabe ist auch noch keine Übertragung: Der Push (manuell wie automatisch) überspringt Leads ohne zustellbare Versandadresse (als unzustellbar geprüft, `invalid`, oder eine nicht ausdrücklich gewählte Vermutung; ohne Prüfurteil bleibt die vorhandene Adresse nutzbar) und Leads, deren Adresse an einem anderen Lead auf „nicht kontaktieren“ steht. Beide zählt er getrennt, ohne Exportstempel; die App zeigt sie im Instantly-Bereich der Kampagne als „Blockiert“ und im Ergebnis des Push-Jobs. Diese Zahlen dem User nennen. Für Leads ohne zustellbare Adresse eine andere erreichbare Adresse der Entscheidungsperson recherchieren (`/outreach-research`), Sperren nie aufheben. Dieselbe Regel gilt für die CSV-Spalte `best_email`, die ohne zustellbare Adresse leer bleibt. Während aktiver E-Mail-Läufe warten. Für einzelne Templateänderungen den revisionsgeschützten `update_email_step` nutzen, nie den Vollersatz `edit_campaign`. Inhaltliche Korrekturen von Werten weiterhin über eine vollständige neue Version mit `save_lead_variables` oder ausdrücklich gestartete Neugenerierung ausführen.
+> **Wichtig:** Vor dem Review `ping` und `list_campaigns` prüfen: Konto und Kampagne müssen zum Auftrag passen. Der fertige Mailtext entsteht erst beim Export aus E-Mail-Schritten und Variablen; geprüft werden hier die gespeicherten Variablenwerte (`get_lead_variables`), nicht ein gerenderter Gesamttext. `approve_lead_variables` setzt nur den Status `approved` (bereit für den CSV-Export, `export_leads`) und überträgt nichts nach Instantly; Push und Export sind eigene Schritte. Während aktiver E-Mail-Läufe warten. Korrigiert wird nie inline: inhaltliche Korrekturen von Werten laufen über eine vollständige neue Version mit `save_lead_variables` oder eine ausdrücklich gestartete Neugenerierung (`start_lead_run`, Stufe `email`); Änderungen an Vorlage oder Variablendefinition über `export_campaign_blueprint` + `edit_campaign` (Replace-all; Ersetzen der AI-Variablen löscht alle generierten Werte — nur mit ausdrücklicher Zustimmung).
 
-## Workflow-Uebersicht
+## Workflow-Übersicht
 
 ```
 1. list_campaigns -> Kampagne identifizieren (oder campaign_id aus Argument)
@@ -19,12 +19,12 @@ Dieser Skill orchestriert den automatischen Review von AI-generierten Variablen 
 2. list_leads(campaign_id, campaign_status="pending_review", fit_level="", research_status="", limit={batch_size})
    -> Leads mit generierten, noch nicht freigegebenen Variablen
    |
-3. Fuer jeden Lead: Sub-Agent spawnen (parallel, bis zu {batch_size} gleichzeitig)
+3. Für jeden Lead: Sub-Agent spawnen (parallel, bis zu {batch_size} gleichzeitig)
    -> Jeder Agent: get_lead_variables() -> Review -> approve_lead_variables() oder reject_lead_variables()
    |
 4. Batch-Report: "Batch 1/N done, X approved, Y rejected"
    |
-5. Naechster Batch: list_leads erneut (remaining > 0?)
+5. Nächster Batch: list_leads erneut (remaining > 0?)
    |
 6. Fertig: Abschluss-Report
 ```
@@ -33,25 +33,25 @@ Dieser Skill orchestriert den automatischen Review von AI-generierten Variablen 
 
 | Eingabe | Verhalten |
 |---------|-----------|
-| `/outreach-verify` | Zeigt Kampagnen via list_campaigns, User waehlt |
-| `/outreach-verify 76` | Startet direkt fuer Kampagne 76 |
-| `pruefe emails fuer kampagne 76` | Startet direkt fuer Kampagne 76 |
+| `/outreach-verify` | Zeigt Kampagnen via list_campaigns, User wählt |
+| `/outreach-verify 76` | Startet direkt für Kampagne 76 |
+| `pruefe emails für kampagne 76` | Startet direkt für Kampagne 76 |
 
-## Schritt-fuer-Schritt Anleitung
+## Schritt-für-Schritt Anleitung
 
 ### Phase 1: Kampagne bestimmen
 
-Wenn KEINE campaign_id als Argument uebergeben wurde:
+Wenn KEINE campaign_id als Argument übergeben wurde:
 
 1. Rufe `list_campaigns` auf (MCP Tool)
 2. Zeige dem User die Kampagnen mit `leadCounts.pending_review > 0`
-3. Frage: "Fuer welche Kampagne soll ich Variablen reviewen?"
+3. Frage: "Für welche Kampagne soll ich Variablen reviewen?"
 4. Merke dir die campaign_id
-5. Vorpruefung: `list_lead_runs(campaign_id, active_only=true)` — solange fuer einen Lead ein Job der E-Mail- oder der Research-Stufe wartet oder laeuft, lehnen `approve_lead_variables`/`reject_lead_variables` diesen Lead mit `lead_run_active` ab (Rennschutz). Erst nach dem Terminal-Status des Laufs reviewen. `ai_variable_stale` beim Freigeben heisst: Werte nach einer Konfigurationsaenderung veraltet; neu generieren lassen oder gezielt korrigieren, nicht freigeben.
+5. Vorprüfung: `list_lead_runs(campaign_id, active_only=true)` — solange für einen Lead ein Job der E-Mail- oder der Research-Stufe wartet oder läuft, lehnen `approve_lead_variables`/`reject_lead_variables` diesen Lead mit `lead_run_active` ab (Rennschutz). Erst nach dem Terminal-Status des Laufs reviewen. Nach einer Änderung der Kampagnenkonfiguration (Variablen, Schritte) vorhandene Werte nicht blind freigeben, sondern gegen die aktuelle Konfiguration prüfen (`export_campaign_blueprint`) und bei Abweichung neu generieren.
 
-Wenn campaign_id als Argument uebergeben wurde: Direkt zur Batch-Groesse-Abfrage.
+Wenn campaign_id als Argument übergeben wurde: Direkt zur Batch-Größe-Abfrage.
 
-**Batch-Groesse abfragen:**
+**Batch-Größe abfragen:**
 
 Frage den User:
 "Wie viele Leads pro Batch? (Default: 10)"
@@ -60,7 +60,7 @@ Frage den User:
 - 100 (Aggressiv)
 - 200 (Maximum)
 
-Merke dir die Antwort als `{batch_size}`. Wenn der User einfach Enter drueckt oder nichts sagt: `batch_size = 10`.
+Merke dir die Antwort als `{batch_size}`. Wenn der User einfach Enter drückt oder nichts sagt: `batch_size = 10`.
 
 Dann weiter zu Phase 2.
 
@@ -97,10 +97,10 @@ Für jeden Lead ausschließlich die tatsächlich verfügbare Agent-Signatur nutz
 
 #### Sub-Agent Prompt Template
 
-Fuer jeden Lead den folgenden Prompt zusammenbauen. **Ersetze die Platzhalter** mit den tatsaechlichen Daten aus der list_leads Response:
+Für jeden Lead den folgenden Prompt zusammenbauen. **Ersetze die Platzhalter** mit den tatsächlichen Daten aus der list_leads Response:
 
 ```
-Du reviewst AI-generierte Variablen fuer einen Lead via MCP Tools.
+Du reviewst AI-generierte Variablen für einen Lead via MCP Tools.
 
 KAMPAGNE: {campaign.name} (ID: {campaign.id})
 LEAD: {lead.company} (ID: {lead.id})
@@ -110,33 +110,33 @@ LEAD WEBSITE: {lead.website}
 ## Schritte
 
 1. Rufe get_lead_variables(campaign_id={campaign.id}, lead_id={lead.id}) auf
-2. Lies JEDE Variable in variables[] sorgfaeltig (name + value)
-3. Pruefe Research-Daten und Lead-Stammdaten fuer Kontext
-4. REVIEW — Pruefe JEDE Variable gegen die Verification-Checkliste (siehe unten)
-5. ENTSCHEIDUNG (binaer):
+2. Lies JEDE Variable in variables[] sorgfältig (name + value)
+3. Prüfe Research-Daten und Lead-Stammdaten für Kontext
+4. REVIEW — Prüfe JEDE Variable gegen die Verification-Checkliste (siehe unten)
+5. ENTSCHEIDUNG (binär):
    a) ALLE Variablen OK -> approve_lead_variables(campaign_id={campaign.id}, lead_id={lead.id})
    b) MINDESTENS EINE Variable unbrauchbar -> reject_lead_variables(campaign_id={campaign.id}, lead_id={lead.id}, reason="...")
 
 ## Verification-Checkliste (pro Variable)
 
-Pruefe JEDE Variable gegen ALLE folgenden Kriterien:
+Prüfe JEDE Variable gegen ALLE folgenden Kriterien:
 
 ### Personalisierung
 - [ ] Bezug zu Research/Website erkennbar? (nicht generisch)
-- [ ] Informationen stimmen mit Lead-Daten ueberein? (Company, Website, Branche, Stadt)
+- [ ] Informationen stimmen mit Lead-Daten überein? (Company, Website, Branche, Stadt)
 
 ### Sprache & Stil
 - [ ] Umlaute korrekt? (echte Ä/Ö/Ü/ä/ö/ü/ß, nicht AE/OE/UE/ae/oe/ue/ss)
 - [ ] Kein "vorallem"? (korrekt: "vor allem")
-- [ ] Anrede konsistent zwischen allen Variablen? (durchgehend formal ODER team-basiert, nie gemischt)
-- [ ] Laenge angemessen? (nicht zu kurz, nicht zu lang)
+- [ ] Anrede konsistent zwischen allen Variablen und passend zur Kampagnen-Ansprache (`get_lead_data` → `emailGeneration.salutationRule`)? Nie gemischt.
+- [ ] Länge angemessen? (nicht zu kurz, nicht zu lang)
 - [ ] Keine Leerzeilen am Anfang oder Ende?
 - [ ] Keine M-dashes? (nur normale Bindestriche -)
 
 ### Inhaltliche Korrektheit
-- [ ] Keine internen Metriken erwaehnt? (SEO-Score, Overall-Score, Fit-Level, Need-Flags, Dimension-Scores, Opportunity Score, ranked Keywords)
+- [ ] Keine internen Metriken erwähnt? (SEO-Score, Overall-Score, Fit-Level, Need-Flags, Dimension-Scores, Opportunity Score, ranked Keywords)
 - [ ] Keine HTTPS/SSL-Behauptungen? ("ohne HTTPS", "kein SSL" — selbst wenn die Website nur http erreichbar ist)
-- [ ] Kein harscher Deficit-Sprech? (ausbaufaehig, nicht erreichbar, fehlerhaft, unzureichend, kaum nutzbar, schwach, schlecht)
+- [ ] Kein harscher Deficit-Sprech? (ausbaufähig, nicht erreichbar, fehlerhaft, unzureichend, kaum nutzbar, schwach, schlecht)
 - [ ] Faktisch korrekt? (keine erfundenen Findings, keine vermeintlichen "Probleme" die nicht existieren)
 
 ### Technisch
@@ -145,7 +145,7 @@ Pruefe JEDE Variable gegen ALLE folgenden Kriterien:
 
 ## Entscheidungslogik
 
-- **approve_lead_variables**: ALLE Variablen passen die Checkliste → freigegeben fuer CSV-Export
+- **approve_lead_variables**: ALLE Variablen passen die Checkliste → freigegeben für CSV-Export
 - **reject_lead_variables(reason=...)**: MINDESTENS EINE Variable bricht die Checkliste oder ist grundlegend unbrauchbar:
   - Komplett generischer Text (kein Personalisierungs-Bezug)
   - Falsche Lead-Informationen (falsches Unternehmen, falsche Branche)
@@ -156,7 +156,7 @@ Pruefe JEDE Variable gegen ALLE folgenden Kriterien:
 
 `reason` muss konkret sein (nennt die problematische Variable + den Defekt). Er steht nur im Audit-Log: Beim manuellen Re-Generate via `/outreach-generate` oder `save_lead_variables` den Grund selbst mitgeben; der Server-Lauf liest ihn nicht.
 
-Gib am Ende eine kurze Zusammenfassung zurueck:
+Gib am Ende eine kurze Zusammenfassung zurück:
 - Entscheidung: approved / rejected
 - Bei rejection: welche Variable + warum
 ```
@@ -165,7 +165,7 @@ Gib am Ende eine kurze Zusammenfassung zurueck:
 
 Warte bis ALLE Sub-Agents des Batches fertig sind (sie laufen im Background — du wirst benachrichtigt).
 
-Zaehle:
+Zähle:
 - Freigegeben (approve_lead_variables erfolgreich)
 - Abgelehnt (reject_lead_variables erfolgreich)
 - Fehler (Agent-Fehler oder Tool-Fehler)
@@ -181,9 +181,9 @@ Verbleibend: {remaining}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-### Phase 5: Naechster Batch oder Abschluss
+### Phase 5: Nächster Batch oder Abschluss
 
-Wenn `remaining > 0`: Zurueck zu Phase 2 (naechster list_leads Aufruf).
+Wenn `remaining > 0`: Zurück zu Phase 2 (nächster list_leads Aufruf).
 
 Wenn `remaining == 0` oder keine Leads mehr: Zeige Abschluss-Report:
 ```
@@ -193,24 +193,24 @@ MCP Verify abgeschlossen
 Kampagne: {campaign.name} (ID: {campaign.id})
 Gesamt verarbeitet: {total_processed} Leads
 Freigegeben: {total_approved} | Abgelehnt: {total_rejected} | Fehler: {total_errors}
-Status: Freigegebene Leads auf "approved" gesetzt (ready fuer CSV-Export)
+Status: Freigegebene Leads auf "approved" gesetzt (ready für CSV-Export)
         Abgelehnte Leads auf "rejected" gesetzt (nicht im Export; siehe Hinweis)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-**WICHTIG — "rejected" ist NICHT final:** Ein rejected-Lead zaehlt als generierungsbeduerftig — der naechste E-Mail-Run bzw. Re-Generate erzeugt neue Variablen und setzt ihn zurueck auf pending_review. Der `reason` landet nur im Audit-Log; die Neu-Generierung des Servers sieht ihn nicht. Soll die Begruendung kuenftige Mails beeinflussen, zusaetzlich `set_lead_email_feedback(campaign_id, lead_id, liked=false, comment="<Grund>")` setzen: Die jeweils drei juengsten Urteile je Richtung fliessen als Beispiele in den E-Mail-Prompt der Kampagne (Uebersicht mit `list_lead_email_feedback`, Ruecknahme mit `delete_lead_email_feedback`). Das Urteil ist unabhaengig von approve/reject und verlangt erzeugte Variablenwerte sowie einen E-Mail-Schritt. Soll ein Lead DAUERHAFT raus: aus der Kampagne entfernen oder `mark_leads_contacted(emails=[...], status="do_not_contact")` setzen — dann wird er global von allen AI-Jobs und Exporten ausgeschlossen.
+**WICHTIG — "rejected" ist NICHT final:** Ein rejected-Lead zählt als generierungsbedürftig — der nächste E-Mail-Run bzw. Re-Generate erzeugt neue Variablen und setzt ihn zurück auf pending_review. Der `reason` landet nur im Audit-Log; die Neu-Generierung des Servers sieht ihn nicht. Soll die Begründung künftige Mails beeinflussen, zusätzlich `set_lead_email_feedback(campaign_id, lead_id, liked=false, comment="<Grund>")` setzen: Die jeweils drei jüngsten Urteile je Richtung fließen als Beispiele in den E-Mail-Prompt der Kampagne (Übersicht mit `list_lead_email_feedback`, Rücknahme mit `delete_lead_email_feedback`). Das Urteil ist unabhängig von approve/reject und verlangt erzeugte Variablenwerte sowie einen E-Mail-Schritt. Soll ein Lead DAUERHAFT raus: aus der Kampagne entfernen oder `mark_leads_contacted(emails=[...], status="do_not_contact")` setzen — dann wird er global von allen AI-Jobs und Exporten ausgeschlossen.
 
 ## MCP Tool Reference
 
 ### list_campaigns
 
-**Keine Parameter.** Gibt alle Kampagnen des Users zurueck.
+**Keine Parameter.** Gibt alle Kampagnen des Users zurück.
 
 Response-Felder:
 - `campaigns[].id` — Kampagnen-ID
 - `campaigns[].name` — Name
 - `campaigns[].leadCounts.pending_review` — Anzahl Leads zur Review
-- `campaigns[].leadCounts.approved` / `.rejected` — Final-Status-Zaehler
+- `campaigns[].leadCounts.approved` / `.rejected` — Final-Status-Zähler
 
 ### list_leads
 
@@ -220,7 +220,7 @@ Response-Felder:
 | `limit` | int | `10` | Anzahl Leads (1-200) |
 | `campaign_status` | string | `"processing"` | Campaign-Status-Filter |
 
-**WICHTIG:** Fuer den Verify-Workflow immer `campaign_status="pending_review"` verwenden!
+**WICHTIG:** Für den Verify-Workflow immer `campaign_status="pending_review"` verwenden!
 
 ### get_lead_variables
 
@@ -229,9 +229,9 @@ Response-Felder:
 | `campaign_id` | int | **required** | Kampagnen-ID |
 | `lead_id` | int | **required** | Lead-ID |
 
-Gibt zurueck:
+Gibt zurück:
 - `campaign` (id, name)
-- `lead` (id, email, company, website, score, qualification, research)
+- `lead` (id, email, company, website, score, research, qualification = Urteil DIESER Kampagne mit fitLevel und summary, sonst null)
 - `version` — aktuelle Variablen-Version
 - `variables[]` — Array mit:
   - `name` — Variablen-Name (z.B. "hallo", "intro")
@@ -248,7 +248,7 @@ Gibt zurueck:
 | `campaign_id` | int | **required** | Kampagnen-ID |
 | `lead_id` | int | **required** | Lead-ID |
 
-Setzt `LeadCampaignStatus.status = approved`. Voraussetzung: mindestens eine `LeadAIVariableValue` muss existieren — sonst `variables_not_found`. Veraltete (`stale`) Werte einer benoetigten Variable lehnt das Tool mit `ai_variable_stale` ab; waehrend fuer den Lead ein Job der Research- oder E-Mail-Stufe wartet oder laeuft, mit `lead_run_active` (die Meldung nennt die gesperrten Lead-IDs, die uebrigen Leads bleiben entscheidbar).
+Setzt `LeadCampaignStatus.status = approved`. Voraussetzung: mindestens eine `LeadAIVariableValue` muss existieren — sonst `variables_not_found`. Solange für die Kampagne ein Lauf mit E-Mail-Stufe aktiv ist, lehnt das Tool mit `lead_run_active` ab.
 
 Success-Response:
 ```json
@@ -269,7 +269,7 @@ Success-Response:
 | `lead_id` | int | **required** | Lead-ID |
 | `reason` | string | **required** | Ablehnungsgrund (non-empty) |
 
-Setzt `LeadCampaignStatus.status = rejected`. `reason` wird im Logger-Audit-Trail persistiert (info-level: leadId, campaignId, userId, reason). Wirft `error` bei leerem `reason`.
+Setzt `LeadCampaignStatus.status = rejected`. `reason` wird nur im Logger-Audit-Trail festgehalten (leadId, campaignId, userId, reason). Leerer `reason` => `validation_failed`; ohne erzeugte Werte `variables_not_found`; bei aktivem E-Mail-Lauf `lead_run_active`.
 
 Success-Response:
 ```json
@@ -278,7 +278,7 @@ Success-Response:
   "lead_id": 456,
   "campaign_id": 123,
   "variables_rejected": 2,
-  "reason": "Variable 'intro' enthaelt erfundene HTTPS-Behauptung",
+  "reason": "Variable 'intro' enthält erfundene HTTPS-Behauptung",
   "campaign_status": "rejected"
 }
 ```
@@ -288,21 +288,21 @@ Success-Response:
 | Fehler | Aktion |
 |--------|--------|
 | `list_leads` gibt leere leads[] | "Keine Leads zur Review" -> STOP |
-| Sub-Agent approve/reject Error | Fehler notieren, weitermachen mit naechstem Lead |
-| `variables_not_found` | Keine erzeugten Werte — Lead gehoert in die Generierung, nicht ins Review |
-| `ai_variable_stale` | Werte nach Konfigurationsaenderung veraltet — neu generieren lassen oder gezielt korrigieren, nicht freigeben |
-| `lead_run_active` | Parallel laeuft ein Server-Lauf mit E-Mail-Stufe — Review pausieren, `get_lead_run_status` bis Terminal-Status, dann fortsetzen |
-| Sub-Agent Timeout/Crash | Als Fehler zaehlen, im Report erwaehnen |
+| Sub-Agent approve/reject Error | Fehler notieren, weitermachen mit nächstem Lead |
+| `variables_not_found` | Keine erzeugten Werte — Lead gehört in die Generierung, nicht ins Review |
+| `validation_failed` (reject) | `reason` fehlt oder ist leer — konkreten Grund nachliefern |
+| `lead_run_active` | Parallel läuft ein Server-Lauf mit E-Mail-Stufe — Review pausieren, `get_lead_run_status` bis Terminal-Status, dann fortsetzen |
+| Sub-Agent Timeout/Crash | Als Fehler zählen, im Report erwähnen |
 | Alle Agents eines Batches fehlgeschlagen | Warnung ausgeben, User fragen ob fortfahren |
 | Netzwerk/MCP-Verbindungsfehler | 1x Retry, dann STOP mit Fehlermeldung |
 
-**Kein automatischer Retry einzelner Leads** — fehlgeschlagene Leads koennen spaeter mit `/outreach-verify` erneut verarbeitet werden (sie behalten den Status `pending_review` und tauchen wieder in list_leads auf).
+**Kein automatischer Retry einzelner Leads** — fehlgeschlagene Leads können später mit `/outreach-verify` erneut verarbeitet werden (sie behalten den Status `pending_review` und tauchen wieder in list_leads auf).
 
 ## Wichtige Hinweise
 
-1. **Voll autonom** — Keine Rueckfragen waehrend der Review. Durchlaufen bis fertig.
-2. **{batch_size}er-Batches** — {batch_size} Leads pro Batch (vom User gewaehlt, Default 10, Maximum 200).
+1. **Voll autonom** — Keine Rückfragen während der Review. Durchlaufen bis fertig.
+2. **{batch_size}er-Batches** — {batch_size} Leads pro Batch (vom User gewählt, Default 10, Maximum 200).
 3. **Parallel** — Alle Agents eines Batches gleichzeitig spawnen (ein Message-Block).
 4. **Idempotent** — Freigegebene/abgelehnte Leads tauchen nicht mehr in list_leads(`pending_review`) auf.
-5. **Binaere Entscheidung** — Approve oder Reject. Keine Inline-Korrektur. Fuer Korrekturen: re-generate via `/outreach-generate` oder `save_lead_variables`.
+5. **Binäre Entscheidung** — Approve oder Reject. Keine Inline-Korrektur. Für Korrekturen: re-generate via `/outreach-generate` oder `save_lead_variables`.
 6. **Audit-Trail** — Reject-Reasons werden via Logger persistiert (siehe `RejectLeadVariablesTool`).

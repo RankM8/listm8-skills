@@ -1,6 +1,6 @@
 # Zugriffsschicht — Actor starten, Ergebnis abholen
 
-> Die Skills reden nur über **Actor + Input**. WIE der Aufruf rausgeht, steht ausschließlich hier —
+> Die Skills reden nur über **Actor + Input**. WIE der Aufruf rausgeht, steht ausschließlich hier (immer mit dem eigenen Konto des Kunden) —
 > damit jeder Weg in jeder Umgebung läuft (Claude Desktop, Claude Code, Codex, jede Umgebung mit HTTP).
 
 ## Umgebung feststellen (einmal am Anfang jedes Laufs)

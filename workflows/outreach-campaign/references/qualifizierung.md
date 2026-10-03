@@ -37,10 +37,9 @@ Immer diese kanonischen Schlüssel verwenden. Die camelCase-Aliasse (`idealCusto
 Bei Maps-Listen gehören die typischen Nachbartreffer (Innungen, Verbände, Zeitarbeit, Händler,
 Verzeichnisse) in die Disqualifier: Google Maps liefert zu einem Gewerk regelmäßig 30-40 % davon.
 
-`additional_prompt` liest auch die Recherche als
-Maßstab mit. Eine Anweisung, die nur das Urteil der Qualifizierung lenken soll, gehört stattdessen
-in `qualificationAgentConfig.additionalPrompt` (Setzen per `patch_campaign_settings`, siehe
-SKILL.md, Abschnitt „Anweisung nur für die Qualifizierung").
+`additional_prompt` ist die Zusatzanweisung der Kampagne („Zusätzliche Hinweise") und wird auch
+von der Recherche als Maßstab gelesen. Er gehört deshalb nur Formulierungen, die für beide Stufen gelten
+(etwa „im Zweifel mid_qualified").
 
 ## Woran du eine zu restriktive Konfiguration erkennst
 

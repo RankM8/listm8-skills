@@ -29,7 +29,7 @@ Der Master-Skill erhebt beides, bevor Geld ausgegeben wird:
 | Größe | 3–100 Mitarbeiter | Unter 3 fehlt Budget, über 500 gibt es feste Lieferanten |
 | Region | Land, Bundesland, Stadt, Umkreis | Eine Region pro Durchlauf |
 | Trigger | Offene Stellen, neue Führung, Standort-Eröffnung, Wachstum | **Filtern, nie in der Mail erwähnen** (Ausnahme: Recruiting-Offer) |
-| Ausschlüsse | Wettbewerber, Bestandskunden, bereits Kontaktierte, Abmeldungen | Der Bestand-Abgleich läuft automatisch (`outreach-uebergabe.md`) |
+| Ausschlüsse | Wettbewerber, Bestandskunden, bereits Kontaktierte, Abmeldungen | Bestand-Abgleich vor dem Scrape mit `export_leads(format="index")` (`outreach-uebergabe.md`) |
 
 ## Trichter-Prinzip (wichtig für die Erwartung)
 

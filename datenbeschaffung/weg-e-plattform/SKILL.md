@@ -10,7 +10,7 @@ Etsy-Manufakturen, gewerbliche eBay-Verkäufer. **Ergebnis dieses Wegs ist immer
 Kontaktweg, nie eine Produktliste.** Eine Zeile ohne identifizierbaren Händler ist kein Lead.
 
 Voraussetzungen vom Master: bestätigter ICP-Satz, Zugriffsweg steht (`../datenbeschaffung-referenzen/references/zugriff.md`),
-Vorab-Abgleich gelaufen (falls MCP verbunden).
+Vorab-Abgleich gelaufen (`check_leads_exist` bzw. `export_leads(format="index")` + `dedup.py`, falls MCP verbunden). Der Lauf beim Anbieter (Apify o. ä.) geschieht im eigenen Konto des Kunden außerhalb von ListM8; Kosten fallen dort an, kostenpflichtige Läufe nur nach ausdrücklicher Freigabe genau dieses Umfangs.
 
 **Belegstand:** Für diesen Weg gibt es keine Kurs-Lektion und keine belegten Ist-Kosten wie bei
 Weg C. Grundlage ist die Actor-Recherche vom 19.08.2026 (Plattform-Verkäufer-Sektion in

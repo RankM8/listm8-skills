@@ -1,71 +1,55 @@
 ---
 name: outreach-import
-description: Use when user says "outreach:import", "mcp:import", "importiere leads via mcp", "leads hochladen mcp", "csv leads importieren", "outscraper import mcp", or triggers /mcp:import.
+description: Use when user says "outreach:import", "mcp:import", "importiere leads via mcp", "leads hochladen mcp", "csv leads importieren", "outscraper import mcp", "apify export importieren", or triggers /mcp:import. Importiert extern beschaffte Lead-Listen (CSV/JSON, z. B. Apify- oder Outscraper-Export) per import_leads.
 ---
 
 # MCP Import — Lead-Listen hochladen
 
-Dieser Skill laedt Lead-Listen ueber das MCP-Tool `import_leads` (Scope `leads:write`) in ListM8 — aus CSV-Dateien (z.B. OutScraper-Exporte), JSON oder Inline-Daten. Mit `campaign_id` werden die Leads der Kampagne zugeordnet (Status `processing`); ohne entstehen unkategorisierte Leads in der globalen Liste. Der Import startet KEINE Verarbeitung — anschliessend `/outreach-pipeline` (serverseitiger Lauf via `start_lead_run`) oder die Manuell-Skills.
+Dieser Skill lädt Lead-Listen über das MCP-Tool `import_leads` (Scope `leads:write`) in ListM8 — aus CSV-Dateien (z. B. Apify- oder Outscraper-Exporte), JSON oder Inline-Daten. Das Scraping selbst passiert außerhalb von ListM8 (der Kunde nutzt Apify, Outscraper o. Ä.); der MCP bekommt nur das Ergebnis. Mit `campaign_id` werden die Leads der Kampagne zugeordnet (Status `processing`); ohne entstehen unkategorisierte Leads im globalen Bestand. Der Import startet KEINE Verarbeitung — anschließend `/outreach-pipeline` (serverseitiger Lauf via `start_lead_run`) oder die Einzel-Skills.
 
 ## Aufruf
 
 | Eingabe | Verhalten |
 |---------|-----------|
 | `/outreach-import <datei> 80` | Datei parsen, in Kampagne 80 importieren |
-| `/outreach-import <datei>` | Kampagne via list_campaigns waehlen (oder "ohne Kampagne") |
+| `/outreach-import <datei>` | Kampagne via `list_campaigns` wählen (oder „ohne Kampagne") |
 | `importiere diese leads: ...` | Inline-Daten importieren |
 
-## Phase 0: Zielkontext prüfen
+## Phase 1: Daten lokal lesen und vorbereiten
 
-`get_context()` aufrufen und Konto, Tenant, Basis-URL sowie konfigurierte Umgebung mit dem Auftrag abgleichen. Ein `prod`-Kernel unterscheidet Staging nicht verlässlich; fehlende `deployment_environment` nicht aus dem Hostnamen erraten. Für den geprüften Import `leads:read` und `leads:write` verlangen. Bei abweichendem Kontext stoppen.
+Keine Dateipfade oder URLs an den Server übergeben: `import_leads` erhält ein JSON-Array von Lead-Objekten (max. 10.000 pro Call).
 
-## Phase 1: Daten lokal lesen und vorprüfen
-
-Keine Dateipfade oder URLs an den Server übergeben. `preview_import` akzeptiert entweder Inline-JSON in `leads` oder Inline-CSV in `csv`, nicht beides; maximal 500 Zeilen und 1 MiB. XLSX lokal in JSON umwandeln. Für CSV `column_mapping={"name":"company","site":"website"}` und bei Bedarf `delimiter=";"` nutzen. `import_leads` selbst erhält weiterhin ein JSON-Array:
-
-1. CSV/XLSX mit Read/Bash lesen; Trennzeichen und Encoding pruefen (UTF-8 sicherstellen, Umlaute!).
+1. CSV/XLSX mit Read/Bash lesen; Trennzeichen und Encoding prüfen (UTF-8 sicherstellen, Umlaute!). XLSX lokal in JSON umwandeln.
 2. Spalten auf Kernfelder mappen: `email` (Pflicht), `company`, `website`, `phoneNumber`, `city`.
-   OutScraper-Referenz-Mapping: `name`→company, `site`→website, `phone`→phoneNumber, `city`→city.
-3. Zusaetzliche Spalten, die erhalten bleiben sollen (Rating, Kategorie, Adresse …): als flache Extra-Keys am Lead-Objekt lassen und in `attribute_mappings` deklarieren:
+   Outscraper-Referenz-Mapping: `name`→company, `site`→website, `phone`→phoneNumber, `city`→city. Bei Apify-Exporten die Spaltennamen des jeweiligen Actors prüfen.
+3. Zusätzliche Spalten, die erhalten bleiben sollen (Rating, Kategorie, Adresse …): als flache Extra-Keys am Lead-Objekt lassen und in `attribute_mappings` deklarieren (ohne Deklaration werden Extra-Keys nicht gespeichert):
    ```json
    { "rating": {"action": "create_new", "name": "Google Rating", "fieldType": "text"},
      "branche": {"action": "map_existing", "fieldKey": "branche"} }
    ```
-4. Vorab-Check: Zeilen ohne gueltige E-Mail zaehlen und dem User melden — das Tool weist den GESAMTEN Call ab, wenn ungueltige E-Mails enthalten sind. Die ersten 20 Zeilendiagnosen stehen direkt im `isError`-Text nach dem Prefix `validation_failed:`; es gibt kein strukturiertes `invalid_rows`-Feld. Ungueltige Zeilen vor dem Call entfernen und im Report ausweisen.
-5. Vorab-Dedup bei gescrapten Listen: VOR dem Import `check_leads_exist` (bzw. den kompletten Listen-Flow aus `/outreach-lists`) fahren — Bestands-Leads und `do_not_contact`-Treffer dem User zeigen, bevor Geld oder Kampagnenplaetze draufgehen.
+   `create_new` braucht `name` und `fieldType`, `map_existing` einen `fieldKey`; sonst `validation_failed`.
+4. Vorab-Check E-Mails: Das Tool weist den GESAMTEN Call ab, wenn eine Zeile keine gültige `email` hat. Die ersten 20 Zeilendiagnosen stehen im `isError`-Text nach dem Prefix `validation_failed:` („row N: …"); es gibt kein strukturiertes `invalid_rows`-Feld. Zeilen ohne gültige E-Mail vor dem Call entfernen, zählen und im Report ausweisen.
+5. Vorab-Dedup: VOR dem Import `check_leads_exist` (E-Mails und/oder Domains, bis 1.000 je Call, in Chunks) fahren — Bestands-Leads und `do_not_contact`-Treffer dem Nutzer zeigen, bevor Kampagnenplätze oder Verarbeitungskosten draufgehen. Domain-Treffer heißen „Firma bekannt" (Warnung, kein Ausschluss). Den kompletten Listen-Flow beschreibt `/outreach-lists`.
 
-## Phase 2: Gebundene Vorschau und Import
-
-`preview_import(leads=[…], campaign_id=…, list_id=…, attribute_mappings={…})` aufrufen. Zeilenergebnisse, bekannte E-Mails, Kontaktsperren, Website-Zusammenführungen und Attributplan prüfen. Bestehende E-Mail-Treffer werden nicht blind überschrieben; Website-Konsolidierung kann eine andere bestehende Primäridentität schützen. Attribute ohne Website werden im bestehenden Bulkpfad nicht übernommen; die Vorschau weist das aus.
-
-Nach Freigabe exakt die zurückgegebenen `execution`-Felder zusammen mit `preview_token` an `import_leads` senden. Nur vorhandene optionale Felder übernehmen; fehlende Felder nicht als null ergänzen (insbesondere `attribute_mappings` verlangt bei Angabe ein Objekt):
+## Phase 2: Import
 
 ```text
-import_leads(
-  leads=<preview.execution.leads>,
-  campaign_id=<preview.execution.campaign_id>,
-  list_id=<preview.execution.list_id>,
-  attribute_mappings=<preview.execution.attribute_mappings>,
-  preview_token=<preview.preview_token>
-)
+import_leads(leads=[…], campaign_id=…, list_id=…, attribute_mappings={…})
 ```
 
-Token gilt 30 Minuten. Payload, Mapping, Ziele und relevanter Bestand werden vor dem Einplanen und nochmals im Worker unter dem User-Mutationslock geprüft. Bei `import_preview_conflict` oder Ablauf eine neue Vorschau holen; den Token niemals einfach weglassen, um den Konflikt zu umgehen. Eine abgelehnte Worker-Ausführung kann Job-Metadaten hinterlassen, verändert aber keine Leads.
-
-- Größere Datenmengen in maximal 500er-Chunks teilen, jeweils unmittelbar vor Ausführung prüfen und sequentiell importieren. Der vorherige Import kann den Bestand für den nächsten Chunk ändern.
-- Der alte ungebundene `import_leads`-Aufruf bleibt technisch kompatibel (maximal 10.000), ist aber kein geprüfter Import.
-- `list_id` fuer gescrapte/beschaffte Listen immer setzen (Herkunft + spaeteres Aufraeumen via `delete_list`) — Listen-Verwaltung: `/outreach-lists`.
-- Response: `job_id` — der Import laeuft async ueber den Fair-Scheduler.
-- Dedup macht das Backend: listen-intern + gegen bestehende Leads; bestehende Leads werden nur zur Kampagne verlinkt (kein Duplikat, keine Feld-Ueberschreibung).
+- `list_id` für beschaffte Listen immer setzen (Herkunft + späteres Aufräumen via `delete_list`); die Liste vorher mit `create_list` anlegen und die Herkunft in `source` festhalten. Listen-Verwaltung: `/outreach-lists`.
+- Größere Datenmengen in Chunks (z. B. 1.000–5.000) sequentiell importieren und jeweils den Job abwarten; so bleibt ein Fehler eingrenzbar.
+- Response: `job_id` (der Import läuft asynchron) und `received`; bei den Links der Antwort (`appUrl`) kann der Nutzer den Stand in der Oberfläche sehen.
+- Dedup macht das Backend: listenintern und gegen bestehende Leads; bestehende Leads werden nur zur Kampagne bzw. Liste verlinkt (kein Duplikat, keine Feld-Überschreibung). `do_not_contact`-Leads werden nicht in Kampagnen aufgenommen und im Ergebnis gemeldet.
 
 ## Phase 3: Job pollen & Report
 
-Der Import ist ERST fertig, wenn der Job es sagt — nie nach festem Warten zaehlen:
+Der Import ist ERST fertig, wenn der Job es sagt — nie nach festem Warten zählen:
 
-1. `get_job_status(job_id)` pollen (anfangs alle ~5 s, bei grossen Imports alle 15–30 s), bis `status` = `completed` oder `failed`. Ein 10.000er-Import kann mehrere Minuten laufen.
-2. Das Job-Result enthaelt die Wahrheit: `imported`, `duplicates` (nur verlinkt), `linked_to_list` (bei `list_id`), `do_not_contact_hits` (Bestands-Leads mit Kontaktsperre) und ggf. Zeilen-Fehler. Diese Zahlen 1:1 an den User berichten — NICHT stattdessen `list_leads` zaehlen (waehrend der Job laeuft, fehlen Leads, und der Report wuerde Doppel-Importe provozieren).
+1. `get_job_status(job_id)` pollen (anfangs alle ~5 s, bei großen Imports alle 15–30 s), bis `status` = `completed` oder `failed`. Ein 10.000er-Import kann mehrere Minuten laufen.
+2. Das Job-Result enthält die Wahrheit: `imported`, `consolidated`, `total`, `duplicates` und `internalDuplicates` (nur verlinkt bzw. listenintern), `linked_to_list` (bei `list_id`: `list_id`, `name`, `newly_linked`), `do_not_contact_hits` (Bestands-Leads mit Kontaktsperre) und `errors`. Diese Zahlen 1:1 an den Nutzer berichten — NICHT stattdessen `list_leads` zählen (während der Job läuft, fehlen Leads, und der Report würde Doppel-Importe provozieren).
 3. Optional zur Sichtkontrolle danach: `list_leads(campaign_id, fit_level="", research_status="", campaign_status="processing")`.
-4. Report: uebergeben / importiert / Duplikate / do_not_contact-Treffer / vorab entfernte ungueltige Zeilen / job_id.
+4. Report: übergeben / importiert / Duplikate / do_not_contact-Treffer / vorab entfernte ungültige Zeilen / `job_id`.
 
 ## Fehlerbehandlung
 
@@ -73,18 +57,21 @@ Erwartete Tool-Fehler sind MCP-Tool-Results mit `isError: true`; ihr Text beginn
 
 | Code | Aktion |
 |------|--------|
-| `validation_failed` mit inline aufgefuehrten Zeilen | Genannte Zeilen fixen/entfernen, erneut senden |
-| `limit_reached` | Chunk verkleinern bzw. User informieren (Plan-Limit MAX_LEADS) |
-| `campaign_not_found` / `list_not_found` | IDs pruefen (`list_campaigns` / `list_lists`) |
-| `insufficient_scope` | Token mit Scope `leads:write` verwenden |
-| Job `failed` in get_job_status | Fehlertext aus dem Job-Result berichten; Import NICHT blind wiederholen (Teilzustand pruefen via list_leads) |
+| `validation_failed` mit inline aufgeführten Zeilen | Genannte Zeilen fixen/entfernen, erneut senden |
+| `validation_failed` zu `attribute_mappings` | Mapping nach dem Schema oben korrigieren |
+| `limit_reached` | Chunk verkleinern (max. 10.000 pro Call) bzw. Nutzer informieren (Plan-Limit `max_leads`) |
+| `campaign_not_found` / `list_not_found` | IDs prüfen (`list_campaigns` / `list_lists`) |
+| `import_failed` | Meldung berichten, Import nicht blind wiederholen |
+| `insufficient_scope` / `access_denied` | Token mit Scope `leads:write` verwenden |
+| Job `failed` in `get_job_status` | Fehlertext aus dem Job-Result berichten; Import NICHT blind wiederholen (Teilzustand prüfen via `list_leads`) |
 
 ## Hinweise
 
 - `secondaryEmails` wird vom Bulk-Import-Pfad nicht verarbeitet (nur via `write_lead_details`).
+- Import und Verarbeitung sind getrennt: Nach dem Job-Ende `start_lead_run` (vorher `list_lead_runs(active_only=true)` prüfen).
 
 ## Verwandt
 
 - `/outreach-lists` (Vorab-Dedup, Listen-Verwaltung, Liste→Kampagne)
-- `/outreach-campaign` (Kampagne zuerst), `/outreach-pipeline` (naechster Schritt)
+- `/outreach-campaign` (Kampagne zuerst), `/outreach-pipeline` (nächster Schritt)
 - die Tool-Beschreibungen des MCP-Servers

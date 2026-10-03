@@ -9,6 +9,8 @@ Ein Impressum-Actor liest die Impressumsseite. Viele Websites führen E-Mail und
 auf einer separaten Kontaktseite — oder haben gar kein Impressum, weil sie nicht der deutschen
 Impressumspflicht unterliegen. Dieser Baustein crawlt gezielt die typischen Kontaktseiten-Pfade
 und füllt **ausschließlich leere Zellen**. Alles, was schon in der CSV steht, bleibt unberührt.
+Der Lauf findet beim Anbieter statt (Apify, eigenes Konto des Kunden) — ListM8 selbst crawlt keine
+Kontaktseiten. Das Ergebnis wandert als CSV über `listen-qualitaet` in den Import.
 
 ## Wann dieser Baustein NICHT genommen wird
 
@@ -48,7 +50,8 @@ Ausbeute kaum. Für Shopify-Shops lohnt `/pages/contact` zusätzlich, für engli
 
 Kalkulation: `Anzahl Lücken-Zeilen × Pfade × Preis je gecrawlter Seite` — Preise ausschließlich
 aus `../datenbeschaffung-referenzen/references/kosten.md` und `../datenbeschaffung-referenzen/references/apify-actors.md`, nie schätzen.
-Betrag nennen, Bestätigung abwarten, harten Deckel setzen. Ohne diesen Schritt kein Lauf.
+Betrag nennen, ausdrückliche Bestätigung genau dieses Umfangs abwarten, harten Deckel setzen. Ohne
+diesen Schritt kein Lauf.
 
 ## Schritt 4 — Crawlen (ein Batch)
 

@@ -5,17 +5,17 @@ description: Use when user says "outreach:generate", "mcp:generate", "generiere 
 
 # MCP Generate — AI-Variablen-Generierung
 
-Dieser Skill orchestriert die vollautomatische AI-Variablen-Generierung fuer Leads via MCP Business Tools. Claude generiert AI-Variablen basierend auf Research, Qualification und Custom Attributes, und speichert sie via `save_lead_variables`. Email-Body und Subject werden NICHT durch diesen Skill erzeugt — sie sind in der Email-Sequenz hardcoded und werden beim CSV-Export live mit den Variablen gerendert. Dieser Skill ist der **Manuell-Modus**; Standard ist der serverseitige Lauf via `/outreach-pipeline` (Tool `start_lead_run`, Stufe `email`; dessen Startcodes wie `leads_already_running` und den Zaehler `skipped_running` beschreibt `/outreach-pipeline`, Regel 4). Vor dem Start `list_lead_runs(campaign_id, active_only=true)` pruefen: bei aktivem email-Lauf blockt `save_lead_variables` mit `lead_run_active`.
+Dieser Skill orchestriert die vollautomatische AI-Variablen-Generierung für Leads via MCP Business Tools. Claude generiert AI-Variablen basierend auf Research, Qualification und Custom Attributes, und speichert sie via `save_lead_variables`. Email-Body und Subject werden NICHT durch diesen Skill erzeugt — sie sind in der Email-Sequenz hardcoded und werden beim CSV-Export live mit den Variablen gerendert. Dieser Skill ist der **Manuell-Modus**; Standard ist der serverseitige Lauf via `/outreach-pipeline` (Tool `start_lead_run`, Stufe `email`). Vor dem Start `list_lead_runs(campaign_id, active_only=true)` prüfen: bei aktivem Lauf mit E-Mail-Stufe blockt `save_lead_variables` mit `lead_run_active`.
 
-> **Hinweis zur Parallelisierung:** Wenn dein Client parallele Subagents unterstuetzt (z.B. Claude Code), spawne pro Lead einen Subagent wie beschrieben. Andernfalls arbeite die Leads **sequentiell** mit exakt denselben Schritten ab — das Ergebnis ist identisch, nur langsamer.
+> **Hinweis zur Parallelisierung:** Wenn dein Client parallele Subagents unterstützt (z.B. Claude Code), spawne pro Lead einen Subagent wie beschrieben. Andernfalls arbeite die Leads **sequentiell** mit exakt denselben Schritten ab — das Ergebnis ist identisch, nur langsamer.
 
-## Phase 0: Sicherer Kontext und Konfiguration
+## Phase 0: Umgebung und Konfiguration prüfen
 
-Vor jeder Generierung `get_context()` mit dem Auftrag abgleichen: Konto, Tenant, Basis-URL und konfigurierte Umgebung; bei Unklarheit oder Abweichung stoppen. `get_campaign(campaign_id)` sowie `get_agent(stage="email", campaign_id=…, include_rules=true)` lesen. `validate_campaign(campaign_id)` prüft Tokens und Definitionen ohne Generierung. Für reine Copy-/Prompt-/Konfigurationskorrekturen `update_email_step`, `update_ai_variable` oder `patch_campaign_settings` mit aktueller `expected_revision` nutzen, nie `edit_campaign` als Einzelkorrektur. Promptänderungen erhalten Werte, markieren betroffene aktuelle Werte aber gegebenenfalls `stale`; Neugenerierung ausdrücklich planen. Der Patch kann betroffene Reviewed-Leads nach `processing` zurückstellen (`requeuedLeadCount`). Serverläufe generieren Vorlagenvariablen, über persistierte Instantly-Mappings verbrauchte AI-Variablen und deren explizite transitive Abhängigkeiten für die ausgewählten Leads; unbenutzte Definitionen und historische Werte bleiben erhalten. Bei `revision_conflict` einer synchronen UI-Regeneration wurden inzwischen veraltete Ergebnisse nicht gespeichert; vor erneutem Versuch Konfiguration und Kontaktstatus neu lesen.
+Vor jeder Generierung `ping` und `list_campaigns` mit dem Auftrag abgleichen (richtige Kampagne, Variablen und E-Mail-Sequenz vorhanden); bei Unklarheit stoppen. Die vollständige Konfiguration (E-Mail-Schritte, AI-Variablen, Kampagnenkontext) liefert `export_campaign_blueprint(campaign_id)`. Änderungen an Variablen oder Schritten laufen über `edit_campaign` mit dem vollständigen Blueprint (Replace-all, kein Teil-Patch). ACHTUNG: Das Ersetzen der AI-Variablen löscht ALLE bereits generierten Variablenwerte der Kampagne — nie ohne ausdrückliche Zustimmung des Users und nie während eines aktiven Laufs.
 
-Nach dem Speichern ausgewählte vollständige Mails über `preview_campaign(campaign_id, lead_ids=[…])` prüfen (maximal 20), nicht aus einzelnen Variablen auf den fertigen Text schließen. Preview/Validation geben nichts frei und lösen keinen Export/Push aus. Persönliches Du ist kein implementierter Ansprachemodus; Formal/Team sind die derzeitigen Systemmodi. `valid=true` bedeutet keine semantische Copy-Garantie.
+Ansprache und Kampagnenkontext kommen pro Lead aus `get_lead_data` (`emailGeneration.salutation`, `salutationRule`, `campaignContext`); die Ansprache gilt durchgängig für alle Variablen eines Leads. Den fertigen Text einzelner Leads prüfst du nicht über ein Vorschau-Tool, sondern über `get_lead_variables` nach dem Speichern.
 
-## Workflow-Uebersicht
+## Workflow-Übersicht
 
 ```
 1. list_campaigns -> Kampagne identifizieren (oder campaign_id aus Argument)
@@ -23,39 +23,39 @@ Nach dem Speichern ausgewählte vollständige Mails über `preview_campaign(camp
 2. list_leads(campaign_id, limit={batch_size})
    -> {batch_size} Leads mit Basisdaten (~0.5 KB/Lead)
    |
-3. Fuer jeden Lead: Sub-Agent spawnen (parallel, bis zu {batch_size} gleichzeitig)
+3. Für jeden Lead: Sub-Agent spawnen (parallel, bis zu {batch_size} gleichzeitig)
    -> Jeder Agent: get_lead_data() -> generiert Variablen -> save_lead_variables()
    |
 4. Batch-Report: "Batch 1/N done, X/Y leads processed"
    |
-5. Naechster Batch: list_leads erneut (remaining > 0?)
+5. Nächster Batch: list_leads erneut (remaining > 0?)
    |
-6. Fertig: "Y Leads verarbeitet, Variablen bereit fuer Review"
+6. Fertig: "Y Leads verarbeitet, Variablen bereit für Review"
 ```
 
 ## Aufruf
 
 | Eingabe | Verhalten |
 |---------|-----------|
-| `/outreach-generate` | Zeigt Kampagnen via list_campaigns, User waehlt |
-| `/outreach-generate 76` | Startet direkt fuer Kampagne 76 |
-| `generiere emails fuer kampagne 76` | Startet direkt fuer Kampagne 76 |
+| `/outreach-generate` | Zeigt Kampagnen via list_campaigns, User wählt |
+| `/outreach-generate 76` | Startet direkt für Kampagne 76 |
+| `generiere emails für kampagne 76` | Startet direkt für Kampagne 76 |
 
-## Schritt-fuer-Schritt Anleitung
+## Schritt-für-Schritt Anleitung
 
 ### Phase 1: Kampagne bestimmen
 
-Wenn KEINE campaign_id als Argument uebergeben wurde:
+Wenn KEINE campaign_id als Argument übergeben wurde:
 
 1. Rufe `list_campaigns` auf (MCP Tool)
 2. Zeige dem User die Kampagnen mit `leadCounts.needs_email_generation > 0`
-3. Frage: "Fuer welche Kampagne soll ich Variablen generieren?"
+3. Frage: "Für welche Kampagne soll ich Variablen generieren?"
 4. Merke dir die campaign_id
-5. Vorpruefung: `list_lead_runs(campaign_id, active_only=true)` — laeuft ein serverseitiger Lauf mit E-Mail-Stufe, lehnt `save_lead_variables` mit `lead_run_active` ab (Rennschutz). Erst nach Terminal-Status starten (`get_lead_run_status`) oder den Lauf nach Ruecksprache mit `cancel_lead_run` stoppen.
+5. Vorprüfung: `list_lead_runs(campaign_id, active_only=true)` — läuft ein serverseitiger Lauf mit E-Mail-Stufe, lehnt `save_lead_variables` mit `lead_run_active` ab (Rennschutz). Erst nach Terminal-Status starten (`get_lead_run_status`) oder den Lauf nach Rücksprache mit `cancel_lead_run` stoppen (bereits laufende Jobs laufen aus).
 
-Wenn campaign_id als Argument uebergeben wurde: Direkt zur Batch-Groesse-Abfrage.
+Wenn campaign_id als Argument übergeben wurde: Direkt zur Batch-Größe-Abfrage.
 
-**Batch-Groesse abfragen:**
+**Batch-Größe abfragen:**
 
 Frage den User:
 "Wie viele Leads pro Batch? (Default: 10)"
@@ -64,7 +64,7 @@ Frage den User:
 - 100 (Aggressiv)
 - 200 (Maximum)
 
-Merke dir die Antwort als `{batch_size}`. Wenn der User einfach Enter drueckt oder nichts sagt: `batch_size = 10`.
+Merke dir die Antwort als `{batch_size}`. Wenn der User einfach Enter drückt oder nichts sagt: `batch_size = 10`.
 
 Dann weiter zu Phase 2.
 
@@ -97,10 +97,10 @@ Für jeden Lead nur die tatsächlich vom Client unterstützte Agent-Signatur ver
 
 #### Sub-Agent Prompt Template
 
-Fuer jeden Lead den folgenden Prompt zusammenbauen. **Ersetze die Platzhalter** mit den tatsaechlichen Daten aus der list_leads Response:
+Für jeden Lead den folgenden Prompt zusammenbauen. **Ersetze die Platzhalter** mit den tatsächlichen Daten aus der list_leads Response:
 
 ```
-Du generierst AI-Variablen fuer einen Lead via MCP Tools.
+Du generierst AI-Variablen für einen Lead via MCP Tools.
 
 KAMPAGNE: {campaign.name} (ID: {campaign.id})
 LEAD: {lead.company} (ID: {lead.id})
@@ -108,35 +108,35 @@ LEAD: {lead.company} (ID: {lead.id})
 ## Schritte
 
 1. Rufe get_lead_data(campaign_id={campaign.id}, lead_id={lead.id}) auf
-2. Lies den emailGeneration.systemPrompt sorgfaeltig — er definiert Ton, Stil und Kontext
+2. Lies den emailGeneration.systemPrompt sorgfältig — er definiert Ton, Stil und Kontext; dazu emailGeneration.salutation/salutationRule (Ansprache) und campaignContext
 3. Analysiere Research, Qualification und Custom Attributes
 4. Optional: Besuche die Lead-Website (lead.website), falls dein Client Websites laden kann — get_lead_data liefert KEINE Screenshots
-5. Generiere fuer JEDE Variable in emailGeneration.variables[] den Text gemaess ihrem Prompt
-6. REVIEW — Pruefe JEDE generierte Variable gegen diese Checkliste:
+5. Generiere für JEDE Variable in emailGeneration.variables[] den Text gemäß ihrem Prompt
+6. REVIEW — Prüfe JEDE generierte Variable gegen diese Checkliste:
    - Umlaute korrekt geschrieben? (Ä/Ö/Ü/ä/ö/ü/ß — NIEMALS AE/OE/UE/ae/oe/ue/ss)
-   - Keine internen Metriken erwaehnt? (SEO-Score, Overall-Score, Fit-Level, Need-Flags, Dimension-Scores, Opportunity Score, ranked Keyword)
+   - Keine internen Metriken erwähnt? (SEO-Score, Overall-Score, Fit-Level, Need-Flags, Dimension-Scores, Opportunity Score, ranked Keyword)
    - Keine HTTPS/SSL-Behauptungen? ("ohne HTTPS", "kein SSL" etc.)
    - Kein harscher Deficit-Sprech? (ausbaufähig, nicht erreichbar, fehlerhaft, unzureichend, kaum nutzbar, schwach, schlecht)
-   - Anrede konsistent ueber alle Variablen? (durchgehend formal ODER team-basiert, nie gemischt)
+   - Anrede gemäß emailGeneration.salutationRule und konsistent über alle Variablen? (nie gemischt)
    - Kein "vorallem"? (korrekt: "vor allem")
    - Keine Leerzeilen am Anfang oder Ende einer Variable?
    - Jede Variable unter 10.000 Zeichen?
-   Falls ein Kriterium verletzt: Korrigiere die Variable und pruefe erneut.
+   Falls ein Kriterium verletzt: Korrigiere die Variable und prüfe erneut.
 7. Speichere via save_lead_variables(campaign_id={campaign.id}, lead_id={lead.id}, variables=JSON-String)
 
-WICHTIG: variables ist ein JSON-STRING. ALLE Variablen aus emailGeneration.expectedOutput muessen enthalten sein.
+WICHTIG: variables ist ein JSON-STRING. ALLE Variablen aus emailGeneration.expectedOutput müssen enthalten sein.
 ```
 
 ### Phase 4: Visueller Kontext (optional)
 
-`get_lead_data` liefert KEINE Screenshots — die visuelle Beurteilung der Server-Runs ist im Research-TEXT zusammengefasst. Wenn dein Client selbst Websites besuchen kann (Browser/Fetch): die Lead-Website (`lead.website`) kurz oeffnen und den Eindruck in die Generierung einbeziehen. Andernfalls auf Basis von Research-Text, Qualification und Custom Attributes generieren — im Report vermerken: "Website nicht besucht, Text-basierte Generierung."
+`get_lead_data` liefert KEINE Screenshots — die visuelle Beurteilung der Server-Runs ist im Research-TEXT zusammengefasst. Wenn dein Client selbst Websites besuchen kann (Browser/Fetch): die Lead-Website (`lead.website`) kurz öffnen und den Eindruck in die Generierung einbeziehen. Andernfalls auf Basis von Research-Text, Qualification und Custom Attributes generieren — im Report vermerken: "Website nicht besucht, Text-basierte Generierung."
 
 ### Phase 5: Ergebnisse sammeln & Report
 
 Warte bis ALLE Sub-Agents des Batches fertig sind (sie laufen im Background — du wirst benachrichtigt).
 
-Zaehle:
-- Erfolgreiche Generierungen (`save_lead_variables` liefert das unveraenderte Erfolgs-Payload mit `status: "success"`)
+Zähle:
+- Erfolgreiche Generierungen (`save_lead_variables` liefert das unveränderte Erfolgs-Payload mit `status: "success"`)
 - Fehler (`save_lead_variables` liefert ein MCP-Tool-Result mit `isError: true`; der Text beginnt mit einem Code wie `validation_failed:` oder `contact_gate:` — oder der Agent selbst ist fehlgeschlagen)
 
 Zeige Batch-Report:
@@ -150,9 +150,9 @@ Verbleibend: {remaining}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-### Phase 6: Naechster Batch oder Abschluss
+### Phase 6: Nächster Batch oder Abschluss
 
-Wenn `remaining > 0`: Zurueck zu Phase 2 (naechster list_leads Aufruf).
+Wenn `remaining > 0`: Zurück zu Phase 2 (nächster list_leads Aufruf).
 
 Wenn `remaining == 0` oder keine Leads mehr: Zeige Abschluss-Report:
 ```
@@ -164,7 +164,7 @@ Gesamt verarbeitet: {total_processed} Leads
 Erfolg: {total_success} | Fehler: {total_errors}
 Status: Verarbeitete Leads auf "pending_review" gesetzt
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Naechster Schritt: /outreach-verify — Variablen pruefen und freigeben
+Nächster Schritt: /outreach-verify — Variablen prüfen und freigeben
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -172,12 +172,14 @@ Naechster Schritt: /outreach-verify — Variablen pruefen und freigeben
 
 ### list_campaigns
 
-**Keine Parameter.** Gibt alle Kampagnen des Users zurueck.
+**Keine Parameter.** Gibt alle Kampagnen des Users zurück.
 
 Response-Felder:
 - `campaigns[].id` — Kampagnen-ID
 - `campaigns[].name` — Name
-- `campaigns[].leadCounts.needs_email_generation` — Anzahl Leads in der Generierungs-Queue
+- `campaigns[].lifecycle` — Lebenszyklus der Kampagne
+- `campaigns[].emailSequence` — E-Mail-Sequenz (id, stepCount) oder null
+- `campaigns[].leadCounts.needs_email_generation` — Anzahl Leads in der Generierungs-Queue (qualifiziert IN DIESER Kampagne, recherchiert, `processing`; Urteile gelten pro Kampagne)
 - `campaigns[].leadCounts.pending_review` — Anzahl Leads mit generierten, noch nicht freigegebenen Variablen
 - `campaigns[].leadCounts.approved` / `.rejected` — Final-Status
 - `campaigns[].aiVariables[]` — Konfigurierte AI-Variablen (Name + sortOrder)
@@ -195,9 +197,9 @@ Response-Felder:
 | `contact_status` | string | `''` | Leer: bereits kontaktierte Leads ausgeblendet; `"all"` zeigt alle, ein Status-Slug filtert darauf |
 | `offset` | int | `0` | Paginierung zusammen mit `limit` und den Antwortfeldern `total`/`remaining` |
 
-Gibt nur Basisdaten zurueck: id, email, company, website, city, phoneNumber, score, contactStatus (mit contactedAt, contactSource), qualification (fitLevel, category, summary).
+Gibt nur Basisdaten zurück: id, email, company, website, city, phoneNumber, score, contactStatus (mit contactedAt, contactSource), qualification (fitLevel, category, summary).
 
-**WICHTIG:** Der Default `campaign_status="processing"` ist korrekt fuer den Generierungs-Workflow (= Leads mit Status "Ausstehend").
+**WICHTIG:** Der Default `campaign_status="processing"` ist korrekt für den Generierungs-Workflow (= Leads mit Status "Ausstehend").
 
 ### get_lead_data
 
@@ -206,13 +208,14 @@ Gibt nur Basisdaten zurueck: id, email, company, website, city, phoneNumber, sco
 | `campaign_id` | int | **required** | Kampagnen-ID |
 | `lead_id` | int | **required** | Lead-ID |
 
-Gibt vollen Generierungs-Context zurueck:
-- Stammdaten (email, company, website, city, phoneNumber, score)
-- `qualification` (fitLevel, category, summary, snapshot)
+Gibt vollen Generierungs-Context zurück. Bei bereits kontaktierten Leads (Kontaktstatus blockiert) antwortet das Tool mit `contact_gate` — Lead überspringen:
+- Stammdaten (email, company, website, city, phoneNumber, score, sendingEmail, secondaryEmails, contactStatus) und `appUrl`-Links
+- `qualification` — Urteil DIESER Kampagne (status, fitLevel, category, summary, completedAt, snapshot); in einer anderen Kampagne qualifizierte Leads zeigen hier ein leeres Urteil
 - `research` (text, bestEmail, decisionMaker, contactRecommendation)
 - `customAttributes` (key-value Paare)
-- `emailGeneration.systemPrompt` — Der aufgeloeste System-Prompt
-- `emailGeneration.variables[]` — Variablen mit aufgeloesten Prompts
+- `emailGeneration.systemPrompt` — Der aufgelöste System-Prompt
+- `emailGeneration.salutation` / `salutationRule` / `campaignContext` — Ansprache und Kampagnenkontext
+- `emailGeneration.variables[]` — Variablen mit aufgelösten Prompts
 - `emailGeneration.expectedOutput` — JSON-Schema der erwarteten Ausgabe (Variablen-Namen)
 
 ### save_lead_variables
@@ -225,7 +228,7 @@ Gibt vollen Generierungs-Context zurueck:
 
 **variables-Format:** `"{\"hallo\": \"...\", \"intro\": \"...\"}"`
 
-Verhalten: Persistiert eine neue `LeadAIVariableValue`-Version pro Variable (vorherige Versionen bleiben als Historie erhalten). Setzt `LeadCampaignStatus.status = pending_review`. Beruehrt KEINE Email-Steps (Body/Subject werden beim CSV-Export live aus den Variablen gerendert).
+Verhalten: Persistiert eine neue `LeadAIVariableValue`-Version pro Variable (vorherige Versionen bleiben als Historie erhalten). Setzt `LeadCampaignStatus.status = pending_review`. Berührt KEINE Email-Steps (Body/Subject werden beim CSV-Export live aus den Variablen gerendert).
 
 Success-Response:
 ```json
@@ -247,17 +250,15 @@ validation_failed: Variable(s) missing from submission: 'intro'
 
 Die fehlenden Namen stehen im Fehlertext — alle Variablen aus `emailGeneration.expectedOutput` nachliefern und erneut senden.
 
-Das Tool liefert nur den Text `<lowercase_code>: <message>` und keine strukturierte Fehler-Response. Weitere erwartete Codes sind z.B. `contact_gate`, `variables_not_configured`, `campaign_not_found`, `lead_not_found`, `lead_not_in_campaign`, `lead_run_active`, `write_conflict` und `insufficient_scope`.
-
-`write_conflict`: Zwei Speicherungen fuer denselben Lead kamen im selben Moment; diese hier wurde nicht gespeichert. Mit `get_lead_variables` den aktuellen Stand lesen und nur erneut speichern, wenn er noch fehlt oder nicht passt — kein blinder Retry.
+Das Tool liefert nur den Text `<lowercase_code>: <message>` und keine strukturierte Fehler-Response. Mögliche Codes: `validation_failed` (ungültiges JSON oder fehlende Variablen), `contact_gate` (Kontaktstatus des Leads blockiert — Lead überspringen), `variables_not_configured` (Kampagne hat keine AI-Variablen), `campaign_not_found`, `lead_not_found`, `lead_not_in_campaign`, `lead_run_active`, `insufficient_scope` und `internal_error`. Ist ein Wert kein String, speichert das Tool die Variable mit Status `error`.
 
 ### Verification-Tools (siehe `/outreach-verify`)
 
 Die folgenden Tools werden im Verification-Workflow verwendet, NICHT in der Generierung:
 
-- **get_lead_variables** — laedt aktuelle Variablen-Werte (Name, Wert, Status, generatedAt) zur Pruefung
-- **approve_lead_variables** — gibt Variablen frei (`LeadCampaignStatus = approved`, ready fuer CSV-Export)
-- **reject_lead_variables** — lehnt Variablen ab mit `reason` (`LeadCampaignStatus = rejected`; NICHT final: der Lead zaehlt wieder als generierungsbeduerftig und wird beim naechsten Generate/Run neu erzeugt. Dauerhaft raus = aus Kampagne entfernen oder `mark_leads_contacted(emails, status="do_not_contact")`)
+- **get_lead_variables** — lädt aktuelle Variablen-Werte (Name, Wert, Status, generatedAt) zur Prüfung
+- **approve_lead_variables** — gibt Variablen frei (`LeadCampaignStatus = approved`, ready für CSV-Export)
+- **reject_lead_variables** — lehnt Variablen ab mit `reason` (`LeadCampaignStatus = rejected`; NICHT final: der Lead zählt wieder als generierungsbedürftig und wird beim nächsten Generate/Run neu erzeugt. Dauerhaft raus = aus Kampagne entfernen oder `mark_leads_contacted(emails, status="do_not_contact")`)
 
 Details: siehe `/outreach-verify` Skill.
 
@@ -266,19 +267,18 @@ Details: siehe `/outreach-verify` Skill.
 | Fehler | Aktion |
 |--------|--------|
 | `list_leads` gibt leere leads[] | "Keine Leads in Queue" -> STOP |
-| Sub-Agent save_lead_variables Error | Fehler notieren, weitermachen mit naechstem Lead |
-| `lead_run_active` | Parallel laeuft ein Server-Lauf mit E-Mail-Stufe — Batch pausieren, `get_lead_run_status` bis Terminal-Status, dann fortsetzen (Queue ist idempotent) |
-| `write_conflict` | Gleichzeitige zweite Speicherung desselben Leads — `get_lead_variables` lesen, nur bei Bedarf einmal neu speichern, sonst als erledigt zaehlen |
-| Sub-Agent Timeout/Crash | Als Fehler zaehlen, im Report erwaehnen |
+| Sub-Agent save_lead_variables Error | Fehler notieren, weitermachen mit nächstem Lead |
+| `lead_run_active` | Parallel läuft ein Server-Lauf mit E-Mail-Stufe — Batch pausieren, `get_lead_run_status` bis Terminal-Status, dann fortsetzen (Queue ist idempotent) |
+| Sub-Agent Timeout/Crash | Als Fehler zählen, im Report erwähnen |
 | Alle Agents eines Batches fehlgeschlagen | Warnung ausgeben, User fragen ob fortfahren |
 | Netzwerk/MCP-Verbindungsfehler | 1x Retry, dann STOP mit Fehlermeldung |
 
-**Kein automatischer Retry einzelner Leads** — fehlgeschlagene Leads koennen spaeter mit `/outreach-generate` erneut verarbeitet werden (sie haben noch keinen `pending_review`-Status und tauchen wieder in list_leads auf).
+**Kein automatischer Retry einzelner Leads** — fehlgeschlagene Leads können später mit `/outreach-generate` erneut verarbeitet werden (sie haben noch keinen `pending_review`-Status und tauchen wieder in list_leads auf).
 
 ## Wichtige Hinweise
 
-1. **Voll autonom** — Keine Rueckfragen waehrend der Generierung. Durchlaufen bis fertig.
-2. **{batch_size}er-Batches** — {batch_size} Leads pro Batch (vom User gewaehlt, Default 10, Maximum 200).
+1. **Voll autonom** — Keine Rückfragen während der Generierung. Durchlaufen bis fertig.
+2. **{batch_size}er-Batches** — {batch_size} Leads pro Batch (vom User gewählt, Default 10, Maximum 200).
 3. **Parallel** — Alle Agents eines Batches gleichzeitig spawnen (ein Message-Block).
 4. **Idempotent** — Leads mit bereits generierten Variablen tauchen nicht mehr in list_leads (default-filter `campaign_status="processing"`) auf.
-5. **Versionierung** — Jeder save_lead_variables-Aufruf erzeugt eine neue Version, aeltere Versionen bleiben als Historie erhalten.
+5. **Versionierung** — Jeder save_lead_variables-Aufruf erzeugt eine neue Version, ältere Versionen bleiben als Historie erhalten.
